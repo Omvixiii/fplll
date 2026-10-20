@@ -90,3 +90,15 @@ stamp-h1
 config.guess~
 config.sub~
 install-sh~
+
+build/
+_install/
+
+# CMake and Ninja
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+install_manifest.txt
+build.ninja
+.ninja_deps
+.ninja_log
