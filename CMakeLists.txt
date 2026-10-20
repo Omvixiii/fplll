@@ -8,10 +8,59 @@ set(CMAKE_CXX_EXTENSIONS NO)
 
 include(GNUInstallDirs)
 find_package(Threads REQUIRED)
-find_path(GMP_INCLUDE_DIR NAMES gmp.h)
-find_library(GMP_LIBRARY NAMES gmp)
-if(NOT GMP_INCLUDE_DIR OR NOT GMP_LIBRARY)
-  message(FATAL_ERROR "GMP headers and library are required")
+find_package(PkgConfig QUIET)
+
+option(FPLLL_USE_MPIR "Use MPIR instead of GMP" OFF)
+option(FPLLL_WITH_QD "Enable quad-double support when libqd is available" OFF)
+option(FPLLL_WITH_RECURSIVE_ENUM "Enable recursive enumeration" ON)
+set(FPLLL_MPIR_ROOT "" CACHE PATH "MPIR installation prefix")
+set(FPLLL_MAX_ENUM_DIM 256 CACHE STRING "Maximum supported enumeration dimension")
+set(FPLLL_MAX_PARALLEL_ENUM_DIM 120 CACHE STRING
+  "Maximum parallel enumeration dimension (0 disables parallel enumeration)")
+set(FPLLL_EXTENUM_DIR "" CACHE PATH "External enumeration library prefix")
+set(FPLLL_EXTENUM_LIBRARY "" CACHE STRING "External enumeration library name or path")
+set(FPLLL_EXTENUM_FUNCTION "" CACHE STRING "External enumeration function symbol")
+
+if(NOT FPLLL_MAX_ENUM_DIM MATCHES "^[1-9][0-9]*$")
+  message(FATAL_ERROR "FPLLL_MAX_ENUM_DIM must be a positive integer")
+endif()
+if(NOT FPLLL_MAX_PARALLEL_ENUM_DIM MATCHES
+    "^(0|20|30|40|50|60|70|80|90|100|110|120|130|140|150|160)$")
+  message(FATAL_ERROR
+    "FPLLL_MAX_PARALLEL_ENUM_DIM must be 0 or a multiple of 10 from 20 to 160")
+endif()
+if(FPLLL_MAX_PARALLEL_ENUM_DIM GREATER_EQUAL FPLLL_MAX_ENUM_DIM)
+  message(FATAL_ERROR "FPLLL_MAX_ENUM_DIM must exceed FPLLL_MAX_PARALLEL_ENUM_DIM")
+endif()
+
+if(FPLLL_USE_MPIR)
+  find_path(MPIR_INCLUDE_DIR NAMES mpir.h HINTS "${FPLLL_MPIR_ROOT}" PATH_SUFFIXES include)
+  find_library(MPIR_LIBRARY NAMES mpir HINTS "${FPLLL_MPIR_ROOT}" PATH_SUFFIXES lib lib64)
+  find_path(GMP_INCLUDE_DIR NAMES gmp.h
+    HINTS "${FPLLL_MPIR_ROOT}" "${MPIR_INCLUDE_DIR}" PATH_SUFFIXES include)
+  if(NOT MPIR_INCLUDE_DIR OR NOT MPIR_LIBRARY OR NOT GMP_INCLUDE_DIR)
+    message(FATAL_ERROR "FPLLL_USE_MPIR requires the MPIR headers and library")
+  endif()
+  add_library(MPIR::MPIR UNKNOWN IMPORTED)
+  set_target_properties(MPIR::MPIR PROPERTIES
+    IMPORTED_LOCATION "${MPIR_LIBRARY}"
+    INTERFACE_INCLUDE_DIRECTORIES "${MPIR_INCLUDE_DIR};${GMP_INCLUDE_DIR}")
+  set(FPLLL_INTEGER_TARGET MPIR::MPIR)
+  set(FPLLL_INTEGER_LIBRARY_NAME mpir)
+  set(HAVE_LIBMPIR 1)
+else()
+  find_path(GMP_INCLUDE_DIR NAMES gmp.h)
+  find_library(GMP_LIBRARY NAMES gmp)
+  if(NOT GMP_INCLUDE_DIR OR NOT GMP_LIBRARY)
+    message(FATAL_ERROR "GMP headers and library are required")
+  endif()
+  add_library(GMP::GMP UNKNOWN IMPORTED)
+  set_target_properties(GMP::GMP PROPERTIES
+    IMPORTED_LOCATION "${GMP_LIBRARY}"
+    INTERFACE_INCLUDE_DIRECTORIES "${GMP_INCLUDE_DIR}")
+  set(FPLLL_INTEGER_TARGET GMP::GMP)
+  set(FPLLL_INTEGER_LIBRARY_NAME gmp)
+  set(HAVE_LIBGMP 1)
 endif()
 
 find_path(MPFR_INCLUDE_DIR NAMES mpfr.h)
@@ -19,17 +68,88 @@ find_library(MPFR_LIBRARY NAMES mpfr)
 if(NOT MPFR_INCLUDE_DIR OR NOT MPFR_LIBRARY)
   message(FATAL_ERROR "MPFR headers and library are required")
 endif()
-
-add_library(GMP::GMP UNKNOWN IMPORTED)
-set_target_properties(GMP::GMP PROPERTIES
-  IMPORTED_LOCATION "${GMP_LIBRARY}"
-  INTERFACE_INCLUDE_DIRECTORIES "${GMP_INCLUDE_DIR}")
-
+set(HAVE_LIBMPFR 1)
 add_library(MPFR::MPFR UNKNOWN IMPORTED)
 set_target_properties(MPFR::MPFR PROPERTIES
   IMPORTED_LOCATION "${MPFR_LIBRARY}"
   INTERFACE_INCLUDE_DIRECTORIES "${MPFR_INCLUDE_DIR}"
-  INTERFACE_LINK_LIBRARIES GMP::GMP)
+  INTERFACE_LINK_LIBRARIES "${FPLLL_INTEGER_TARGET}")
+
+set(FPLLL_QD_TARGET "")
+if(FPLLL_WITH_QD)
+  if(PkgConfig_FOUND)
+    pkg_check_modules(QD QUIET IMPORTED_TARGET qd)
+  endif()
+  if(TARGET PkgConfig::QD)
+    set(FPLLL_QD_TARGET PkgConfig::QD)
+  else()
+    find_path(QD_INCLUDE_DIR NAMES qd/dd_real.h)
+    find_library(QD_LIBRARY NAMES qd)
+    if(NOT QD_INCLUDE_DIR OR NOT QD_LIBRARY)
+      message(FATAL_ERROR "FPLLL_WITH_QD requires libqd and qd/dd_real.h")
+    endif()
+    add_library(QD::QD UNKNOWN IMPORTED)
+    set_target_properties(QD::QD PROPERTIES
+      IMPORTED_LOCATION "${QD_LIBRARY}"
+      INTERFACE_INCLUDE_DIRECTORIES "${QD_INCLUDE_DIR}")
+    set(FPLLL_QD_TARGET QD::QD)
+  endif()
+endif()
+
+set(FPLLL_EXTENUM_LIBRARY_PATH "")
+if(FPLLL_EXTENUM_LIBRARY)
+  if(NOT FPLLL_EXTENUM_FUNCTION)
+    set(FPLLL_EXTENUM_FUNCTION "${FPLLL_EXTENUM_LIBRARY}")
+  endif()
+  if(NOT FPLLL_EXTENUM_FUNCTION MATCHES "^[A-Za-z_][A-Za-z0-9_]*$")
+    message(FATAL_ERROR "FPLLL_EXTENUM_FUNCTION must be a C++ identifier")
+  endif()
+  if(IS_ABSOLUTE "${FPLLL_EXTENUM_LIBRARY}" AND EXISTS "${FPLLL_EXTENUM_LIBRARY}")
+    set(FPLLL_EXTENUM_LIBRARY_PATH "${FPLLL_EXTENUM_LIBRARY}")
+  else()
+    find_library(FPLLL_EXTENUM_LIBRARY_PATH NAMES "${FPLLL_EXTENUM_LIBRARY}"
+      HINTS "${FPLLL_EXTENUM_DIR}" PATH_SUFFIXES lib lib64)
+  endif()
+  if(NOT FPLLL_EXTENUM_LIBRARY_PATH)
+    message(FATAL_ERROR "Could not find external enumeration library ${FPLLL_EXTENUM_LIBRARY}")
+  endif()
+
+  include(CheckCXXSourceCompiles)
+  set(CMAKE_REQUIRED_INCLUDES "${CMAKE_CURRENT_SOURCE_DIR}")
+  set(CMAKE_REQUIRED_LIBRARIES "${FPLLL_EXTENUM_LIBRARY_PATH}")
+  check_cxx_source_compiles(
+    "#include <fplll/enum/enumerate_ext_api.h>
+     extern extenum_fc_enumerate ${FPLLL_EXTENUM_FUNCTION};
+     int main() { auto function = &${FPLLL_EXTENUM_FUNCTION}; (void)function; return 0; }"
+    FPLLL_EXTENUM_LINKS)
+  unset(CMAKE_REQUIRED_INCLUDES)
+  unset(CMAKE_REQUIRED_LIBRARIES)
+  if(NOT FPLLL_EXTENUM_LINKS)
+    message(FATAL_ERROR "External enumeration symbol ${FPLLL_EXTENUM_FUNCTION} was not found")
+  endif()
+  set(FPLLL_EXTENUM_FUNC "${FPLLL_EXTENUM_FUNCTION}")
+endif()
+
+include(CheckCXXSourceCompiles)
+set(_FPLLL_ATOMIC_TEST_SOURCE [=[
+  #include <atomic>
+  #include <cstdint>
+  int main() {
+    std::atomic<int64_t> value{};
+    return static_cast<int>(value.fetch_add(1));
+  }
+]=])
+check_cxx_source_compiles("${_FPLLL_ATOMIC_TEST_SOURCE}" FPLLL_ATOMIC_LINKS_WITHOUT_LIB)
+set(FPLLL_ATOMIC_LIBRARY "")
+if(NOT FPLLL_ATOMIC_LINKS_WITHOUT_LIB)
+  set(CMAKE_REQUIRED_LIBRARIES atomic)
+  check_cxx_source_compiles("${_FPLLL_ATOMIC_TEST_SOURCE}" FPLLL_ATOMIC_LINKS_WITH_LIB)
+  unset(CMAKE_REQUIRED_LIBRARIES)
+  if(NOT FPLLL_ATOMIC_LINKS_WITH_LIB)
+    message(FATAL_ERROR "Could not link std::atomic with or without libatomic")
+  endif()
+  set(FPLLL_ATOMIC_LIBRARY atomic)
+endif()
 
 set(FPLLL_CONFIG_INCLUDE_DIR "${CMAKE_CURRENT_BINARY_DIR}/fplll")
 file(MAKE_DIRECTORY "${FPLLL_CONFIG_INCLUDE_DIR}")
@@ -38,6 +158,15 @@ configure_file(
   "${FPLLL_CONFIG_INCLUDE_DIR}/fplll_config.h"
   @ONLY)
 configure_file(cmake/config.h.in "${CMAKE_CURRENT_BINARY_DIR}/config.h" @ONLY)
+
+set(FPLLL_PARALLEL_ENUM_SOURCES)
+if(FPLLL_MAX_PARALLEL_ENUM_DIM GREATER 0)
+  list(APPEND FPLLL_PARALLEL_ENUM_SOURCES fplll/enum-parallel/enumlib.cpp)
+  foreach(dimension RANGE 20 ${FPLLL_MAX_PARALLEL_ENUM_DIM} 10)
+    list(APPEND FPLLL_PARALLEL_ENUM_SOURCES
+      "fplll/enum-parallel/enumlib_dim.${dimension}.cpp")
+  endforeach()
+endif()
 
 set(FPLLL_LIBRARY_SOURCES
   fplll/fplll.cpp
@@ -64,22 +193,7 @@ set(FPLLL_LIBRARY_SOURCES
   fplll/householder.cpp
   fplll/hlll.cpp
   fplll/threadpool.cpp
-  fplll/enum-parallel/enumlib.cpp
-  fplll/enum-parallel/enumlib_dim.20.cpp
-  fplll/enum-parallel/enumlib_dim.30.cpp
-  fplll/enum-parallel/enumlib_dim.40.cpp
-  fplll/enum-parallel/enumlib_dim.50.cpp
-  fplll/enum-parallel/enumlib_dim.60.cpp
-  fplll/enum-parallel/enumlib_dim.70.cpp
-  fplll/enum-parallel/enumlib_dim.80.cpp
-  fplll/enum-parallel/enumlib_dim.90.cpp
-  fplll/enum-parallel/enumlib_dim.100.cpp
-  fplll/enum-parallel/enumlib_dim.110.cpp
-  fplll/enum-parallel/enumlib_dim.120.cpp
-  fplll/enum-parallel/enumlib_dim.130.cpp
-  fplll/enum-parallel/enumlib_dim.140.cpp
-  fplll/enum-parallel/enumlib_dim.150.cpp
-  fplll/enum-parallel/enumlib_dim.160.cpp)
+  ${FPLLL_PARALLEL_ENUM_SOURCES})
 
 add_library(fplll SHARED ${FPLLL_LIBRARY_SOURCES})
 add_library(fplll::fplll ALIAS fplll)
@@ -100,7 +214,13 @@ set(FPLLL_DEFAULT_STRATEGY_PATH
 target_compile_definitions(fplll PRIVATE
   "FPLLL_DEFAULT_STRATEGY_PATH=\"${FPLLL_DEFAULT_STRATEGY_PATH}\""
   "FPLLL_DEFAULT_STRATEGY=\"${FPLLL_DEFAULT_STRATEGY_PATH}/default.json\"")
-target_link_libraries(fplll PUBLIC MPFR::MPFR GMP::GMP Threads::Threads)
+target_link_libraries(fplll PUBLIC
+  MPFR::MPFR
+  "${FPLLL_INTEGER_TARGET}"
+  Threads::Threads
+  "${FPLLL_QD_TARGET}"
+  "${FPLLL_EXTENUM_LIBRARY_PATH}"
+  "${FPLLL_ATOMIC_LIBRARY}")
 
 add_executable(fplll_cli fplll/main.cpp)
 set_target_properties(fplll_cli PROPERTIES
@@ -129,6 +249,33 @@ target_include_directories(llldiff PRIVATE
   "${CMAKE_CURRENT_BINARY_DIR}"
   "${FPLLL_CONFIG_INCLUDE_DIR}")
 target_link_libraries(llldiff PRIVATE fplll)
+
+include(CTest)
+if(BUILD_TESTING)
+  set(FPLLL_TESTS
+    test_nr
+    test_lll
+    test_enum
+    test_cvp
+    test_svp
+    test_bkz
+    test_pruner
+    test_gso
+    test_lll_gram
+    test_hlll
+    test_svp_gram
+    test_bkz_gram
+    test_counter
+    test_babai
+    test_ceil)
+  foreach(test_name IN LISTS FPLLL_TESTS)
+    add_executable(${test_name} "tests/${test_name}.cpp")
+    target_compile_definitions(${test_name} PRIVATE
+      "TESTDATADIR=\"${CMAKE_CURRENT_SOURCE_DIR}/\"")
+    target_link_libraries(${test_name} PRIVATE fplll)
+    add_test(NAME ${test_name} COMMAND ${test_name})
+  endforeach()
+endif()
 
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/fplll.h"
   "#include <fplll/fplll.h>\n")

@@ -16,12 +16,54 @@
         "CMAKE_CXX_COMPILER": "g++",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
       }
+    },
+    {
+      "name": "gcc-debug-no-parallel",
+      "displayName": "GCC Debug (parallel enumeration disabled)",
+      "inherits": "gcc-debug",
+      "binaryDir": "${sourceDir}/build/gcc-debug-no-parallel",
+      "cacheVariables": {
+        "FPLLL_MAX_PARALLEL_ENUM_DIM": "0"
+      }
+    },
+    {
+      "name": "gcc-debug-qd",
+      "displayName": "GCC Debug (QD enabled)",
+      "inherits": "gcc-debug",
+      "binaryDir": "${sourceDir}/build/gcc-debug-qd",
+      "cacheVariables": {
+        "FPLLL_WITH_QD": "ON"
+      }
+    },
+    {
+      "name": "gcc-debug-iterative",
+      "displayName": "GCC Debug (recursive enumeration disabled)",
+      "inherits": "gcc-debug",
+      "binaryDir": "${sourceDir}/build/gcc-debug-iterative",
+      "cacheVariables": {
+        "FPLLL_WITH_RECURSIVE_ENUM": "OFF"
+      }
     }
   ],
   "buildPresets": [
     {
       "name": "gcc-debug",
       "configurePreset": "gcc-debug",
+      "jobs": 4
+    },
+    {
+      "name": "gcc-debug-no-parallel",
+      "configurePreset": "gcc-debug-no-parallel",
+      "jobs": 4
+    },
+    {
+      "name": "gcc-debug-qd",
+      "configurePreset": "gcc-debug-qd",
+      "jobs": 4
+    },
+    {
+      "name": "gcc-debug-iterative",
+      "configurePreset": "gcc-debug-iterative",
       "jobs": 4
     }
   ]
