@@ -1,0 +1,99 @@
+name: CMake
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build-and-test:
+    name: ${{ matrix.preset }}
+    runs-on: ubuntu-24.04
+    container: fedora:44
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - preset: gcc-debug
+            compiler: g++
+            install-prefix: gcc-debug
+          - preset: gcc-release
+            compiler: g++
+            install-prefix: gcc-release
+          - preset: clang-debug
+            compiler: clang++
+            install-prefix: clang-debug
+          - preset: clang-release
+            compiler: clang++
+            install-prefix: clang-release
+    env:
+      PRESET: ${{ matrix.preset }}
+      CXX_COMPILER: ${{ matrix.compiler }}
+      INSTALL_PREFIX: ${{ matrix.install-prefix }}
+    steps:
+      - name: Check out
+        uses: actions/checkout@v7
+      - name: Install build dependencies
+        run: dnf -y install gcc gcc-c++ clang ccache cmake ninja-build gmp-devel mpfr-devel qd-devel pkgconf-pkg-config
+      - name: Configure, build, and test
+        run: |
+          cmake --preset "$PRESET"
+          cmake --build --preset "$PRESET" --parallel 8
+          ctest --test-dir "build/$PRESET" --output-on-failure
+      - name: Install and build downstream consumers
+        run: |
+          cmake --install "build/$PRESET"
+          cmake -S tests/cmake-consumer -B "build/consumer-$PRESET" -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_CXX_COMPILER="$CXX_COMPILER" \
+            -DCMAKE_PREFIX_PATH="$GITHUB_WORKSPACE/_install/$INSTALL_PREFIX"
+          cmake --build "build/consumer-$PRESET" --parallel 8
+          "build/consumer-$PRESET/fplll_consumer_shared"
+          "build/consumer-$PRESET/fplll_consumer_static"
+
+  feature-matrix:
+    name: ${{ matrix.preset }} feature matrix
+    runs-on: ubuntu-24.04
+    container: fedora:44
+    strategy:
+      fail-fast: false
+      matrix:
+        preset:
+          - gcc-debug-no-parallel
+          - gcc-debug-qd
+          - gcc-debug-iterative
+    env:
+      PRESET: ${{ matrix.preset }}
+    steps:
+      - name: Check out
+        uses: actions/checkout@v7
+      - name: Install build dependencies
+        run: dnf -y install gcc gcc-c++ ccache cmake ninja-build gmp-devel mpfr-devel qd-devel pkgconf-pkg-config
+      - name: Configure, build, and test
+        run: |
+          cmake --preset "$PRESET"
+          cmake --build --preset "$PRESET" --parallel 8
+          ctest --test-dir "build/$PRESET" --output-on-failure
+
+  sanitizers:
+    name: ${{ matrix.preset }} sanitizer
+    runs-on: ubuntu-24.04
+    container: fedora:44
+    strategy:
+      fail-fast: false
+      matrix:
+        preset:
+          - gcc-asan
+          - gcc-ubsan
+    env:
+      PRESET: ${{ matrix.preset }}
+    steps:
+      - name: Check out
+        uses: actions/checkout@v7
+      - name: Install build dependencies
+        run: dnf -y install gcc gcc-c++ ccache cmake ninja-build gmp-devel mpfr-devel qd-devel pkgconf-pkg-config
+      - name: Configure and build focused test targets
+        run: |
+          cmake --preset "$PRESET"
+          cmake --build --preset "$PRESET" --target fplll fplll_cli test_nr test_lll test_enum test_cvp test_svp --parallel 8
+      - name: Run focused sanitizer tests
+        run: ctest --test-dir "build/$PRESET" -R '^(test_nr|test_lll|test_enum|test_cvp|test_svp)$' --output-on-failure

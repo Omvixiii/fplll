@@ -1,0 +1,39 @@
+name: Conda package
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  conda-package:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        shell: bash -el {0}
+    steps:
+      - name: Check out
+        uses: actions/checkout@v7
+      - name: Set up Miniforge
+        uses: conda-incubator/setup-miniconda@v4.0.1
+        with:
+          miniforge-version: latest
+          channels: conda-forge
+          channel-priority: strict
+          activate-environment: fplll-ci
+          python-version: "3.12"
+      - name: Install packaging and consumer tools
+        run: conda install --yes conda-build cmake ninja pkg-config c-compiler cxx-compiler gmp mpfr
+      - name: Build Conda package
+        run: conda build conda.recipe --no-anaconda-upload
+      - name: Install package and validate downstream CMake consumer
+        run: |
+          conda install --yes --use-local fplll=5.5.0
+          export PKG_CONFIG_PATH="$CONDA_PREFIX/lib/pkgconfig:$PKG_CONFIG_PATH"
+          pkg-config --modversion fplll
+          cmake -S tests/cmake-consumer -B build/conda-consumer -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_CXX_COMPILER="${CXX:-c++}" \
+            -DCMAKE_PREFIX_PATH="$CONDA_PREFIX"
+          cmake --build build/conda-consumer --parallel 8
+          build/conda-consumer/fplll_consumer_shared
+          build/conda-consumer/fplll_consumer_static

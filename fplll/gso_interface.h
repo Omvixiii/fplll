@@ -620,7 +620,7 @@ protected:
 #ifdef DEBUG
   /* Used only in debug mode. */
   int row_op_first, row_op_last;
-  bool in_row_op_range(int i) { return i >= row_op_first && i < row_op_last; }
+  bool in_row_op_range(int i) const { return i >= row_op_first && i < row_op_last; }
 #endif
 };
 

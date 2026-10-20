@@ -14,8 +14,10 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
         "CMAKE_CXX_COMPILER": "g++",
+        "CMAKE_CXX_COMPILER_LAUNCHER": "ccache",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-        "CMAKE_INSTALL_LIBDIR": "lib"
+        "CMAKE_INSTALL_LIBDIR": "lib",
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/_install/gcc-debug"
       }
     },
     {
@@ -52,7 +54,63 @@
       "binaryDir": "${sourceDir}/build/gcc-release",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
-        "CMAKE_INSTALL_PREFIX": "${sourceDir}/_install/cmake-release"
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/_install/gcc-release"
+      }
+    },
+    {
+      "name": "clang-debug",
+      "displayName": "Clang Debug",
+      "inherits": "gcc-debug",
+      "binaryDir": "${sourceDir}/build/clang-debug",
+      "cacheVariables": {
+        "CMAKE_CXX_COMPILER": "clang++",
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/_install/clang-debug"
+      }
+    },
+    {
+      "name": "clang-release",
+      "displayName": "Clang Release",
+      "inherits": "gcc-release",
+      "binaryDir": "${sourceDir}/build/clang-release",
+      "cacheVariables": {
+        "CMAKE_CXX_COMPILER": "clang++",
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/_install/clang-release"
+      }
+    },
+    {
+      "name": "gcc-asan",
+      "displayName": "GCC AddressSanitizer",
+      "inherits": "gcc-debug",
+      "binaryDir": "${sourceDir}/build/gcc-asan",
+      "cacheVariables": {
+        "FPLLL_MAX_PARALLEL_ENUM_DIM": "0",
+        "CMAKE_CXX_FLAGS": "-fsanitize=address -fno-omit-frame-pointer",
+        "CMAKE_EXE_LINKER_FLAGS": "-fsanitize=address",
+        "CMAKE_SHARED_LINKER_FLAGS": "-fsanitize=address"
+      }
+    },
+    {
+      "name": "gcc-ubsan",
+      "displayName": "GCC UndefinedBehaviorSanitizer",
+      "inherits": "gcc-debug",
+      "binaryDir": "${sourceDir}/build/gcc-ubsan",
+      "cacheVariables": {
+        "FPLLL_MAX_PARALLEL_ENUM_DIM": "0",
+        "CMAKE_CXX_FLAGS": "-fsanitize=undefined -fno-omit-frame-pointer",
+        "CMAKE_EXE_LINKER_FLAGS": "-fsanitize=undefined",
+        "CMAKE_SHARED_LINKER_FLAGS": "-fsanitize=undefined"
+      }
+    },
+    {
+      "name": "gcc-coverage",
+      "displayName": "GCC Coverage",
+      "inherits": "gcc-debug",
+      "binaryDir": "${sourceDir}/build/gcc-coverage",
+      "cacheVariables": {
+        "FPLLL_MAX_PARALLEL_ENUM_DIM": "20",
+        "CMAKE_CXX_FLAGS": "--coverage",
+        "CMAKE_EXE_LINKER_FLAGS": "--coverage",
+        "CMAKE_SHARED_LINKER_FLAGS": "--coverage"
       }
     }
   ],
@@ -60,27 +118,52 @@
     {
       "name": "gcc-debug",
       "configurePreset": "gcc-debug",
-      "jobs": 4
+      "jobs": 8
     },
     {
       "name": "gcc-debug-no-parallel",
       "configurePreset": "gcc-debug-no-parallel",
-      "jobs": 4
+      "jobs": 8
     },
     {
       "name": "gcc-debug-qd",
       "configurePreset": "gcc-debug-qd",
-      "jobs": 4
+      "jobs": 8
     },
     {
       "name": "gcc-debug-iterative",
       "configurePreset": "gcc-debug-iterative",
-      "jobs": 4
+      "jobs": 8
     },
     {
       "name": "gcc-release",
       "configurePreset": "gcc-release",
-      "jobs": 4
+      "jobs": 8
+    },
+    {
+      "name": "clang-debug",
+      "configurePreset": "clang-debug",
+      "jobs": 8
+    },
+    {
+      "name": "clang-release",
+      "configurePreset": "clang-release",
+      "jobs": 8
+    },
+    {
+      "name": "gcc-asan",
+      "configurePreset": "gcc-asan",
+      "jobs": 8
+    },
+    {
+      "name": "gcc-ubsan",
+      "configurePreset": "gcc-ubsan",
+      "jobs": 8
+    },
+    {
+      "name": "gcc-coverage",
+      "configurePreset": "gcc-coverage",
+      "jobs": 8
     }
   ]
 }

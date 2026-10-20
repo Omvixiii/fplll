@@ -191,8 +191,8 @@ int test_int_rel_bkz_dump_gso(int d, int b, const int block_size,
   A.gen_intrel(b);
   B          = A;
   int status = 0;
-  // TODO: maybe not safe.
-  string file_bkz_dump_gso = tmpnam(nullptr);
+  // Each test runs in a private working directory under the binary tree.
+  string file_bkz_dump_gso = "bkz-gso-dump.json";
   status |= test_bkz_param<ZT>(B, block_size, flags, file_bkz_dump_gso);
 
   if (status != 0)

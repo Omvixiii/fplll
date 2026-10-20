@@ -1,40 +1,25 @@
 name: Code Coverage
 
-on: 
-  pull_request:
+on:
   push:
-    
-env:
-  MAX_ENUM_DIM: 64
-  MAX_PARALLEL_ENUM_DIM: 20
-  JOBS: 2
-  CXXFLAGS: -O2 -ggdb -fprofile-arcs -ftest-coverage
+  pull_request:
 
 jobs:
-  linux:
-    runs-on: ubuntu-latest
-
+  gcc-coverage:
+    runs-on: ubuntu-24.04
+    container: fedora:44
     steps:
       - name: Check out
-        uses: actions/checkout@v4
-      - name: Install prerequisites
+        uses: actions/checkout@v7
+      - name: Install build dependencies
+        run: dnf -y install gcc gcc-c++ ccache cmake ninja-build gmp-devel mpfr-devel qd-devel pkgconf-pkg-config
+      - name: Configure, build, and test
         run: |
-          sudo DEBIAN_FRONTEND=noninteractive apt-get update
-          sudo DEBIAN_FRONTEND=noninteractive apt-get install autoconf automake libtool libgmp-dev libmpfr-dev libqd-dev
-      - name: Configure
-        run: |
-          ./autogen.sh
-          ./configure --disable-static --with-max-enum-dim=$MAX_ENUM_DIM \
-                      --with-max-parallel-enum-dim=$MAX_PARALLEL_ENUM_DIM
-      - name: Compile
-        run: make -j $JOBS
-
-      - name: Generate
-        run: |
-          make -j $JOBS check
-          cd fplll && gcov .libs/libfplll_la-*.o && cd ..
-
-      - name: Push
-        uses: codecov/codecov-action@v1
+          cmake --preset gcc-coverage
+          cmake --build --preset gcc-coverage --parallel 8
+          ctest --test-dir build/gcc-coverage --output-on-failure
+      - name: Upload coverage
+        uses: codecov/codecov-action@v7.1.1
         with:
-          token: ${{ secrets.CODECOV_TOKEN }} # not required for public repos
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false

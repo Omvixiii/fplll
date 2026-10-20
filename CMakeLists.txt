@@ -1,3 +1,8 @@
+if(CMAKE_SOURCE_DIR STREQUAL CMAKE_BINARY_DIR)
+  message(FATAL_ERROR
+    "In-source builds are disabled. Configure with a CMake Preset or pass a separate -B binary directory.")
+endif()
+
 cmake_minimum_required(VERSION 3.20)
 
 project(fplll VERSION 5.5.0 LANGUAGES CXX)
@@ -5,6 +10,18 @@ project(fplll VERSION 5.5.0 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED YES)
 set(CMAKE_CXX_EXTENSIONS NO)
+
+# Keep every generated executable and library under the binary tree. Presets
+# use Ninja single-config builds, while these per-config paths also keep
+# multi-config generators from writing into the source tree.
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
+foreach(config DEBUG RELEASE RELWITHDEBINFO MINSIZEREL)
+  set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_${config} "${CMAKE_BINARY_DIR}/bin/${config}")
+  set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_${config} "${CMAKE_BINARY_DIR}/lib/${config}")
+  set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${config} "${CMAKE_BINARY_DIR}/lib/${config}")
+endforeach()
 
 include(GNUInstallDirs)
 find_package(Threads REQUIRED)
@@ -208,12 +225,6 @@ set(FPLLL_LIBRARY_SOURCES
   fplll/threadpool.cpp
   ${FPLLL_PARALLEL_ENUM_SOURCES})
 
-add_library(fplll SHARED ${FPLLL_LIBRARY_SOURCES})
-add_library(fplll::fplll ALIAS fplll)
-set_target_properties(fplll PROPERTIES
-  VERSION 9.0.0
-  SOVERSION 9)
-
 set(FPLLL_DEFAULT_STRATEGY_PATH
   "${CMAKE_INSTALL_FULL_DATADIR}/fplll/strategies")
 function(fplll_configure_library target)
@@ -238,9 +249,17 @@ function(fplll_configure_library target)
     "${FPLLL_EXTENUM_TARGET}"
     "${FPLLL_ATOMIC_LIBRARY}")
 endfunction()
+
+add_library(fplll_objects OBJECT ${FPLLL_LIBRARY_SOURCES})
+set_target_properties(fplll_objects PROPERTIES POSITION_INDEPENDENT_CODE ON)
+fplll_configure_library(fplll_objects)
+
+add_library(fplll SHARED $<TARGET_OBJECTS:fplll_objects>)
+add_library(fplll::fplll ALIAS fplll)
+set_target_properties(fplll PROPERTIES VERSION 9.0.0 SOVERSION 9)
 fplll_configure_library(fplll)
 
-add_library(fplll_static STATIC ${FPLLL_LIBRARY_SOURCES})
+add_library(fplll_static STATIC $<TARGET_OBJECTS:fplll_objects>)
 add_library(fplll::fplll_static ALIAS fplll_static)
 set_target_properties(fplll_static PROPERTIES
   OUTPUT_NAME fplll
@@ -248,10 +267,40 @@ set_target_properties(fplll_static PROPERTIES
   POSITION_INDEPENDENT_CODE ON)
 fplll_configure_library(fplll_static)
 
+# Automake exposes these duplicate/debug libraries as optional targets. Keep
+# equivalent opt-in build targets for downstream packagers and developers.
+add_library(fplllv SHARED EXCLUDE_FROM_ALL $<TARGET_OBJECTS:fplll_objects>)
+set_target_properties(fplllv PROPERTIES VERSION 9.0.0 SOVERSION 9)
+fplll_configure_library(fplllv)
+
+add_library(fplll_debug_objects OBJECT EXCLUDE_FROM_ALL ${FPLLL_LIBRARY_SOURCES})
+set_target_properties(fplll_debug_objects PROPERTIES POSITION_INDEPENDENT_CODE ON)
+fplll_configure_library(fplll_debug_objects)
+target_compile_definitions(fplll_debug_objects PRIVATE DEBUG)
+
+add_library(fpllld SHARED EXCLUDE_FROM_ALL $<TARGET_OBJECTS:fplll_debug_objects>)
+set_target_properties(fpllld PROPERTIES VERSION 9.0.0 SOVERSION 9)
+fplll_configure_library(fpllld)
+target_compile_definitions(fpllld PUBLIC DEBUG)
+
+add_library(fpllld_static STATIC EXCLUDE_FROM_ALL $<TARGET_OBJECTS:fplll_debug_objects>)
+set_target_properties(fpllld_static PROPERTIES
+  OUTPUT_NAME fpllld
+  EXPORT_NAME fpllld_static
+  POSITION_INDEPENDENT_CODE ON)
+fplll_configure_library(fpllld_static)
+target_compile_definitions(fpllld_static PUBLIC DEBUG)
+
+add_library(fplllv_static STATIC EXCLUDE_FROM_ALL $<TARGET_OBJECTS:fplll_objects>)
+set_target_properties(fplllv_static PROPERTIES
+  OUTPUT_NAME fplllv
+  EXPORT_NAME fplllv_static
+  POSITION_INDEPENDENT_CODE ON)
+fplll_configure_library(fplllv_static)
+
 add_executable(fplll_cli fplll/main.cpp)
 set_target_properties(fplll_cli PROPERTIES
-  OUTPUT_NAME fplll
-  RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bin")
+  OUTPUT_NAME fplll)
 target_include_directories(fplll_cli PRIVATE
   "${CMAKE_CURRENT_SOURCE_DIR}"
   "${CMAKE_CURRENT_BINARY_DIR}"
@@ -259,25 +308,38 @@ target_include_directories(fplll_cli PRIVATE
 target_link_libraries(fplll_cli PRIVATE fplll)
 
 add_executable(latticegen fplll/latticegen.cpp)
-set_target_properties(latticegen PROPERTIES
-  RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bin")
 target_include_directories(latticegen PRIVATE
   "${CMAKE_CURRENT_SOURCE_DIR}"
   "${CMAKE_CURRENT_BINARY_DIR}"
   "${FPLLL_CONFIG_INCLUDE_DIR}")
 target_link_libraries(latticegen PRIVATE fplll)
 
-add_executable(llldiff fplll/llldiff.cpp)
-set_target_properties(llldiff PROPERTIES
-  RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bin")
-target_include_directories(llldiff PRIVATE
+add_executable(fplll_dbg EXCLUDE_FROM_ALL fplll/main.cpp)
+target_compile_definitions(fplll_dbg PRIVATE DEBUG)
+target_include_directories(fplll_dbg PRIVATE
   "${CMAKE_CURRENT_SOURCE_DIR}"
   "${CMAKE_CURRENT_BINARY_DIR}"
   "${FPLLL_CONFIG_INCLUDE_DIR}")
-target_link_libraries(llldiff PRIVATE fplll)
+target_link_libraries(fplll_dbg PRIVATE fpllld)
+
+add_executable(latticegen_dbg EXCLUDE_FROM_ALL fplll/latticegen.cpp)
+target_compile_definitions(latticegen_dbg PRIVATE DEBUG)
+target_include_directories(latticegen_dbg PRIVATE
+  "${CMAKE_CURRENT_SOURCE_DIR}"
+  "${CMAKE_CURRENT_BINARY_DIR}"
+  "${FPLLL_CONFIG_INCLUDE_DIR}")
+target_link_libraries(latticegen_dbg PRIVATE fpllld)
+add_custom_target(dbg DEPENDS fplll_dbg latticegen_dbg)
 
 include(CTest)
 if(BUILD_TESTING)
+  add_executable(llldiff fplll/llldiff.cpp)
+  target_include_directories(llldiff PRIVATE
+    "${CMAKE_CURRENT_SOURCE_DIR}"
+    "${CMAKE_CURRENT_BINARY_DIR}"
+    "${FPLLL_CONFIG_INCLUDE_DIR}")
+  target_link_libraries(llldiff PRIVATE fplll)
+
   set(FPLLL_TESTS
     test_nr
     test_lll
@@ -296,10 +358,14 @@ if(BUILD_TESTING)
     test_ceil)
   foreach(test_name IN LISTS FPLLL_TESTS)
     add_executable(${test_name} "tests/${test_name}.cpp")
+    set(test_work_dir "${CMAKE_CURRENT_BINARY_DIR}/test-work/${test_name}")
+    file(MAKE_DIRECTORY "${test_work_dir}")
     target_compile_definitions(${test_name} PRIVATE
       "TESTDATADIR=\"${CMAKE_CURRENT_SOURCE_DIR}/\"")
     target_link_libraries(${test_name} PRIVATE fplll)
     add_test(NAME ${test_name} COMMAND ${test_name})
+    set_tests_properties(${test_name} PROPERTIES
+      WORKING_DIRECTORY "${test_work_dir}")
   endforeach()
 endif()
 
