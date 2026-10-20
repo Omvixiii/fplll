@@ -36,7 +36,8 @@ fplll is distributed under the [GNU Lesser General Public License](COPYING) (eit
     	* [MacOS](#MacOS)
     	* [Docker and AWS](#Docker-and-AWS)
     * [Installation from source](#Installation-from-source)
-    	* [Dependencies](#dependencies)
+      * [Build with CMake presets](#build-with-cmake-presets)
+      * [Dependencies](#dependencies)
       		* [Required](#required), [Optional](#optional).
       	* [Linux and MacOS](#Linux-and-MacOS)
       	* [Windows 10](#windows-10)
@@ -97,14 +98,42 @@ We now have Docker/AWS images for fplll too. They aren't on this repository, tho
 
 fplll can also be built from source. Below, we explicate some of the dependencies for building from source, as well as operating systems specific instructions.
 
+### Build with CMake presets ###
+
+CMake + Ninja is the recommended build entry point. The presets keep all generated files in a dedicated binary directory under `build/`, and in-source builds are rejected. The project requires C++23.
+
+Install CMake 3.20 or newer, Ninja, ccache, a C++23 compiler, GMP and MPFR. Then list and run a preset:
+
+```sh
+cmake --list-presets
+cmake --preset gcc-debug
+cmake --build --preset gcc-debug
+ctest --test-dir build/gcc-debug --output-on-failure
+```
+
+The `gcc-release`, `clang-debug` and `clang-release` presets provide optimized builds and the Clang compiler. `gcc-debug-qd`, `gcc-debug-no-parallel` and `gcc-debug-iterative` exercise optional feature configurations; `gcc-asan` and `gcc-ubsan` enable sanitizers. Each preset fixes its build directory to `build/<preset>` and its install prefix to `_install/<preset>`. For example:
+
+```sh
+cmake --preset gcc-release
+cmake --build --preset gcc-release
+cmake --install build/gcc-release
+```
+
+The presets use ccache as the C++ compiler launcher. Its cache directory and size remain controlled by the local ccache configuration.
+
+The build-system feature mapping and local verification limits are recorded in [`notes/cmake-migration.md`](notes/cmake-migration.md).
+
+The legacy Autotools instructions below remain available for comparison during the migration. The CMake presets do not invoke Autotools or m4.
+
 ### Dependencies ###
 
 #### Required ####
 
 - GNU MP 4.2.0 or higher [http://gmplib.org/](http://gmplib.org/) or MPIR 1.0.0 or higher [http://mpir.org](http://mpir.org)
 - MPFR 2.3.0 or higher, COMPLETE INSTALLATION [http://www.mpfr.org/](http://www.mpfr.org/)
-- autotools 2.61 or higher
-- g++ 4.9.3 or higher
+- A compiler with C++23 support (GCC or Clang)
+- CMake 3.20 or newer, Ninja and ccache for the preset-based build
+- Autotools 2.61 or higher only for the legacy Autotools build
 
 #### Optional ####
 - QD 2.3.15 or higher (a C++/Fortran-90 double-double and quad-double package), compile and install
@@ -455,4 +484,3 @@ Bug reports may be sent to [https://groups.google.com/forum/#!forum/fplll-devel]
 <a name="S09">[S09]</a> D. Stehle. Floating-Point LLL: Theoretical and Practical Aspects. The LLL Algorithm 2009: 179-213
 
 <a name="SE94">[SE94]</a>: C.-P. Schnorr and M. Euchner. Lattice basis reduction: Improved practical algorithms and solving subset sum problems. Math. Program. 66: 181-199 (1994)
-
