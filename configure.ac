@@ -55,7 +55,7 @@ AC_LANG([C++])
 AC_PROG_CXX
 AC_PROG_CC
 AC_PROG_MAKE_SET
-AX_CXX_COMPILE_STDCXX([11],[noext],[mandatory])
+AX_CXX_COMPILE_STDCXX([23],[noext],[mandatory])
 
 # Checks for libraries.
 AC_SUBST([GMP_LIBS], [-lgmp])
@@ -239,4 +239,3 @@ AC_CONFIG_FILES([Makefile
                  tests/Makefile
                  fplll.pc])
 AC_OUTPUT
-

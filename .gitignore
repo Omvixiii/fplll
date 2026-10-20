@@ -102,3 +102,4 @@ install_manifest.txt
 build.ninja
 .ninja_deps
 .ninja_log
+!cmake/config.h.in

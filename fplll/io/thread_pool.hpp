@@ -44,7 +44,7 @@
 
 /*************************** example usage ***************************************\
 grep "^//test.cpp" thread_pool.hpp -A33 > test.cpp
-g++ -std=c++11 -o test test.cpp -pthread -lpthread
+g++ -std=c++23 -o test test.cpp -pthread -lpthread
 
 //test.cpp:
 #include "thread_pool.hpp"

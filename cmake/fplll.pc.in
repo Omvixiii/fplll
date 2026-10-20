@@ -1,0 +1,10 @@
+prefix=${pcfiledir}/@FPLLL_PC_PREFIX_RELATIVE@
+exec_prefix=${prefix}
+libdir=${prefix}/@CMAKE_INSTALL_LIBDIR@
+includedir=${prefix}/@CMAKE_INSTALL_INCLUDEDIR@
+
+Name: fplll
+Description: lattice algorithms with floating-point computations
+Version: @PROJECT_VERSION@
+Cflags: -I${includedir} -pthread
+Libs: -L${libdir} -lfplll -lmpfr -lgmp -pthread
