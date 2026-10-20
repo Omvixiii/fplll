@@ -1,0 +1,93 @@
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+find_dependency(Threads)
+
+if(@FPLLL_USE_MPIR@)
+  if(NOT TARGET MPIR::MPIR)
+    find_path(FPLLL_MPIR_INCLUDE_DIR NAMES mpir.h HINTS "@FPLLL_MPIR_ROOT@"
+      PATH_SUFFIXES include)
+    find_library(FPLLL_MPIR_LIBRARY NAMES mpir HINTS "@FPLLL_MPIR_ROOT@"
+      PATH_SUFFIXES lib lib64)
+    find_path(FPLLL_GMP_COMPAT_INCLUDE_DIR NAMES gmp.h
+      HINTS "@FPLLL_MPIR_ROOT@" "${FPLLL_MPIR_INCLUDE_DIR}" PATH_SUFFIXES include)
+    if(NOT FPLLL_MPIR_INCLUDE_DIR OR NOT FPLLL_MPIR_LIBRARY OR
+       NOT FPLLL_GMP_COMPAT_INCLUDE_DIR)
+      message(FATAL_ERROR "fplll was built with MPIR, but MPIR could not be found")
+    endif()
+    add_library(MPIR::MPIR UNKNOWN IMPORTED)
+    set_target_properties(MPIR::MPIR PROPERTIES
+      IMPORTED_LOCATION "${FPLLL_MPIR_LIBRARY}"
+      INTERFACE_INCLUDE_DIRECTORIES "${FPLLL_MPIR_INCLUDE_DIR};${FPLLL_GMP_COMPAT_INCLUDE_DIR}")
+  endif()
+  set(_fplll_integer_target MPIR::MPIR)
+else()
+  if(NOT TARGET GMP::GMP)
+    find_path(FPLLL_GMP_INCLUDE_DIR NAMES gmp.h)
+    find_library(FPLLL_GMP_LIBRARY NAMES gmp)
+    if(NOT FPLLL_GMP_INCLUDE_DIR OR NOT FPLLL_GMP_LIBRARY)
+      message(FATAL_ERROR "fplll requires GMP, but GMP could not be found")
+    endif()
+    add_library(GMP::GMP UNKNOWN IMPORTED)
+    set_target_properties(GMP::GMP PROPERTIES
+      IMPORTED_LOCATION "${FPLLL_GMP_LIBRARY}"
+      INTERFACE_INCLUDE_DIRECTORIES "${FPLLL_GMP_INCLUDE_DIR}")
+  endif()
+  set(_fplll_integer_target GMP::GMP)
+endif()
+
+if(NOT TARGET MPFR::MPFR)
+  find_path(FPLLL_MPFR_INCLUDE_DIR NAMES mpfr.h)
+  find_library(FPLLL_MPFR_LIBRARY NAMES mpfr)
+  if(NOT FPLLL_MPFR_INCLUDE_DIR OR NOT FPLLL_MPFR_LIBRARY)
+    message(FATAL_ERROR "fplll requires MPFR, but MPFR could not be found")
+  endif()
+  add_library(MPFR::MPFR UNKNOWN IMPORTED)
+  set_target_properties(MPFR::MPFR PROPERTIES
+    IMPORTED_LOCATION "${FPLLL_MPFR_LIBRARY}"
+    INTERFACE_INCLUDE_DIRECTORIES "${FPLLL_MPFR_INCLUDE_DIR}"
+    INTERFACE_LINK_LIBRARIES "${_fplll_integer_target}")
+endif()
+
+if(@FPLLL_WITH_QD@ AND NOT TARGET QD::QD)
+  find_package(PkgConfig QUIET)
+  if(PkgConfig_FOUND)
+    pkg_check_modules(QD QUIET IMPORTED_TARGET qd)
+  endif()
+  if(TARGET PkgConfig::QD)
+    add_library(QD::QD INTERFACE IMPORTED)
+    set_target_properties(QD::QD PROPERTIES
+      INTERFACE_LINK_LIBRARIES PkgConfig::QD)
+  else()
+    find_path(FPLLL_QD_INCLUDE_DIR NAMES qd/dd_real.h)
+    find_library(FPLLL_QD_LIBRARY NAMES qd)
+    if(NOT FPLLL_QD_INCLUDE_DIR OR NOT FPLLL_QD_LIBRARY)
+      message(FATAL_ERROR "fplll was built with QD, but libqd could not be found")
+    endif()
+    add_library(QD::QD UNKNOWN IMPORTED)
+    set_target_properties(QD::QD PROPERTIES
+      IMPORTED_LOCATION "${FPLLL_QD_LIBRARY}"
+      INTERFACE_INCLUDE_DIRECTORIES "${FPLLL_QD_INCLUDE_DIR}")
+  endif()
+endif()
+
+if(@FPLLL_HAS_EXTENUM@ AND NOT TARGET FPLLL::ExtEnum)
+  set(_fplll_extenum_name "@FPLLL_EXTENUM_LIBRARY@")
+  if(IS_ABSOLUTE "${_fplll_extenum_name}")
+    get_filename_component(_fplll_extenum_name "${_fplll_extenum_name}" NAME)
+    string(REGEX REPLACE "^lib" "" _fplll_extenum_name "${_fplll_extenum_name}")
+    string(REGEX REPLACE "\\.(so(\\..*)?|a|dylib)$" "" _fplll_extenum_name
+      "${_fplll_extenum_name}")
+  endif()
+  find_library(FPLLL_EXTENUM_PACKAGE_LIBRARY NAMES "${_fplll_extenum_name}"
+    HINTS "@FPLLL_EXTENUM_DIR@" PATH_SUFFIXES lib lib64)
+  if(NOT FPLLL_EXTENUM_PACKAGE_LIBRARY)
+    message(FATAL_ERROR "fplll requires external enumeration library ${_fplll_extenum_name}")
+  endif()
+  add_library(FPLLL::ExtEnum UNKNOWN IMPORTED)
+  set_target_properties(FPLLL::ExtEnum PROPERTIES
+    IMPORTED_LOCATION "${FPLLL_EXTENUM_PACKAGE_LIBRARY}")
+endif()
+
+include("${CMAKE_CURRENT_LIST_DIR}/fplllTargets.cmake")
+check_required_components(fplll)

@@ -76,12 +76,17 @@ set_target_properties(MPFR::MPFR PROPERTIES
   INTERFACE_LINK_LIBRARIES "${FPLLL_INTEGER_TARGET}")
 
 set(FPLLL_QD_TARGET "")
+set(FPLLL_QD_INCLUDE_DIRS "")
 if(FPLLL_WITH_QD)
   if(PkgConfig_FOUND)
     pkg_check_modules(QD QUIET IMPORTED_TARGET qd)
   endif()
   if(TARGET PkgConfig::QD)
-    set(FPLLL_QD_TARGET PkgConfig::QD)
+    add_library(QD::QD INTERFACE IMPORTED)
+    set_target_properties(QD::QD PROPERTIES
+      INTERFACE_LINK_LIBRARIES PkgConfig::QD)
+    set(FPLLL_QD_TARGET QD::QD)
+    set(FPLLL_QD_INCLUDE_DIRS "${QD_INCLUDE_DIRS}")
   else()
     find_path(QD_INCLUDE_DIR NAMES qd/dd_real.h)
     find_library(QD_LIBRARY NAMES qd)
@@ -93,10 +98,13 @@ if(FPLLL_WITH_QD)
       IMPORTED_LOCATION "${QD_LIBRARY}"
       INTERFACE_INCLUDE_DIRECTORIES "${QD_INCLUDE_DIR}")
     set(FPLLL_QD_TARGET QD::QD)
+    set(FPLLL_QD_INCLUDE_DIRS "${QD_INCLUDE_DIR}")
   endif()
 endif()
 
 set(FPLLL_EXTENUM_LIBRARY_PATH "")
+set(FPLLL_EXTENUM_TARGET "")
+set(FPLLL_HAS_EXTENUM OFF)
 if(FPLLL_EXTENUM_LIBRARY)
   if(NOT FPLLL_EXTENUM_FUNCTION)
     set(FPLLL_EXTENUM_FUNCTION "${FPLLL_EXTENUM_LIBRARY}")
@@ -127,7 +135,12 @@ if(FPLLL_EXTENUM_LIBRARY)
   if(NOT FPLLL_EXTENUM_LINKS)
     message(FATAL_ERROR "External enumeration symbol ${FPLLL_EXTENUM_FUNCTION} was not found")
   endif()
+  add_library(FPLLL::ExtEnum UNKNOWN IMPORTED)
+  set_target_properties(FPLLL::ExtEnum PROPERTIES
+    IMPORTED_LOCATION "${FPLLL_EXTENUM_LIBRARY_PATH}")
+  set(FPLLL_EXTENUM_TARGET FPLLL::ExtEnum)
   set(FPLLL_EXTENUM_FUNC "${FPLLL_EXTENUM_FUNCTION}")
+  set(FPLLL_HAS_EXTENUM ON)
 endif()
 
 include(CheckCXXSourceCompiles)
@@ -201,26 +214,39 @@ set_target_properties(fplll PROPERTIES
   VERSION 9.0.0
   SOVERSION 9)
 
-target_include_directories(fplll
-  PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
-    $<BUILD_INTERFACE:${FPLLL_CONFIG_INCLUDE_DIR}>
-    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
-  PRIVATE
-    "${CMAKE_CURRENT_SOURCE_DIR}/fplll")
 set(FPLLL_DEFAULT_STRATEGY_PATH
   "${CMAKE_INSTALL_FULL_DATADIR}/fplll/strategies")
-target_compile_definitions(fplll PRIVATE
-  "FPLLL_DEFAULT_STRATEGY_PATH=\"${FPLLL_DEFAULT_STRATEGY_PATH}\""
-  "FPLLL_DEFAULT_STRATEGY=\"${FPLLL_DEFAULT_STRATEGY_PATH}/default.json\"")
-target_link_libraries(fplll PUBLIC
-  MPFR::MPFR
-  "${FPLLL_INTEGER_TARGET}"
-  Threads::Threads
-  "${FPLLL_QD_TARGET}"
-  "${FPLLL_EXTENUM_LIBRARY_PATH}"
-  "${FPLLL_ATOMIC_LIBRARY}")
+function(fplll_configure_library target)
+  target_include_directories(${target}
+    PUBLIC
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
+      $<BUILD_INTERFACE:${FPLLL_CONFIG_INCLUDE_DIR}>
+      $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+      $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/fplll>
+    PRIVATE
+      "${CMAKE_CURRENT_SOURCE_DIR}/fplll")
+  target_compile_definitions(${target} PRIVATE
+    "FPLLL_DEFAULT_STRATEGY_PATH=\"${FPLLL_DEFAULT_STRATEGY_PATH}\""
+    "FPLLL_DEFAULT_STRATEGY=\"${FPLLL_DEFAULT_STRATEGY_PATH}/default.json\"")
+  target_compile_features(${target} PUBLIC cxx_std_23)
+  target_link_libraries(${target} PUBLIC
+    MPFR::MPFR
+    "${FPLLL_INTEGER_TARGET}"
+    Threads::Threads
+    "${FPLLL_QD_TARGET}"
+    "${FPLLL_EXTENUM_TARGET}"
+    "${FPLLL_ATOMIC_LIBRARY}")
+endfunction()
+fplll_configure_library(fplll)
+
+add_library(fplll_static STATIC ${FPLLL_LIBRARY_SOURCES})
+add_library(fplll::fplll_static ALIAS fplll_static)
+set_target_properties(fplll_static PROPERTIES
+  OUTPUT_NAME fplll
+  EXPORT_NAME fplll_static
+  POSITION_INDEPENDENT_CODE ON)
+fplll_configure_library(fplll_static)
 
 add_executable(fplll_cli fplll/main.cpp)
 set_target_properties(fplll_cli PROPERTIES
@@ -335,10 +361,15 @@ install(FILES fplll/io/thread_pool.hpp
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/fplll.h"
   DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
 
-install(TARGETS fplll fplll_cli latticegen
+install(TARGETS fplll fplll_static EXPORT fplllTargets
   LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
   ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
   RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}")
+install(TARGETS fplll_cli latticegen
+  RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}")
+install(EXPORT fplllTargets
+  NAMESPACE fplll::
+  DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/fplll")
 install(FILES strategies/default.json
   DESTINATION "${CMAKE_INSTALL_DATADIR}/fplll/strategies")
 
@@ -352,9 +383,9 @@ if(FPLLL_USE_MPIR)
 endif()
 if(FPLLL_WITH_QD)
   list(APPEND FPLLL_PC_LIBS -lqd)
-  if(QD_INCLUDE_DIR)
-    list(APPEND FPLLL_PC_CFLAGS "-I${QD_INCLUDE_DIR}")
-  endif()
+  foreach(qd_include_dir IN LISTS FPLLL_QD_INCLUDE_DIRS)
+    list(APPEND FPLLL_PC_CFLAGS "-I${qd_include_dir}")
+  endforeach()
 endif()
 if(FPLLL_EXTENUM_LIBRARY_PATH)
   list(APPEND FPLLL_PC_LIBS "${FPLLL_EXTENUM_LIBRARY_PATH}")
@@ -364,3 +395,18 @@ string(JOIN " " FPLLL_PC_CFLAGS ${FPLLL_PC_CFLAGS})
 configure_file(cmake/fplll.pc.in "${CMAKE_CURRENT_BINARY_DIR}/fplll.pc" @ONLY)
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/fplll.pc"
   DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
+
+include(CMakePackageConfigHelpers)
+set(FPLLL_CMAKE_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/cmake/fplll")
+configure_package_config_file(
+  cmake/fplllConfig.cmake.in
+  "${CMAKE_CURRENT_BINARY_DIR}/fplllConfig.cmake"
+  INSTALL_DESTINATION "${FPLLL_CMAKE_INSTALL_DIR}")
+write_basic_package_version_file(
+  "${CMAKE_CURRENT_BINARY_DIR}/fplllConfigVersion.cmake"
+  VERSION "${PROJECT_VERSION}"
+  COMPATIBILITY SameMajorVersion)
+install(FILES
+  "${CMAKE_CURRENT_BINARY_DIR}/fplllConfig.cmake"
+  "${CMAKE_CURRENT_BINARY_DIR}/fplllConfigVersion.cmake"
+  DESTINATION "${FPLLL_CMAKE_INSTALL_DIR}")

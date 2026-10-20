@@ -6,5 +6,5 @@ includedir=${prefix}/@CMAKE_INSTALL_INCLUDEDIR@
 Name: fplll
 Description: lattice algorithms with floating-point computations
 Version: @PROJECT_VERSION@
-Cflags: -I${includedir} @FPLLL_PC_CFLAGS@ -pthread
+Cflags: -I${includedir} -I${includedir}/fplll @FPLLL_PC_CFLAGS@ -std=c++23 -pthread
 Libs: -L${libdir} -lfplll @FPLLL_PC_LIBS@

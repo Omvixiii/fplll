@@ -14,7 +14,8 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
         "CMAKE_CXX_COMPILER": "g++",
-        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "CMAKE_INSTALL_LIBDIR": "lib"
       }
     },
     {
@@ -43,6 +44,16 @@
       "cacheVariables": {
         "FPLLL_WITH_RECURSIVE_ENUM": "OFF"
       }
+    },
+    {
+      "name": "gcc-release",
+      "displayName": "GCC Release",
+      "inherits": "gcc-debug",
+      "binaryDir": "${sourceDir}/build/gcc-release",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/_install/cmake-release"
+      }
     }
   ],
   "buildPresets": [
@@ -64,6 +75,11 @@
     {
       "name": "gcc-debug-iterative",
       "configurePreset": "gcc-debug-iterative",
+      "jobs": 4
+    },
+    {
+      "name": "gcc-release",
+      "configurePreset": "gcc-release",
       "jobs": 4
     }
   ]
