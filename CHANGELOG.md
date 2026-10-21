@@ -31,17 +31,17 @@ and history for releases not covered by this archive.
 - BKZ 2.0: recursive BKZ preprocessing, extreme pruning, gaussian
   heuristic bound
 - precomputed BKZ (2.0) reduction strategies up to block size 90, cf.
-  https://github.com/fplll/strategizer
+  <https://github.com/fplll/strategizer>
 - Self-Dual BKZ and Slide reduction
 - faster, recursive enumeration implementation
 - Gaussian lattice sieving
-- Python interface at https://github.com/fplll/fpylll
+- Python interface at <https://github.com/fplll/fpylll>
 - optional dumping Gram-Schmidt vectors during execution of algorithm
 - q-ary lattice generator
 - instructions on how to cite
 - optional support for doubledouble and quaddouble
 - pkg-config support
-- API documentation at https://fplll.github.io/fplll/
+- API documentation at <https://fplll.github.io/fplll/>
 - revised build system supporting parallel build
 - copyright headers
 - dropped fplllv3 compatibility layer
