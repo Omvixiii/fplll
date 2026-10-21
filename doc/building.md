@@ -40,6 +40,7 @@ instead of attempting an in-source configure in the checkout.
 | Executables, debug tools and tests | `bin/<CONFIG>/` |
 | Shared and static libraries, including variants | `lib/<CONFIG>/` |
 | Per-test working directories and generated test data | `test-work/<CONFIG>/<test-name>/` |
+| CMake test metadata (`CMakeFiles/`, `CTestTestfile.cmake`) | `tests/` |
 | Package metadata | `fplll.pc`, `fplllConfig*.cmake` |
 | Source archive | `fplll-<version>.tar.gz` |
 | API documentation | `doc/html/` |
@@ -54,6 +55,10 @@ New generated sources must use binary-directory paths for outputs and
 byproducts. Test fixtures in `tests/lattices/` and `strategies/` are read-only
 inputs; tests must write relative to their isolated CTest working directories.
 Run tests through CTest to establish those directories.
+The test registrations live in `tests/CMakeLists.txt`; CMake's `CMakeFiles/`
+directories are generated in the binary tree and are never source files.
+The source-package and installed-consumer regression fixtures live in
+`tests/cmake/`.
 
 ## Build options and targets
 
@@ -116,6 +121,12 @@ the old source distribution workflow; the isolation test verifies the archive.
 The `check-style` target checks C++ formatting without changing source files.
 The `format` target applies clang-format. With Doxygen installed at configure
 time, the `doc` target generates API documentation under the binary directory.
+The root [`Doxyfile`](../Doxyfile) supplies the API layout, source exclusions,
+and HTML template settings; CMake includes it through
+[`cmake/Doxyfile.in`](../cmake/Doxyfile.in) to set the current version and
+source/build paths. Keep both files while this documentation target exists:
+deleting the base configuration would also discard the project's custom
+documentation settings. Doxygen is optional for normal builds.
 
 ## Historical baseline and cleanup
 

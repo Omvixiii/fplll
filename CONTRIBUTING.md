@@ -1,14 +1,14 @@
-# Contributing to fplll #
+# Contributing to fplll
 
 fplll welcomes contributions. We encourage users to fix bugs, improve the documentation, write tests and to enhance the code. We encourage researchers to contribute implementations of their algorithms to fplll. In the following we are trying to give some guidance on how to contribute effectively.
 
-## Communication ##
+## Communication
 
 Communication in the fplll project happens mainly on [GitHub](https://github.com/fplll/fplll/issues) and on our [mailing list](https://groups.google.com/forum/#!forum/fplll-devel).
 
-## Setup ##
+## Setup
 
-### Fork on GitHub ##
+### Fork on GitHub
 
 Login/signup on GitHub and fork fplll from [https://github.com/fplll/fplll](https://github.com/fplll/fplll).
 
@@ -16,7 +16,9 @@ Login/signup on GitHub and fork fplll from [https://github.com/fplll/fplll](http
 
 Now clone your git repo where my-github-name is your account name on GitHub:
 
-    $ git clone git@github.com:my-github-name/fplll.git
+```sh
+git clone git@github.com:my-github-name/fplll.git
+```
 
 Build and test using the CMake presets:
 
@@ -29,7 +31,7 @@ ctest --preset gcc-debug
 For verbose compiler commands, add `--verbose` to the build command. See the
 [build guide](doc/building.md) for dependencies, options and output locations.
 
-## Reporting Bugs ##
+## Reporting Bugs
 
 Bug should be filed at [https://github.com/fplll/fplll/issues](https://github.com/fplll/fplll/issues). Alternatively, feel free to contact  [https://groups.google.com/forum/#!forum/fplll-devel](https://groups.google.com/forum/#!forum/fplll-devel). The former method is definitely preferred though.
 
@@ -45,14 +47,17 @@ Also since GitHub pegs and syncs a pull request to a specific branch, it is the 
 
 To create a topic branch, its easiest to use the convenient ``-b`` argument to ``git checkout``
 
-    $ git checkout -b fix-broken-thing
-    Switched to a new branch 'fix-broken-thing'
+```sh
+git checkout -b fix-broken-thing
+```
 
 You should use a verbose enough name for your branch so it is clear what it is about. Now you can commit your changes and regularly merge in the upstream develop as described below.
 
 When you are ready to generate a pull request, either for preliminary review, or for consideration of merging into the project you must first push your local topic branch back up to GitHub
 
-    git push origin fix-broken-thing
+```sh
+git push origin fix-broken-thing
+```
 
 Now when you go to your fork on GitHub, you will see this branch listed under the "Source" tab where it says "Switch Branches". Go ahead and select your topic branch from this list, and then click the "Pull request" button.
 
@@ -60,32 +65,40 @@ Here you can add a comment about your branch. If this in response to a submitted
 
 ## Pull upstream changes into your fork regularly
 
-It is important that you pull upstream changes from master into your fork on a regular basis. Nothing is worse than putting in a days of hard work into a pull request only to have it rejected because it has diverged too far from master. 
+It is important that you pull upstream changes from master into your fork on a regular basis. Nothing is worse than putting in a days of hard work into a pull request only to have it rejected because it has diverged too far from master.
 
 To pull in upstream changes::
 
-    $ git remote add upstream https://github.com/fplll/fplll.git
-    $ git fetch upstream master
+```sh
+git remote add upstream https://github.com/fplll/fplll.git
+git fetch upstream master
+```
 
 Check the log to be sure that you actually want the changes, before merging::
 
-    $ git log upstream/master
+```sh
+git log upstream/master
+```
 
 Then merge the changes that you fetched::
 
-    $ git merge upstream/master
+```sh
+git merge upstream/master
+```
 
-For more info, see http://help.github.com/fork-a-repo/
+For more info, see <http://help.github.com/fork-a-repo/>
 
 ## How to get your pull request accepted
 
 We want your submission. But we also want to provide a stable experience for our users. In the following, we give some guidelines for contributing.
 
-### Run the tests!
+### Run the tests
 
 Before you submit a pull request, please run tests:
 
-    $ ctest --preset gcc-debug
+```sh
+ctest --preset gcc-debug
+```
 
 These checks are also run automatically for every pull request. Nothing failing tests will be accepted.
 
@@ -117,7 +130,7 @@ if (foo)
   do_something_good();
 }
 ```
-    
+
 instead of:
 
 ```c++
@@ -138,15 +151,15 @@ configuration. Keep formatting changes separate from functional changes.
 
 Starting from fplll 5.1.0, the coding convention is [enforced](https://github.com/fplll/fplll/pull/215) throughout the whole project. In particular, the code of every pull request has to strictly adhere to the coding convention, and a GitHub Action will error when it is not the case. Automatic formatting can (and should) be performed by the command
 
-```
+```sh
 cmake --build --preset gcc-debug --target format
 ```
 
 This requires clang-format. The `check-style` target checks formatting without modifying files.
 
-In order to improve readability, some situations might require manual formatting. Clang-format [includes a comment trigger](http://llvm.org/releases/6.0.0/tools/clang/docs/https://releases.llvm.org/6.0.0/tools/clang/docs/ClangFormatStyleOptions.html#disabling-formatting-on-a-piece-of-code) to _locally_ disable the formatting. The code between a comment `// clang-format off` or `/* clang-format off */` up to a comment `// clang-format on` or `/* clang-format on */` will not be formatted. 
+In order to improve readability, some situations might require manual formatting. Clang-format [includes a comment trigger](http://llvm.org/releases/6.0.0/tools/clang/docs/https://releases.llvm.org/6.0.0/tools/clang/docs/ClangFormatStyleOptions.html#disabling-formatting-on-a-piece-of-code) to _locally_ disable the formatting. The code between a comment `// clang-format off` or `/* clang-format off */` up to a comment `// clang-format on` or `/* clang-format on */` will not be formatted.
 
-```
+```c++
 int formatted_code;
 // clang-format off
     void    unformatted_code  ;
@@ -162,7 +175,9 @@ Debug variant objects are compiled only when a debug variant target is requested
 
 ### Attribution
 
-Please do not forget to add yourself as a contributor in [README.md](README.md) if you make a non-trivial contribution. Furthermore, you may want to claim copyright in the copyright headers of each file.
+Please add yourself to the historical credits in [usage.md](doc/usage.md) if you
+make a non-trivial contribution. You may also claim copyright in the copyright
+headers of files you change.
 
 ## Documentation
 
@@ -173,7 +188,8 @@ cmake --preset gcc-debug
 cmake --build --preset gcc-debug --target doc
 ```
 
-HTML output is written to `build/gcc-debug/doc/html/`. Only library sources are
-used as API inputs; build configuration headers and local notes are excluded.
+HTML output is written to `build/gcc-debug/doc/html/`. Library sources, the
+README, and the usage and build guides are documentation inputs; build
+configuration headers and local notes are excluded.
 Review the generated documentation before publishing to the separate `gh-pages`
 checkout. Never generate documentation into the source tree.

@@ -136,7 +136,7 @@ by David Cade. Here is a brief summary of the changes:
   (integers and floating-point numbers).
 
 - we translated the matrix indices by 1: the first matrix entry is
-  B[0][0] instead of B[1][1].
+  `B[0][0]` instead of `B[1][1]`.
 
 - automatised triangular option: the code looks at the matrix and
   decides how close to upper-triangular it is.

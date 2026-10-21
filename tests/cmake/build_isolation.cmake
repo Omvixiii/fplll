@@ -88,7 +88,7 @@ run_step(install "${CMAKE_COMMAND}" --install "${binary}")
 file(WRITE "${FPLLL_TEST_ROOT}/consumer-prefix.cmake"
   "set(CMAKE_PREFIX_PATH [==[${prefix};${FPLLL_TEST_PREFIX_PATH}]==] CACHE STRING \"\" FORCE)\n")
 run_step(consumer-configure "${CMAKE_COMMAND}"
-  -S "${source}/tests/cmake-consumer" -B "${FPLLL_TEST_ROOT}/consumer" -G Ninja
+  -S "${source}/tests/cmake/consumer" -B "${FPLLL_TEST_ROOT}/consumer" -G Ninja
   -C "${FPLLL_TEST_ROOT}/consumer-prefix.cmake"
   "-DCMAKE_CXX_COMPILER=${FPLLL_TEST_CXX_COMPILER}"
   "-DCMAKE_PREFIX_PATH=${prefix};${FPLLL_TEST_PREFIX_PATH}")
