@@ -9,6 +9,16 @@ foreach(required FPLLL_SOURCE_DIR FPLLL_TEST_ROOT FPLLL_TEST_CXX_COMPILER
     message(FATAL_ERROR "${required} is required")
   endif()
 endforeach()
+
+# A previous run may have cached an older source layout (for example, the
+# installed-consumer fixture's location). Always start this regression from a
+# clean binary-tree sandbox, and reject paths outside CTest's work directory.
+set(test_work_root "${FPLLL_PARENT_BINARY_DIR}/test-work")
+cmake_path(IS_PREFIX test_work_root "${FPLLL_TEST_ROOT}" NORMALIZE in_test_work_tree)
+if(NOT in_test_work_tree OR NOT FPLLL_TEST_ROOT MATCHES "/sandbox$")
+  message(FATAL_ERROR "FPLLL_TEST_ROOT must be a sandbox under ${test_work_root}")
+endif()
+file(REMOVE_RECURSE "${FPLLL_TEST_ROOT}")
 file(MAKE_DIRECTORY "${FPLLL_TEST_ROOT}")
 set(source "${FPLLL_TEST_ROOT}/source")
 set(binary "${FPLLL_TEST_ROOT}/binary")
@@ -37,7 +47,6 @@ endfunction()
 run_step(package "${CMAKE_COMMAND}" --build "${FPLLL_PARENT_BINARY_DIR}"
   --target package_source)
 set(archive "${FPLLL_PARENT_BINARY_DIR}/fplll-${FPLLL_VERSION}.tar.gz")
-file(REMOVE_RECURSE "${source}")
 file(ARCHIVE_EXTRACT INPUT "${archive}" DESTINATION "${FPLLL_TEST_ROOT}/unpacked")
 file(RENAME "${FPLLL_TEST_ROOT}/unpacked/fplll-${FPLLL_VERSION}" "${source}")
 foreach(forbidden m4 configure.ac autogen.sh Makefile.am fplll/Makefile.am
