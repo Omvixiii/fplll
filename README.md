@@ -97,7 +97,8 @@ We now have Docker/AWS images for fplll too. They aren't on this repository, tho
 ## Building from source
 
 CMake is the build system for this branch. Install CMake 3.20 or newer, Ninja,
-ccache, a C++23 compiler, GMP and MPFR. QD is optional.
+ccache, a C++11 compiler, GMP and MPFR. The development preset uses C++23;
+QD is optional.
 
 ```sh
 cmake --preset gcc-debug

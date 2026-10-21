@@ -2,7 +2,9 @@
 
 ## Requirements and presets
 
-Use CMake 3.20 or newer, Ninja, ccache, a C++23 compiler, GMP and MPFR.
+Use CMake 3.20 or newer, Ninja, ccache, a C++11 compiler, GMP and MPFR.
+The GCC development preset enables C++23 explicitly; other consumers may use
+the C++11 compatibility baseline.
 The presets use `g++` or `clang++` from `PATH`. On macOS, install the libraries
 and tools with Homebrew and use a Clang preset. Linux and WSL use the same
 CMake commands. For nonstandard dependency locations, set `CMAKE_PREFIX_PATH`.

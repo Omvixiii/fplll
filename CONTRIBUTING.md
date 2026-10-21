@@ -103,7 +103,9 @@ Pull requests should be as small/atomic as possible.
 
 ### Coding Conventions
 
-fplll requires C++23 and we try to make use of its modern features to make the library readable.
+The public library remains compatible with C++11. The GCC development preset
+uses C++23 so contributors can use modern language features in development
+without raising the consumer compatibility baseline.
 
 Please keep your code as clean and straightforward as possible. Code is written for the consumption by compilers and for the consumption by human beings. By making code clear and easy to understand, others can build on it and fix issues should they arise.
 

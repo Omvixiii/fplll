@@ -4,8 +4,8 @@
 
 ### Build and development
 
-- Use CMake and C++23 as the sole build toolchain; remove the legacy build
-  scripts and macro files.
+- Use CMake as the sole build toolchain; remove the legacy build scripts and
+  macro files while keeping C++11 as the public compatibility baseline.
 - Provide configure, build and test presets with independent build and install
   directories. Reject in-source builds.
 - Generate configuration headers and enumeration sources in the binary tree;

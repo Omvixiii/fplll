@@ -16,7 +16,7 @@ endif()
 
 project(fplll VERSION "${FPLLL_VERSION}" LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED YES)
 set(CMAKE_CXX_EXTENSIONS NO)
 
@@ -250,7 +250,7 @@ function(fplll_configure_library target)
   target_compile_definitions(${target} PRIVATE
     "FPLLL_DEFAULT_STRATEGY_PATH=\"${FPLLL_DEFAULT_STRATEGY_PATH}\""
     "FPLLL_DEFAULT_STRATEGY=\"${FPLLL_DEFAULT_STRATEGY_PATH}/default.json\"")
-  target_compile_features(${target} PUBLIC cxx_std_23)
+  target_compile_features(${target} PUBLIC cxx_std_11)
   target_link_libraries(${target} PUBLIC
     MPFR::MPFR
     "${FPLLL_INTEGER_TARGET}"
