@@ -43,7 +43,7 @@ PenaltyExcessCharacter: 1000000
 PenaltyReturnTypeOnItsOwnLine: 60
 PointerAlignment: Right
 SpacesBeforeTrailingComments: 2
-Standard:        Cpp11
+Standard:        Latest
 IndentWidth:     2
 TabWidth:        8
 UseTab:          Never

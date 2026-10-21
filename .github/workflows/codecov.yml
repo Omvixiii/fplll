@@ -17,7 +17,7 @@ jobs:
         run: |
           cmake --preset gcc-coverage
           cmake --build --preset gcc-coverage --parallel 8
-          ctest --test-dir build/gcc-coverage --output-on-failure
+          ctest --preset gcc-coverage
       - name: Upload coverage
         uses: codecov/codecov-action@v7.1.1
         with:

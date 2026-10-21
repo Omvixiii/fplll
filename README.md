@@ -94,127 +94,42 @@ brew install fplll
 ### Docker and AWS ###
 We now have Docker/AWS images for fplll too. They aren't on this repository, though; you can find them [here](https://hub.docker.com/u/fplll)
 
-## Installation from source ##
+## Building from source
 
-fplll can also be built from source. Below, we explicate some of the dependencies for building from source, as well as operating systems specific instructions.
-
-### Build with CMake presets ###
-
-CMake + Ninja is the recommended build entry point. The presets keep all generated files in a dedicated binary directory under `build/`, and in-source builds are rejected. The project requires C++23.
-
-Install CMake 3.20 or newer, Ninja, ccache, a C++23 compiler, GMP and MPFR. Then list and run a preset:
+CMake is the build system for this branch. Install CMake 3.20 or newer, Ninja,
+ccache, a C++23 compiler, GMP and MPFR. QD is optional.
 
 ```sh
-cmake --list-presets
 cmake --preset gcc-debug
 cmake --build --preset gcc-debug
-ctest --test-dir build/gcc-debug --output-on-failure
+ctest --preset gcc-debug
 ```
 
-The `gcc-release`, `clang-debug` and `clang-release` presets provide optimized builds and the Clang compiler. `gcc-debug-qd`, `gcc-debug-no-parallel` and `gcc-debug-iterative` exercise optional feature configurations; `gcc-asan` and `gcc-ubsan` enable sanitizers. Each preset fixes its build directory to `build/<preset>` and its install prefix to `_install/<preset>`. For example:
+Use `gcc-release`, `clang-debug` or `clang-release` for other compiler/build
+configurations. Feature presets include `gcc-debug-qd`, `gcc-debug-no-parallel`,
+`gcc-debug-iterative`, `gcc-asan`, `gcc-ubsan` and `gcc-coverage`.
+
+Each preset has its own build directory, `build/<preset>`, and installation
+prefix, `_install/<preset>`. In-source builds are rejected. Configuration
+headers, generated C++ sources, executables, libraries and test outputs stay
+inside the binary directory.
 
 ```sh
 cmake --preset gcc-release
 cmake --build --preset gcc-release
+ctest --preset gcc-release
 cmake --install build/gcc-release
 ```
 
-The presets use ccache as the C++ compiler launcher. Its cache directory and size remain controlled by the local ccache configuration.
+See the [build guide](doc/building.md) for dependencies, build options, output
+layout, installation, source packages and the isolated historical baseline.
+Changes are recorded in [CHANGELOG.md](CHANGELOG.md).
 
-The build-system feature mapping and local verification limits are recorded in [`notes/cmake-migration.md`](notes/cmake-migration.md).
+# How to use
 
-The legacy Autotools instructions below remain available for comparison during the migration. The CMake presets do not invoke Autotools or m4.
-
-### Dependencies ###
-
-#### Required ####
-
-- GNU MP 4.2.0 or higher [http://gmplib.org/](http://gmplib.org/) or MPIR 1.0.0 or higher [http://mpir.org](http://mpir.org)
-- MPFR 2.3.0 or higher, COMPLETE INSTALLATION [http://www.mpfr.org/](http://www.mpfr.org/)
-- A compiler with C++23 support (GCC or Clang)
-- CMake 3.20 or newer, Ninja and ccache for the preset-based build
-- Autotools 2.61 or higher only for the legacy Autotools build
-
-#### Optional ####
-- QD 2.3.15 or higher (a C++/Fortran-90 double-double and quad-double package), compile and install
-  the shared library (e.g. `./configure --enable-shared=yes`).
-  [http://crd-legacy.lbl.gov/~dhbailey/mpdist/](http://crd-legacy.lbl.gov/~dhbailey/mpdist/)
-  
-NOTE: If you are intending to use fplll on Windows 10, then these packages should be installed after the `Windows Subsystem for Linux` has been installed and activated. Please go to the [Windows 10](#windows-10) instructions for more information.
-
-### Linux and MacOS ###
-
-You should download the source code from Github and then run
-
-    ./autogen.sh
-
-which generates the `./configure` script used to configure fplll by calling the appropriate
-autotools command.
-
-Then, to compile and install type
-
-	./configure
-	make
-	make install			# (as root)
-
-If GMP, MPFR and/or MPIR are not in the `$LD_LIBRARY_PATH`, you have to point to the directories where the libraries are, with
-
-    ./configure --with-gmp=path/to/gmp
-
-or
-
-    ./configure --with-mpfr=path/to/mpfr
-
-The same philosophy applies to the (optional) QD library. If you want to use
-mpir instead of gmp, use `--enable-mpir` and `--with-mpir=path/to/mpir`.
-
-You can remove the program binaries and object files from the source code directory by typing `make
-clean`. To also remove the files that `./configure` created (so you can compile the package for a
-different kind of computer), type `make distclean`.  By default, `make install` installs the package
-commands under `/usr/local/bin`, include files under `/usr/local/include`, etc.  You can specify an
-installation directory name other than `/usr/local` by giving `./configure` the option
-`--prefix=dirname`.  Run `./configure --help` for further details.
-
-### Windows 10 ###
-
-Windows 10 has the "Windows Subsystem for Linux"(WSL), which essentially allows you to use Linux features in Windows without the need for a dual-boot system or a virtual machine. To activate this, first go to **Settings** -> **Update and security** -> **For developers** and enable developer mode. (This may take a while.) Afterwards, open Powershell as an administrator and run 
-
-	Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Windows-Subsystem-Linux
-
-This will enable the WSL. Next, open the Windows Store and navigate to your favourite available Linux distribution - this may be installed as if it were a regular application. Afterwards, this system will act as a regular program, and so it can be opened however you like e.g. by opening command prompt and typing `bash`. With this Linux-like subsystem, installing fplll is then similar to above, except that most likely the package repository is not up to date, and various additional packages need to be installed first. To make sure you only install the most recent software, run:
-	
-	sudo apt-get update
-	
-Then run `sudo apt-get install <packages>` for the (indirectly) required packages, such as `make`, `autoconf`, `libtool`, `gcc`, `g++`, `libgmp-dev`, `libmpfr-dev` and `pkg-config`. Finally, download the fplll source code, extract the contents, navigate to this folder in Bash (commonly found under `/mnt/c/<local path>` when stored somewhere on the `C:\` drive), and run:
-	
-	./autogen.sh
-	./configure
-	make 
-
-The same comments as before apply for using e.g. `make install` or `make distclean` instead of `make`.
-
-Note: to fix a potential error `libfplll.so.5: cannot open shared object file: No such file or directory` raised after trying to run `fplll` after a successful compilation, find the location of `libfplll.so.5` (probably something like `/../fplll/.libs/`; run `find -name libfplll.so.5` to find it) and run `export LD_LIBRARY_PATH=<path>`. 
-
-## Check ##
-
-Type
-
-	make check
-
-
-## Optimization ##
-
-The default compilation flag is `-O3`. One may use the `-march=native -O3` flag to optimize the binaries. See "[this issue](https://github.com/fplll/fplll/issues/169)" for its impact on the enumeration speed.
-
-
-# How to use #
-
-Executable files `fplll` and `latticegen` are installed in the directory
-`/usr/local/bin`. (Note that the programs generated by `make` in the `fplll/` directory are only wrappers to the programs in `fplll/.libs/`).
-
-If you type `make check`, it will also generate the executable file `llldiff`, 
-in `fplll/.libs/`.
-
+The build places `fplll` and `latticegen` under `build/<preset>/bin/<CONFIG>/`
+(for example, `build/gcc-debug/bin/DEBUG/`). Installation places them in the
+prefix's `bin/` directory. `llldiff` is a test helper and is not installed.
 
 ## latticegen ##
 

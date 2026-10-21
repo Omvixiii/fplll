@@ -3,6 +3,8 @@ name: CMake
 on:
   push:
   pull_request:
+  schedule:
+    - cron: '0 0 * * 0'
 
 jobs:
   build-and-test:
@@ -38,7 +40,7 @@ jobs:
         run: |
           cmake --preset "$PRESET"
           cmake --build --preset "$PRESET" --parallel 8
-          ctest --test-dir "build/$PRESET" --output-on-failure
+          ctest --preset "$PRESET"
       - name: Install and build downstream consumers
         run: |
           cmake --install "build/$PRESET"
@@ -72,7 +74,7 @@ jobs:
         run: |
           cmake --preset "$PRESET"
           cmake --build --preset "$PRESET" --parallel 8
-          ctest --test-dir "build/$PRESET" --output-on-failure
+          ctest --preset "$PRESET"
 
   sanitizers:
     name: ${{ matrix.preset }} sanitizer
@@ -96,4 +98,24 @@ jobs:
           cmake --preset "$PRESET"
           cmake --build --preset "$PRESET" --target fplll fplll_cli test_nr test_lll test_enum test_cvp test_svp --parallel 8
       - name: Run focused sanitizer tests
-        run: ctest --test-dir "build/$PRESET" -R '^(test_nr|test_lll|test_enum|test_cvp|test_svp)$' --output-on-failure
+        run: ctest --preset "$PRESET" -R '^(test_nr|test_lll|test_enum|test_cvp|test_svp)$' --output-on-failure
+
+  macos:
+    name: macOS Clang
+    runs-on: macos-15
+    env:
+      HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK: 1
+    steps:
+      - name: Check out
+        uses: actions/checkout@v7
+      - name: Set Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+      - name: Install build dependencies
+        run: brew install cmake ninja ccache pkgconf gmp mpfr qd
+      - name: Configure, build, and test
+        run: |
+          cmake --preset clang-debug -DCMAKE_PREFIX_PATH="$(brew --prefix)"
+          cmake --build --preset clang-debug
+          ctest --preset clang-debug

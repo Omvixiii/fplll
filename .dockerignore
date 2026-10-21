@@ -1,0 +1,13 @@
+.git
+.agents
+.codex
+.vscode
+.cache
+build
+_install
+notes
+CMakeUserPresets.json
+CMakeCache.txt
+CMakeFiles
+compile_commands.json
+doc/html

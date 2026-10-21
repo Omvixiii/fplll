@@ -18,16 +18,16 @@ Now clone your git repo where my-github-name is your account name on GitHub:
 
     $ git clone git@github.com:my-github-name/fplll.git
 
-Then run
+Build and test using the CMake presets:
 
-    $ ./autogen.sh
-    $ ./configure
-    $ make
-    $ make check
+```sh
+cmake --preset gcc-debug
+cmake --build --preset gcc-debug
+ctest --preset gcc-debug
+```
 
-as usual.
-
-Note that the verbosity of ``make`` is set to low by default. To enable verbose output by default, use ``./configure --disable-silent-rules``. The verbosity can also be overridden at run time: ``make V=1`` will produce verbose output.
+For verbose compiler commands, add `--verbose` to the build command. See the
+[build guide](doc/building.md) for dependencies, options and output locations.
 
 ## Reporting Bugs ##
 
@@ -85,7 +85,7 @@ We want your submission. But we also want to provide a stable experience for our
 
 Before you submit a pull request, please run tests:
 
-    $ make check
+    $ ctest --preset gcc-debug
 
 These checks are also run automatically for every pull request. Nothing failing tests will be accepted.
 
@@ -103,7 +103,7 @@ Pull requests should be as small/atomic as possible.
 
 ### Coding Conventions
 
-fplll is written in [C++11](https://en.wikipedia.org/wiki/C%2B%2B11) and we try to make use of its modern features to make the library readable.
+fplll requires C++23 and we try to make use of its modern features to make the library readable.
 
 Please keep your code as clean and straightforward as possible. Code is written for the consumption by compilers and for the consumption by human beings. By making code clear and easy to understand, others can build on it and fix issues should they arise.
 
@@ -129,84 +129,18 @@ Furthermore, the pixel shortage is over. We want to see:
 - `grid` instead of `g`
 - `my_function_that_does_things` instead of `mftdt`
 
-The following [clang-format](http://clang.llvm.org/docs/ClangFormat.html) configuration file describes our coding convention. Clang-format is both a library and a stand-alone tool aiming at automatically reformatting C++ sources files. 
-
-```yaml
----
-Language:        Cpp
-# BasedOnStyle:  LLVM
-AccessModifierOffset: -2
-AlignAfterOpenBracket: true
-AlignConsecutiveAssignments: true
-AlignEscapedNewlinesLeft: false
-AlignOperands:   true
-AlignTrailingComments: true
-AllowAllParametersOfDeclarationOnNextLine: true
-AllowShortBlocksOnASingleLine: false
-AllowShortCaseLabelsOnASingleLine: false
-AllowShortIfStatementsOnASingleLine: false
-AllowShortLoopsOnASingleLine: false
-AllowShortFunctionsOnASingleLine: All
-AlwaysBreakAfterDefinitionReturnType: false
-AlwaysBreakTemplateDeclarations: false
-AlwaysBreakBeforeMultilineStrings: false
-BreakBeforeBinaryOperators: None
-BreakBeforeTernaryOperators: true
-BreakConstructorInitializersBeforeComma: false
-BinPackParameters: true
-BinPackArguments: true
-ColumnLimit:     100
-ConstructorInitializerAllOnOneLineOrOnePerLine: false
-ConstructorInitializerIndentWidth: 4
-DerivePointerAlignment: false
-ExperimentalAutoDetectBinPacking: false
-IndentCaseLabels: false
-IndentWrappedFunctionNames: false
-IndentFunctionDeclarationAfterType: false
-MaxEmptyLinesToKeep: 1
-KeepEmptyLinesAtTheStartOfBlocks: true
-NamespaceIndentation: None
-ObjCBlockIndentWidth: 2
-ObjCSpaceAfterProperty: false
-ObjCSpaceBeforeProtocolList: true
-PenaltyBreakBeforeFirstCallParameter: 19
-PenaltyBreakComment: 300
-PenaltyBreakString: 1000
-PenaltyBreakFirstLessLess: 120
-PenaltyExcessCharacter: 1000000
-PenaltyReturnTypeOnItsOwnLine: 60
-PointerAlignment: Right
-SpacesBeforeTrailingComments: 2
-Standard:        Cpp11
-IndentWidth:     2
-TabWidth:        8
-UseTab:          Never
-BreakBeforeBraces: Allman
-SpacesInParentheses: false
-SpacesInSquareBrackets: false
-SpacesInAngles:  false
-SpaceInEmptyParentheses: false
-SpacesInCStyleCastParentheses: false
-SpaceAfterCStyleCast: false
-SpacesInContainerLiterals: true
-SpaceBeforeAssignmentOperators: true
-ContinuationIndentWidth: 4
-CommentPragmas:  '^ IWYU pragma:'
-ForEachMacros:   [ foreach, Q_FOREACH, BOOST_FOREACH ]
-SpaceBeforeParens: ControlStatements
-DisableFormat:   false
-...
-```
+The repository's [.clang-format](.clang-format) is the authoritative formatting
+configuration. Keep formatting changes separate from functional changes.
 
 ### Enforcement of the coding convention
 
 Starting from fplll 5.1.0, the coding convention is [enforced](https://github.com/fplll/fplll/pull/215) throughout the whole project. In particular, the code of every pull request has to strictly adhere to the coding convention, and a GitHub Action will error when it is not the case. Automatic formatting can (and should) be performed by the command
 
 ```
-make check-style
+cmake --build --preset gcc-debug --target format
 ```
 
-and require clang-format to be installed.
+This requires clang-format. The `check-style` target checks formatting without modifying files.
 
 In order to improve readability, some situations might require manual formatting. Clang-format [includes a comment trigger](http://llvm.org/releases/6.0.0/tools/clang/docs/https://releases.llvm.org/6.0.0/tools/clang/docs/ClangFormatStyleOptions.html#disabling-formatting-on-a-piece-of-code) to _locally_ disable the formatting. The code between a comment `// clang-format off` or `/* clang-format off */` up to a comment `// clang-format on` or `/* clang-format on */` will not be formatted. 
 
@@ -220,7 +154,9 @@ void formatted_code_again;
 
 ### Faster compilation
 
-By default, libtool builds everything twice, one for the static and one for the dynamic library, cf. https://stackoverflow.com/questions/572760/libtool-slowness-double-building. If you want to avoid this double compiling time you can run ./configure --disable-static which disables building the static library.
+The shared and static libraries reuse the same compiled OBJECT library. The
+presets also enable ccache; configure its cache location and size locally.
+Debug variant objects are compiled only when a debug variant target is requested.
 
 ### Attribution
 
@@ -228,16 +164,14 @@ Please do not forget to add yourself as a contributor in [README.md](README.md) 
 
 ## Documentation
 
-fplll uses [doxygen](http://www.stack.nl/~dimitri/doxygen/) with a [bootstrap theme](https://github.com/Velron/doxygen-bootstrapped) to generate API documentation. To produce API documentation run
+With Doxygen installed, configure a preset and build the `doc` target:
 
-    $ doxygen Doxyfile
+```sh
+cmake --preset gcc-debug
+cmake --build --preset gcc-debug --target doc
+```
 
-Our documentation is served at [https://fplll.github.io/fplll/](https://fplll.github.io/fplll/) using [GitHub pages](https://pages.github.com). To update the documentation, check out the ``gh-pages`` branch and update the html files in there. Doxygen writes its outputs to ``doc/html``, you can arrange it that this directory holds the ``gh-pages`` branch of the fplll repository:
-
-    $ cd doc
-    $ git clone -b gh-pages git@github.com:<my-github-name>/fplll.git html
-    $ cd ..
-    
-Now, whenever you run ``doxygen`` it will write its outputs to a directory which holds the right branch. If you push it to your remote, you can then check it at [http://my-github-name.github.io/fplll](http://my-github-name.github.io/fplll).
-
-Before generating documentation with Doxygen to push to [https://fplll.github.io/fplll/](https://fplll.github.io/fplll/) please run ``make maintainer-clean`` in the fplll root directory. This removes ``config.h`` and ``fplll_config.h``, i.e. it prevents your local, machine-specific configuration to be pushed as part of the official API documentation. In any case, it is recommended to review the changes in the `gh-pages` branch before committing and pushing.
+HTML output is written to `build/gcc-debug/doc/html/`. Only library sources are
+used as API inputs; build configuration headers and local notes are excluded.
+Review the generated documentation before publishing to the separate `gh-pages`
+checkout. Never generate documentation into the source tree.

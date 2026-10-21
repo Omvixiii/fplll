@@ -10,21 +10,21 @@
       "name": "gcc-debug",
       "displayName": "GCC Debug",
       "generator": "Ninja",
-      "binaryDir": "${sourceDir}/build/gcc-debug",
+      "binaryDir": "${sourceDir}/build/${presetName}",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
         "CMAKE_CXX_COMPILER": "g++",
         "CMAKE_CXX_COMPILER_LAUNCHER": "ccache",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
         "CMAKE_INSTALL_LIBDIR": "lib",
-        "CMAKE_INSTALL_PREFIX": "${sourceDir}/_install/gcc-debug"
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/_install/${presetName}"
       }
     },
     {
       "name": "gcc-debug-no-parallel",
       "displayName": "GCC Debug (parallel enumeration disabled)",
       "inherits": "gcc-debug",
-      "binaryDir": "${sourceDir}/build/gcc-debug-no-parallel",
+      "binaryDir": "${sourceDir}/build/${presetName}",
       "cacheVariables": {
         "FPLLL_MAX_PARALLEL_ENUM_DIM": "0"
       }
@@ -33,7 +33,7 @@
       "name": "gcc-debug-qd",
       "displayName": "GCC Debug (QD enabled)",
       "inherits": "gcc-debug",
-      "binaryDir": "${sourceDir}/build/gcc-debug-qd",
+      "binaryDir": "${sourceDir}/build/${presetName}",
       "cacheVariables": {
         "FPLLL_WITH_QD": "ON"
       }
@@ -42,7 +42,7 @@
       "name": "gcc-debug-iterative",
       "displayName": "GCC Debug (recursive enumeration disabled)",
       "inherits": "gcc-debug",
-      "binaryDir": "${sourceDir}/build/gcc-debug-iterative",
+      "binaryDir": "${sourceDir}/build/${presetName}",
       "cacheVariables": {
         "FPLLL_WITH_RECURSIVE_ENUM": "OFF"
       }
@@ -51,37 +51,34 @@
       "name": "gcc-release",
       "displayName": "GCC Release",
       "inherits": "gcc-debug",
-      "binaryDir": "${sourceDir}/build/gcc-release",
+      "binaryDir": "${sourceDir}/build/${presetName}",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release",
-        "CMAKE_INSTALL_PREFIX": "${sourceDir}/_install/gcc-release"
+        "CMAKE_BUILD_TYPE": "Release"
       }
     },
     {
       "name": "clang-debug",
       "displayName": "Clang Debug",
       "inherits": "gcc-debug",
-      "binaryDir": "${sourceDir}/build/clang-debug",
+      "binaryDir": "${sourceDir}/build/${presetName}",
       "cacheVariables": {
-        "CMAKE_CXX_COMPILER": "clang++",
-        "CMAKE_INSTALL_PREFIX": "${sourceDir}/_install/clang-debug"
+        "CMAKE_CXX_COMPILER": "clang++"
       }
     },
     {
       "name": "clang-release",
       "displayName": "Clang Release",
       "inherits": "gcc-release",
-      "binaryDir": "${sourceDir}/build/clang-release",
+      "binaryDir": "${sourceDir}/build/${presetName}",
       "cacheVariables": {
-        "CMAKE_CXX_COMPILER": "clang++",
-        "CMAKE_INSTALL_PREFIX": "${sourceDir}/_install/clang-release"
+        "CMAKE_CXX_COMPILER": "clang++"
       }
     },
     {
       "name": "gcc-asan",
       "displayName": "GCC AddressSanitizer",
       "inherits": "gcc-debug",
-      "binaryDir": "${sourceDir}/build/gcc-asan",
+      "binaryDir": "${sourceDir}/build/${presetName}",
       "cacheVariables": {
         "FPLLL_MAX_PARALLEL_ENUM_DIM": "0",
         "CMAKE_CXX_FLAGS": "-fsanitize=address -fno-omit-frame-pointer",
@@ -93,7 +90,7 @@
       "name": "gcc-ubsan",
       "displayName": "GCC UndefinedBehaviorSanitizer",
       "inherits": "gcc-debug",
-      "binaryDir": "${sourceDir}/build/gcc-ubsan",
+      "binaryDir": "${sourceDir}/build/${presetName}",
       "cacheVariables": {
         "FPLLL_MAX_PARALLEL_ENUM_DIM": "0",
         "CMAKE_CXX_FLAGS": "-fsanitize=undefined -fno-omit-frame-pointer",
@@ -105,7 +102,7 @@
       "name": "gcc-coverage",
       "displayName": "GCC Coverage",
       "inherits": "gcc-debug",
-      "binaryDir": "${sourceDir}/build/gcc-coverage",
+      "binaryDir": "${sourceDir}/build/${presetName}",
       "cacheVariables": {
         "FPLLL_MAX_PARALLEL_ENUM_DIM": "20",
         "CMAKE_CXX_FLAGS": "--coverage",
@@ -164,6 +161,108 @@
       "name": "gcc-coverage",
       "configurePreset": "gcc-coverage",
       "jobs": 8
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "gcc-debug",
+      "configurePreset": "gcc-debug",
+      "output": {
+        "outputOnFailure": true
+      },
+      "execution": {
+        "noTestsAction": "error"
+      }
+    },
+    {
+      "name": "gcc-debug-no-parallel",
+      "configurePreset": "gcc-debug-no-parallel",
+      "output": {
+        "outputOnFailure": true
+      },
+      "execution": {
+        "noTestsAction": "error"
+      }
+    },
+    {
+      "name": "gcc-debug-qd",
+      "configurePreset": "gcc-debug-qd",
+      "output": {
+        "outputOnFailure": true
+      },
+      "execution": {
+        "noTestsAction": "error"
+      }
+    },
+    {
+      "name": "gcc-debug-iterative",
+      "configurePreset": "gcc-debug-iterative",
+      "output": {
+        "outputOnFailure": true
+      },
+      "execution": {
+        "noTestsAction": "error"
+      }
+    },
+    {
+      "name": "gcc-release",
+      "configurePreset": "gcc-release",
+      "output": {
+        "outputOnFailure": true
+      },
+      "execution": {
+        "noTestsAction": "error"
+      }
+    },
+    {
+      "name": "clang-debug",
+      "configurePreset": "clang-debug",
+      "output": {
+        "outputOnFailure": true
+      },
+      "execution": {
+        "noTestsAction": "error"
+      }
+    },
+    {
+      "name": "clang-release",
+      "configurePreset": "clang-release",
+      "output": {
+        "outputOnFailure": true
+      },
+      "execution": {
+        "noTestsAction": "error"
+      }
+    },
+    {
+      "name": "gcc-asan",
+      "configurePreset": "gcc-asan",
+      "output": {
+        "outputOnFailure": true
+      },
+      "execution": {
+        "noTestsAction": "error"
+      }
+    },
+    {
+      "name": "gcc-ubsan",
+      "configurePreset": "gcc-ubsan",
+      "output": {
+        "outputOnFailure": true
+      },
+      "execution": {
+        "noTestsAction": "error"
+      }
+    },
+    {
+      "name": "gcc-coverage",
+      "configurePreset": "gcc-coverage",
+      "output": {
+        "outputOnFailure": true
+      },
+      "execution": {
+        "noTestsAction": "error"
+      }
     }
   ]
 }

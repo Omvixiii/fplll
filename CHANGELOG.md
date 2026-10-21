@@ -1,4 +1,28 @@
-Changes in fplll-5.0:
+# Changelog
+
+## Unreleased
+
+### Build and development
+
+- Use CMake and C++23 as the sole build toolchain; remove the legacy build
+  scripts and macro files.
+- Provide configure, build and test presets with independent build and install
+  directories. Reject in-source builds.
+- Generate configuration headers and enumeration sources in the binary tree;
+  keep libraries, executables and per-test output directories there as well.
+- Provide shared/static libraries, optional debug variants, exported CMake
+  targets, pkg-config metadata and CPack source archives.
+- Migrate CI, packaging, container builds and contributor instructions to CMake.
+- Consolidate historical release notes here; keep local migration notes out of
+  version control and source packages.
+
+## Historical releases
+
+The entries below preserve the release notes previously stored in NEWS.
+Dates and missing release entries have not been reconstructed; consult Git tags
+and history for releases not covered by this archive.
+
+## 5.0
 
 - switched to C++11
 - switched to more open development model on GitHub, cf. CONTRIBUTING.md
@@ -26,37 +50,43 @@ Changes in fplll-5.0:
 - coding/naming convention
 - FP API improved to allow for more readable/natural code
 
+## 4.0.4
 
-Changes in fplll-4.0.4:
-- compatibility for packages that still expect to build against 
-libfplll version 3.
-- updates of config.sub and config.guess 
+- compatibility for packages that still expect to build against
+  libfplll version 3.
+- updates of config.sub and config.guess
 - better check that MPFR and GMP are installed
 - compilation issue with NaN's
 
-Changes in fplll-4.0.3:
+## 4.0.3
+
 - Compiler issues with Cygwin
 
-Changes in fplll-4.0.2:
+## 4.0.2
+
 - Changed formulation for the license, in README.html
 
-Main changes in fplll-4.0.1:
+## 4.0.1
+
 - Compiler warnings about unused parameters fixed
 
-Main changes in fplll-4.0.0:
+## 4.0.0
+
 - BKZ reduction, available with 'fplll -a bkz -b block_size'
 
-*******************************************************************
-Changes in fplll-3.1.3:
+## 3.1.3
+
 - Fixed build process when DESTDIR is defined
 
-Changes in fplll-3.1.2:
+## 3.1.2
+
 - Memory leak fixed in the wrapper.
 
-Main changes in fplll-3.1.1:
+## 3.1.1
+
 - Some code is no longer included in the header files but is compiled in
-libfplll instead. The -lfplll option will now be required for apps which could
-be compiled without it.
+  libfplll instead. The -lfplll option will now be required for apps which could
+  be compiled without it.
 - 'make install' puts all header files but fplll.h in a subdirectory named fplll
 - New programming interface for the library (documented in README.html).
 - 'generate' renamed to 'latticegen'.
@@ -65,30 +95,25 @@ be compiled without it.
 - More important bugs fixed in the SVP solver.
 - Optimization of the SVP solver.
 - By default, 'fplll -a svp' now gives the coordinates of a shortest vector in
-the _standard_ basis.
+  the _standard_ basis.
 
-*******************************************************************
-
-The main differences between fplll-2.1 and fplll-3.0 are the following:
+## 3.0
 
 - short lattice vector enumeration algorithm (by Xavier Pujol).
 - GPL -> LGPLv2
 - no more need to specify the number of rows and columns in the input
-of the fplll binary.
+  of the fplll binary.
 - new version of dpe.h [Patrick Pelissier and Paul Zimmermann]
- 
-*******************************************************************
 
-The main differences between fplll-2.1 and fplll-2.0 are the following:
+## 2.1
 
 - "configure/make/make install" packaging (thanks to Martin Albrecht)
-- few minor changes to make fplll portable to SAGE (thanks to Martin 
-Albrecht) 
+- few minor changes to make fplll portable to SAGE (thanks to Martin
+  Albrecht)
 - conversion scripts between MAGMA and fplll formats.
 - a bug fixed in fast_early (discovered by Martin Albrecht)
 
-
-*******************************************************************
+## 2.0
 
 fplll-2.0 is an improved version of fplll-1.3. Parts of it resemble
 Magma's LLL (Allan Steel, Damien Stehle) and/or NTL's LLL (Victor
@@ -98,20 +123,20 @@ The improvements from fplll-1.3 to fplll-2.0 were mostly performed
 by David Cade. Here is a brief summary of the changes:
 
 - the major algorithmic improvement is the so-called wrapper, which
-chooses for the user a guess of the right sequence of heuristic/proved
-variants to use, in order to finish as quick as possible, but in a
-reliable way.  
+  chooses for the user a guess of the right sequence of heuristic/proved
+  variants to use, in order to finish as quick as possible, but in a
+  reliable way.
 
 - the early-reduction strategy of Allan Steel has been integrated. It
-consists in size-reducing vectors earlier than what would have been
-done in the standard LLL. This is not integrated into the wrapper yet. 
+  consists in size-reducing vectors earlier than what would have been
+  done in the standard LLL. This is not integrated into the wrapper yet.
 
 - we switched from C to C++, to simplify our lives with the wrapper.
-It is extremely convenient for the use of the underlying arrithmetics
-(integers and floating-point numbers).
+  It is extremely convenient for the use of the underlying arrithmetics
+  (integers and floating-point numbers).
 
 - we translated the matrix indices by 1: the first matrix entry is
-B[0][0] instead of B[1][1].
+  B[0][0] instead of B[1][1].
 
 - automatised triangular option: the code looks at the matrix and
-decides how close to upper-triangular it is.
+  decides how close to upper-triangular it is.

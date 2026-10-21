@@ -1,27 +1,34 @@
-if(CMAKE_SOURCE_DIR STREQUAL CMAKE_BINARY_DIR)
+cmake_minimum_required(VERSION 3.20)
+
+# Resolve aliases as well as literal paths, including use via add_subdirectory().
+file(REAL_PATH "${CMAKE_CURRENT_SOURCE_DIR}" FPLLL_SOURCE_DIR_REAL)
+file(REAL_PATH "${CMAKE_CURRENT_BINARY_DIR}" FPLLL_BINARY_DIR_REAL)
+if(FPLLL_SOURCE_DIR_REAL STREQUAL FPLLL_BINARY_DIR_REAL)
   message(FATAL_ERROR
     "In-source builds are disabled. Configure with a CMake Preset or pass a separate -B binary directory.")
 endif()
 
-cmake_minimum_required(VERSION 3.20)
+file(READ "${CMAKE_CURRENT_SOURCE_DIR}/VERSION" FPLLL_VERSION)
+string(STRIP "${FPLLL_VERSION}" FPLLL_VERSION)
+if(NOT FPLLL_VERSION MATCHES "^[0-9]+\\.[0-9]+\\.[0-9]+$")
+  message(FATAL_ERROR "VERSION must contain a three-component version, got: ${FPLLL_VERSION}")
+endif()
 
-project(fplll VERSION 5.5.0 LANGUAGES CXX)
+project(fplll VERSION "${FPLLL_VERSION}" LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED YES)
 set(CMAKE_CXX_EXTENSIONS NO)
 
-# Keep every generated executable and library under the binary tree. Presets
-# use Ninja single-config builds, while these per-config paths also keep
-# multi-config generators from writing into the source tree.
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
-foreach(config DEBUG RELEASE RELWITHDEBINFO MINSIZEREL)
-  set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_${config} "${CMAKE_BINARY_DIR}/bin/${config}")
-  set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_${config} "${CMAKE_BINARY_DIR}/lib/${config}")
-  set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${config} "${CMAKE_BINARY_DIR}/lib/${config}")
-endforeach()
+# One layout for executables, tests and all library variants, including custom
+# configurations and multi-config generators. Stay inside this project's binary
+# directory even when embedded in a larger build.
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY
+  "${CMAKE_CURRENT_BINARY_DIR}/bin/$<UPPER_CASE:$<CONFIG>>")
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY
+  "${CMAKE_CURRENT_BINARY_DIR}/lib/$<UPPER_CASE:$<CONFIG>>")
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY
+  "${CMAKE_CURRENT_BINARY_DIR}/lib/$<UPPER_CASE:$<CONFIG>>")
 
 include(GNUInstallDirs)
 find_package(Threads REQUIRED)
@@ -193,8 +200,10 @@ set(FPLLL_PARALLEL_ENUM_SOURCES)
 if(FPLLL_MAX_PARALLEL_ENUM_DIM GREATER 0)
   list(APPEND FPLLL_PARALLEL_ENUM_SOURCES fplll/enum-parallel/enumlib.cpp)
   foreach(dimension RANGE 20 ${FPLLL_MAX_PARALLEL_ENUM_DIM} 10)
-    list(APPEND FPLLL_PARALLEL_ENUM_SOURCES
-      "fplll/enum-parallel/enumlib_dim.${dimension}.cpp")
+    set(enum_source
+      "${CMAKE_CURRENT_BINARY_DIR}/generated/enum-parallel/enumlib_dim.${dimension}.cpp")
+    configure_file(cmake/enumlib_dim.cpp.in "${enum_source}" @ONLY)
+    list(APPEND FPLLL_PARALLEL_ENUM_SOURCES "${enum_source}")
   endforeach()
 endif()
 
@@ -230,13 +239,14 @@ set(FPLLL_DEFAULT_STRATEGY_PATH
 function(fplll_configure_library target)
   target_include_directories(${target}
     PUBLIC
-      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
       $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
       $<BUILD_INTERFACE:${FPLLL_CONFIG_INCLUDE_DIR}>
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
       $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
       $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/fplll>
     PRIVATE
-      "${CMAKE_CURRENT_SOURCE_DIR}/fplll")
+      "${CMAKE_CURRENT_SOURCE_DIR}/fplll"
+      "${CMAKE_CURRENT_SOURCE_DIR}/fplll/enum-parallel")
   target_compile_definitions(${target} PRIVATE
     "FPLLL_DEFAULT_STRATEGY_PATH=\"${FPLLL_DEFAULT_STRATEGY_PATH}\""
     "FPLLL_DEFAULT_STRATEGY=\"${FPLLL_DEFAULT_STRATEGY_PATH}/default.json\"")
@@ -267,8 +277,7 @@ set_target_properties(fplll_static PROPERTIES
   POSITION_INDEPENDENT_CODE ON)
 fplll_configure_library(fplll_static)
 
-# Automake exposes these duplicate/debug libraries as optional targets. Keep
-# equivalent opt-in build targets for downstream packagers and developers.
+# Optional variant/debug targets for downstream packagers and developers.
 add_library(fplllv SHARED EXCLUDE_FROM_ALL $<TARGET_OBJECTS:fplll_objects>)
 set_target_properties(fplllv PROPERTIES VERSION 9.0.0 SOVERSION 9)
 fplll_configure_library(fplllv)
@@ -301,43 +310,25 @@ fplll_configure_library(fplllv_static)
 add_executable(fplll_cli fplll/main.cpp)
 set_target_properties(fplll_cli PROPERTIES
   OUTPUT_NAME fplll)
-target_include_directories(fplll_cli PRIVATE
-  "${CMAKE_CURRENT_SOURCE_DIR}"
-  "${CMAKE_CURRENT_BINARY_DIR}"
-  "${FPLLL_CONFIG_INCLUDE_DIR}")
 target_link_libraries(fplll_cli PRIVATE fplll)
 
 add_executable(latticegen fplll/latticegen.cpp)
-target_include_directories(latticegen PRIVATE
-  "${CMAKE_CURRENT_SOURCE_DIR}"
-  "${CMAKE_CURRENT_BINARY_DIR}"
-  "${FPLLL_CONFIG_INCLUDE_DIR}")
 target_link_libraries(latticegen PRIVATE fplll)
 
 add_executable(fplll_dbg EXCLUDE_FROM_ALL fplll/main.cpp)
 target_compile_definitions(fplll_dbg PRIVATE DEBUG)
-target_include_directories(fplll_dbg PRIVATE
-  "${CMAKE_CURRENT_SOURCE_DIR}"
-  "${CMAKE_CURRENT_BINARY_DIR}"
-  "${FPLLL_CONFIG_INCLUDE_DIR}")
 target_link_libraries(fplll_dbg PRIVATE fpllld)
 
 add_executable(latticegen_dbg EXCLUDE_FROM_ALL fplll/latticegen.cpp)
 target_compile_definitions(latticegen_dbg PRIVATE DEBUG)
-target_include_directories(latticegen_dbg PRIVATE
-  "${CMAKE_CURRENT_SOURCE_DIR}"
-  "${CMAKE_CURRENT_BINARY_DIR}"
-  "${FPLLL_CONFIG_INCLUDE_DIR}")
 target_link_libraries(latticegen_dbg PRIVATE fpllld)
 add_custom_target(dbg DEPENDS fplll_dbg latticegen_dbg)
 
 include(CTest)
+option(FPLLL_BUILD_ISOLATION_TESTS
+  "Enable the slower standalone build/install isolation regression test" OFF)
 if(BUILD_TESTING)
   add_executable(llldiff fplll/llldiff.cpp)
-  target_include_directories(llldiff PRIVATE
-    "${CMAKE_CURRENT_SOURCE_DIR}"
-    "${CMAKE_CURRENT_BINARY_DIR}"
-    "${FPLLL_CONFIG_INCLUDE_DIR}")
   target_link_libraries(llldiff PRIVATE fplll)
 
   set(FPLLL_TESTS
@@ -358,8 +349,9 @@ if(BUILD_TESTING)
     test_ceil)
   foreach(test_name IN LISTS FPLLL_TESTS)
     add_executable(${test_name} "tests/${test_name}.cpp")
-    set(test_work_dir "${CMAKE_CURRENT_BINARY_DIR}/test-work/${test_name}")
-    file(MAKE_DIRECTORY "${test_work_dir}")
+    set(test_work_dir
+      "${CMAKE_CURRENT_BINARY_DIR}/test-work/$<UPPER_CASE:$<CONFIG>>/${test_name}")
+    file(GENERATE OUTPUT "${test_work_dir}/.keep" CONTENT "")
     target_compile_definitions(${test_name} PRIVATE
       "TESTDATADIR=\"${CMAKE_CURRENT_SOURCE_DIR}/\"")
     target_link_libraries(${test_name} PRIVATE fplll)
@@ -367,10 +359,29 @@ if(BUILD_TESTING)
     set_tests_properties(${test_name} PROPERTIES
       WORKING_DIRECTORY "${test_work_dir}")
   endforeach()
+
+  if(FPLLL_BUILD_ISOLATION_TESTS)
+    set(isolation_work_dir
+      "${CMAKE_CURRENT_BINARY_DIR}/test-work/$<UPPER_CASE:$<CONFIG>>/build-isolation")
+    file(GENERATE OUTPUT "${isolation_work_dir}/.keep" CONTENT "")
+    add_test(NAME test_build_isolation
+      COMMAND "${CMAKE_COMMAND}"
+        "-DFPLLL_SOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}"
+        "-DFPLLL_TEST_ROOT=${isolation_work_dir}/sandbox"
+        "-DFPLLL_TEST_CXX_COMPILER=${CMAKE_CXX_COMPILER}"
+        "-DFPLLL_TEST_PREFIX_PATH=${CMAKE_PREFIX_PATH}"
+        "-DFPLLL_PARENT_BINARY_DIR=${CMAKE_CURRENT_BINARY_DIR}"
+        "-DFPLLL_VERSION=${PROJECT_VERSION}"
+        -P "${CMAKE_CURRENT_SOURCE_DIR}/tests/cmake/build_isolation.cmake")
+    set_tests_properties(test_build_isolation PROPERTIES
+      WORKING_DIRECTORY "${isolation_work_dir}"
+      LABELS "build-system"
+      TIMEOUT 1200
+      RUN_SERIAL TRUE)
+  endif()
 endif()
 
-file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/fplll.h"
-  "#include <fplll/fplll.h>\n")
+configure_file(cmake/fplll.h.in "${CMAKE_CURRENT_BINARY_DIR}/fplll.h" COPYONLY)
 
 set(FPLLL_PUBLIC_HEADERS
   fplll/defs.h
@@ -476,3 +487,43 @@ install(FILES
   "${CMAKE_CURRENT_BINARY_DIR}/fplllConfig.cmake"
   "${CMAKE_CURRENT_BINARY_DIR}/fplllConfigVersion.cmake"
   DESTINATION "${FPLLL_CMAKE_INSTALL_DIR}")
+
+add_custom_target(check-style
+  COMMAND "${CMAKE_COMMAND}" "-DFPLLL_SOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}"
+    -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/CheckStyle.cmake"
+  VERBATIM)
+add_custom_target(format
+  COMMAND "${CMAKE_COMMAND}" "-DFPLLL_SOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}"
+    -DFPLLL_FORMAT=ON -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/CheckStyle.cmake"
+  VERBATIM)
+
+find_package(Doxygen QUIET)
+if(DOXYGEN_FOUND)
+  # Override the historical Doxyfile's relative paths without editing sources.
+  configure_file(cmake/Doxyfile.in "${CMAKE_CURRENT_BINARY_DIR}/Doxyfile" @ONLY)
+  add_custom_target(doc
+    COMMAND "${DOXYGEN_EXECUTABLE}" "${CMAKE_CURRENT_BINARY_DIR}/Doxyfile"
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+    VERBATIM)
+endif()
+
+# Release archives are built entirely inside the binary directory.
+set(CPACK_PACKAGE_NAME fplll)
+set(CPACK_PACKAGE_VERSION "${PROJECT_VERSION}")
+set(CPACK_SOURCE_GENERATOR TGZ)
+set(CPACK_SOURCE_PACKAGE_FILE_NAME "fplll-${PROJECT_VERSION}")
+set(CPACK_VERBATIM_VARIABLES YES)
+string(REGEX REPLACE "([][+.*()^$?|\\\\])" "\\\\\\1"
+  FPLLL_SOURCE_REGEX "${CMAKE_CURRENT_SOURCE_DIR}")
+string(REGEX REPLACE "([][+.*()^$?|\\\\])" "\\\\\\1"
+  FPLLL_BINARY_REGEX "${CMAKE_CURRENT_BINARY_DIR}")
+set(CPACK_SOURCE_IGNORE_FILES
+  "^${FPLLL_BINARY_REGEX}(/|$)"
+  "^${FPLLL_SOURCE_REGEX}/(build|_install|notes|[.]git|[.]cache|[.]vscode|[.]agents|[.]codex)(/|$)"
+  "^${FPLLL_SOURCE_REGEX}/CMakeUserPresets[.]json$"
+  "^${FPLLL_SOURCE_REGEX}/CMakeCache[.]txt$"
+  "^${FPLLL_SOURCE_REGEX}/CMakeFiles/"
+  "^${FPLLL_SOURCE_REGEX}/compile_commands[.]json$"
+  "^${FPLLL_SOURCE_REGEX}/doc/html/"
+  "[.]swp$" "~$")
+include(CPack)

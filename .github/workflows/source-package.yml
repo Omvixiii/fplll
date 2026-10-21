@@ -1,0 +1,25 @@
+name: Source package
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build-isolation:
+    runs-on: ubuntu-24.04
+    container: fedora:44
+    steps:
+      - name: Check out
+        uses: actions/checkout@v7
+      - name: Install build dependencies
+        run: dnf -y install gcc gcc-c++ ccache cmake ninja-build gmp-devel mpfr-devel pkgconf-pkg-config
+      - name: Configure isolation test
+        run: cmake --preset gcc-debug -DFPLLL_BUILD_ISOLATION_TESTS=ON
+      - name: Build, test and install from the source archive
+        run: ctest --preset gcc-debug -R '^test_build_isolation$'
+      - name: Upload source archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: fplll-source
+          path: build/gcc-debug/fplll-*.tar.gz
+          if-no-files-found: error

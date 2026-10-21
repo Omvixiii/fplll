@@ -49,7 +49,7 @@
 #include <unistd.h>
 #endif
 
-#include "fplll_config.h"
+#include <fplll_config.h>
 #ifdef HAVE_LIBMPIR
 #include <mpir.h>
 #endif
