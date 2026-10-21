@@ -1,4 +1,10 @@
 # Doxyfile 1.8.8
+#
+# This is the shared base configuration for API documentation. CMake includes
+# it through cmake/Doxyfile.in and overrides the version, input, and output
+# paths for an out-of-source build. Keep project-specific templates and
+# documentation exclusions here; do not generate documentation in the source
+# tree.
 
 # This file describes the settings to be used by the documentation system
 # doxygen (www.doxygen.org) for a project.
