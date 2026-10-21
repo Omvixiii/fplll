@@ -8,7 +8,11 @@ endif()
 
 project(fplll_install_consumer LANGUAGES CXX)
 
-find_package(fplll 5.5 CONFIG REQUIRED)
+if(DEFINED FPLLL_EXPECTED_VERSION)
+  find_package(fplll "${FPLLL_EXPECTED_VERSION}" EXACT CONFIG REQUIRED)
+else()
+  find_package(fplll CONFIG REQUIRED)
+endif()
 
 add_executable(fplll_consumer_shared consumer.cpp)
 target_link_libraries(fplll_consumer_shared PRIVATE fplll::fplll)

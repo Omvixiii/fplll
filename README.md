@@ -10,30 +10,42 @@ shortest-vector enumeration, and closest-vector enumeration. See the
 
 ## Build from source
 
-Install CMake 3.20 or newer, Ninja, ccache, a C++ compiler, GMP, and MPFR.
-The GCC debug preset uses C++23; release builds and the default CMake
-configuration retain a C++11 compatibility baseline. QD is optional.
+Install CMake 3.21 or newer, Ninja, ccache, a C++11-capable compiler, GMP, and
+MPFR. QD is optional. All presets use Ninja and ccache; CMake discovers the
+C++ compiler automatically.
 
 ```sh
-cmake --preset gcc-debug
-cmake --build --preset gcc-debug
-ctest --preset gcc-debug
+cmake --preset debug
+cmake --build --preset debug
+ctest --preset debug
 ```
 
-The commands place executables in `build/gcc-debug/bin/DEBUG/` and keep
-libraries, generated files, and test output under `build/gcc-debug/`.
-Use `gcc-release` to check the C++11 release configuration. To install that
-build into `_install/gcc-release/`:
+Use `release` for optimized builds or `relwithdebinfo` for optimized builds
+with debug symbols. Use `asan` or `ubsan` for address or undefined behavior
+checks with GCC or Clang and the corresponding sanitizer runtime. Both inherit
+the Debug configuration.
+
+Each preset keeps its build output under `build/<preset>/`,
+with executables in `bin/<CONFIG>/` (for example, `build/debug/bin/DEBUG/`).
+Installation defaults to `_install/<preset>/` inside the checkout:
 
 ```sh
-cmake --preset gcc-release
-cmake --build --preset gcc-release
-ctest --preset gcc-release
-cmake --install build/gcc-release
+cmake --preset release
+cmake --build --preset release
+ctest --preset release
+cmake --install build/release
 ```
 
-The [build guide](doc/building.md) covers dependencies, all presets, optional
-features, installation, downstream CMake and pkg-config use, and source archives.
+Put local overrides, such as compiler selection, dependency paths, and build
+parallelism, in an untracked `CMakeUserPresets.json` that inherits the project
+presets.
+
+CMake determines development versions from Git tags automatically. Release CI
+supplies the version through `-DFPLLL_VERSION=X.Y.Z`; generated source archives
+retain it without Git. No version file needs to be edited before building.
+
+The [build guide](doc/building.md) covers optional features, installation,
+downstream CMake and pkg-config use, and source archives.
 
 ## Command-line tools
 
@@ -41,8 +53,8 @@ The build provides `fplll` for lattice reduction and `latticegen` for generating
 example lattices. Matrix rows are basis vectors. For example:
 
 ```sh
-build/gcc-debug/bin/DEBUG/latticegen r 10 1000 |
-  build/gcc-debug/bin/DEBUG/fplll -a lll
+build/debug/bin/DEBUG/latticegen r 10 1000 |
+  build/debug/bin/DEBUG/fplll -a lll
 ```
 
 ### latticegen

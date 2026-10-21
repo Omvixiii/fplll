@@ -8,13 +8,9 @@ if(FPLLL_SOURCE_DIR_REAL STREQUAL FPLLL_BINARY_DIR_REAL)
     "In-source builds are disabled. Configure with a CMake Preset or pass a separate -B binary directory.")
 endif()
 
-file(READ "${CMAKE_CURRENT_SOURCE_DIR}/VERSION" FPLLL_VERSION)
-string(STRIP "${FPLLL_VERSION}" FPLLL_VERSION)
-if(NOT FPLLL_VERSION MATCHES "^[0-9]+\\.[0-9]+\\.[0-9]+$")
-  message(FATAL_ERROR "VERSION must contain a three-component version, got: ${FPLLL_VERSION}")
-endif()
-
+include(cmake/FplllVersion.cmake)
 project(fplll VERSION "${FPLLL_VERSION}" LANGUAGES CXX)
+message(STATUS "fplll version: ${FPLLL_VERSION_INFO}")
 
 # C++11 is the compatibility baseline. Presets and embedding projects may
 # request a newer standard without this project silently overriding it.
@@ -320,6 +316,23 @@ target_link_libraries(fplll_cli PRIVATE fplll)
 add_executable(latticegen fplll/latticegen.cpp)
 target_link_libraries(latticegen PRIVATE fplll)
 
+# Installed tools must find fplll under a custom or relocated install prefix.
+if(APPLE OR UNIX)
+  if(IS_ABSOLUTE "${CMAKE_INSTALL_LIBDIR}")
+    set(FPLLL_TOOL_INSTALL_RPATH "${CMAKE_INSTALL_LIBDIR}")
+  else()
+    file(RELATIVE_PATH FPLLL_BINDIR_TO_LIBDIR
+      "${CMAKE_INSTALL_FULL_BINDIR}" "${CMAKE_INSTALL_FULL_LIBDIR}")
+    if(APPLE)
+      set(FPLLL_TOOL_INSTALL_RPATH "@loader_path/${FPLLL_BINDIR_TO_LIBDIR}")
+    else()
+      set(FPLLL_TOOL_INSTALL_RPATH "$ORIGIN/${FPLLL_BINDIR_TO_LIBDIR}")
+    endif()
+  endif()
+  set_target_properties(fplll_cli latticegen PROPERTIES
+    INSTALL_RPATH "${FPLLL_TOOL_INSTALL_RPATH}")
+endif()
+
 add_executable(fplll_dbg EXCLUDE_FROM_ALL fplll/main.cpp)
 target_compile_definitions(fplll_dbg PRIVATE DEBUG)
 target_link_libraries(fplll_dbg PRIVATE fpllld)
@@ -469,7 +482,11 @@ set(CPACK_PACKAGE_NAME fplll)
 set(CPACK_PACKAGE_VERSION "${PROJECT_VERSION}")
 set(CPACK_SOURCE_GENERATOR TGZ)
 set(CPACK_SOURCE_PACKAGE_FILE_NAME "fplll-${PROJECT_VERSION}")
+set(CPACK_SOURCE_INSTALLED_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR};/")
 set(CPACK_VERBATIM_VARIABLES YES)
+configure_file(cmake/CPackSourceVersion.cmake.in
+  "${CMAKE_CURRENT_BINARY_DIR}/CPackSourceVersion.cmake" @ONLY)
+list(APPEND CPACK_PRE_BUILD_SCRIPTS "${CMAKE_CURRENT_BINARY_DIR}/CPackSourceVersion.cmake")
 string(REGEX REPLACE "([][+.*()^$?|\\\\])" "\\\\\\1"
   FPLLL_SOURCE_REGEX "${CMAKE_CURRENT_SOURCE_DIR}")
 string(REGEX REPLACE "([][+.*()^$?|\\\\])" "\\\\\\1"

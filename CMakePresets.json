@@ -1,109 +1,83 @@
 {
-  "version": 2,
+  "version": 3,
   "cmakeMinimumRequired": {
     "major": 3,
-    "minor": 20,
+    "minor": 21,
     "patch": 0
   },
   "configurePresets": [
     {
-      "name": "gcc-debug",
-      "displayName": "GCC Debug",
+      "name": "base",
+      "hidden": true,
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/build/${presetName}",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug",
-        "CMAKE_CXX_COMPILER": "g++",
-        "CMAKE_CXX_STANDARD": "23",
         "CMAKE_CXX_COMPILER_LAUNCHER": "ccache",
-        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-        "CMAKE_INSTALL_LIBDIR": "lib",
-        "CMAKE_INSTALL_PREFIX": "${sourceDir}/_install/${presetName}",
-        "FPLLL_MAX_PARALLEL_ENUM_DIM": "20"
+        "CMAKE_EXPORT_COMPILE_COMMANDS": true,
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/_install/${presetName}"
       }
     },
     {
-      "name": "gcc-release",
-      "displayName": "GCC Release",
-      "inherits": "gcc-debug",
-      "binaryDir": "${sourceDir}/build/${presetName}",
+      "name": "debug",
+      "inherits": "base",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release",
-        "CMAKE_CXX_STANDARD": "11",
-        "FPLLL_MAX_PARALLEL_ENUM_DIM": "120"
+        "CMAKE_BUILD_TYPE": "Debug"
       }
     },
     {
-      "name": "gcc-asan",
-      "displayName": "GCC AddressSanitizer",
-      "inherits": "gcc-debug",
-      "binaryDir": "${sourceDir}/build/${presetName}",
+      "name": "release",
+      "inherits": "base",
       "cacheVariables": {
-        "FPLLL_MAX_PARALLEL_ENUM_DIM": "0",
-        "CMAKE_CXX_FLAGS": "-fsanitize=address -fno-omit-frame-pointer",
-        "CMAKE_EXE_LINKER_FLAGS": "-fsanitize=address",
-        "CMAKE_SHARED_LINKER_FLAGS": "-fsanitize=address"
+        "CMAKE_BUILD_TYPE": "Release"
       }
     },
     {
-      "name": "gcc-ubsan",
-      "displayName": "GCC UndefinedBehaviorSanitizer",
-      "inherits": "gcc-debug",
-      "binaryDir": "${sourceDir}/build/${presetName}",
+      "name": "relwithdebinfo",
+      "inherits": "base",
       "cacheVariables": {
-        "FPLLL_MAX_PARALLEL_ENUM_DIM": "0",
-        "CMAKE_CXX_FLAGS": "-fsanitize=undefined -fno-omit-frame-pointer",
-        "CMAKE_EXE_LINKER_FLAGS": "-fsanitize=undefined",
-        "CMAKE_SHARED_LINKER_FLAGS": "-fsanitize=undefined"
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
       }
     },
     {
-      "name": "gcc-coverage",
-      "displayName": "GCC Coverage",
-      "inherits": "gcc-debug",
-      "binaryDir": "${sourceDir}/build/${presetName}",
+      "name": "asan",
+      "inherits": "debug",
       "cacheVariables": {
-        "CMAKE_CXX_FLAGS": "--coverage",
-        "CMAKE_EXE_LINKER_FLAGS": "--coverage",
-        "CMAKE_SHARED_LINKER_FLAGS": "--coverage"
+        "CMAKE_CXX_FLAGS": "-fsanitize=address -fno-omit-frame-pointer"
+      }
+    },
+    {
+      "name": "ubsan",
+      "inherits": "debug",
+      "cacheVariables": {
+        "CMAKE_CXX_FLAGS": "-fsanitize=undefined -fno-sanitize-recover=undefined -fno-omit-frame-pointer"
       }
     }
   ],
   "buildPresets": [
     {
-      "name": "common-build",
-      "hidden": true,
-      "jobs": 8
+      "name": "debug",
+      "configurePreset": "debug"
     },
     {
-      "name": "gcc-debug",
-      "inherits": "common-build",
-      "configurePreset": "gcc-debug"
+      "name": "release",
+      "configurePreset": "release"
     },
     {
-      "name": "gcc-release",
-      "inherits": "common-build",
-      "configurePreset": "gcc-release"
+      "name": "relwithdebinfo",
+      "configurePreset": "relwithdebinfo"
     },
     {
-      "name": "gcc-asan",
-      "inherits": "common-build",
-      "configurePreset": "gcc-asan"
+      "name": "asan",
+      "configurePreset": "asan"
     },
     {
-      "name": "gcc-ubsan",
-      "inherits": "common-build",
-      "configurePreset": "gcc-ubsan"
-    },
-    {
-      "name": "gcc-coverage",
-      "inherits": "common-build",
-      "configurePreset": "gcc-coverage"
+      "name": "ubsan",
+      "configurePreset": "ubsan"
     }
   ],
   "testPresets": [
     {
-      "name": "common-test",
+      "name": "base",
       "hidden": true,
       "output": {
         "outputOnFailure": true
@@ -113,29 +87,29 @@
       }
     },
     {
-      "name": "gcc-debug",
-      "inherits": "common-test",
-      "configurePreset": "gcc-debug"
+      "name": "debug",
+      "inherits": "base",
+      "configurePreset": "debug"
     },
     {
-      "name": "gcc-release",
-      "inherits": "common-test",
-      "configurePreset": "gcc-release"
+      "name": "release",
+      "inherits": "base",
+      "configurePreset": "release"
     },
     {
-      "name": "gcc-asan",
-      "inherits": "common-test",
-      "configurePreset": "gcc-asan"
+      "name": "relwithdebinfo",
+      "inherits": "base",
+      "configurePreset": "relwithdebinfo"
     },
     {
-      "name": "gcc-ubsan",
-      "inherits": "common-test",
-      "configurePreset": "gcc-ubsan"
+      "name": "asan",
+      "inherits": "base",
+      "configurePreset": "asan"
     },
     {
-      "name": "gcc-coverage",
-      "inherits": "common-test",
-      "configurePreset": "gcc-coverage"
+      "name": "ubsan",
+      "inherits": "base",
+      "configurePreset": "ubsan"
     }
   ]
 }

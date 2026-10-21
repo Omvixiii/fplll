@@ -25,7 +25,7 @@ runs:
       uses: actions/cache@v6
       with:
         path: ~/.cache/ccache
-        key: ${{ runner.os }}-${{ inputs.scope || github.job }}-ccache-${{ hashFiles('VERSION', 'CMakeLists.txt', 'CMakePresets.json', 'cmake/**', 'fplll/**/*.h', 'fplll/**/*.cpp', 'fplll/**/*.inl', 'tests/**/*.cpp', 'tests/**/*.h') }}
+        key: ${{ runner.os }}-${{ inputs.scope || github.job }}-ccache-${{ hashFiles('CMakeLists.txt', 'CMakePresets.json', 'cmake/**', 'fplll/**/*.h', 'fplll/**/*.cpp', 'fplll/**/*.inl', 'tests/**/*.cpp', 'tests/**/*.h') }}
         restore-keys: |
           ${{ runner.os }}-${{ inputs.scope || github.job }}-ccache-
     - name: Limit compiler cache size

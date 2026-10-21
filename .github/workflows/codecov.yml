@@ -19,13 +19,17 @@ jobs:
     steps:
       - name: Check out
         uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
       - name: Set up build environment
         uses: ./.github/actions/setup-fplll
       - name: Configure, build, and test
         run: |
-          cmake --preset gcc-coverage
-          cmake --build --preset gcc-coverage
-          ctest --preset gcc-coverage
+          cmake --preset debug -DCMAKE_CXX_COMPILER=g++ -DCMAKE_CXX_STANDARD=23 \
+            -DFPLLL_MAX_PARALLEL_ENUM_DIM=20 -DCMAKE_CXX_FLAGS=--coverage \
+            -DCMAKE_EXE_LINKER_FLAGS=--coverage -DCMAKE_SHARED_LINKER_FLAGS=--coverage
+          cmake --build --preset debug
+          ctest --preset debug
       - name: Compiler cache statistics
         if: always()
         run: ccache --show-stats

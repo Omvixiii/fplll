@@ -21,12 +21,17 @@ jobs:
       - name: Set up build environment
         uses: ./.github/actions/setup-fplll
       - name: Build and validate release
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
         run: |
-          cmake --preset gcc-release -DFPLLL_BUILD_ISOLATION_TESTS=ON
-          cmake --build --preset gcc-release
-          ctest --preset gcc-release
+          release_version="${RELEASE_TAG#v}"
+          cmake --preset release -DCMAKE_CXX_COMPILER=g++ \
+            -DFPLLL_VERSION="$release_version" -DFPLLL_BUILD_ISOLATION_TESTS=ON
+          cmake --build --preset release
+          ctest --preset release
+          cmake --build --preset release --target package_source
       - name: Publish source archive
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ github.ref_name }}
-        run: gh release create "$RELEASE_TAG" build/gcc-release/fplll-*.tar.gz --verify-tag --title "$RELEASE_TAG" --generate-notes
+        run: gh release create "$RELEASE_TAG" build/release/fplll-*.tar.gz --verify-tag --title "$RELEASE_TAG" --generate-notes

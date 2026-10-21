@@ -19,12 +19,17 @@ jobs:
     steps:
       - name: Check out
         uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
       - name: Set up build environment
         uses: ./.github/actions/setup-fplll
       - name: Configure isolation test
-        run: cmake --preset gcc-debug -DFPLLL_BUILD_ISOLATION_TESTS=ON -DFPLLL_ISOLATION_WITH_QD=ON
+        run: |
+          cmake --preset debug -DCMAKE_CXX_COMPILER=g++ \
+            -DFPLLL_MAX_PARALLEL_ENUM_DIM=20 \
+            -DFPLLL_BUILD_ISOLATION_TESTS=ON -DFPLLL_ISOLATION_WITH_QD=ON
       - name: Build, test and install from the source archive
-        run: ctest --preset gcc-debug -R '^test_build_isolation$'
+        run: ctest --preset debug -R '^test_build_isolation$'
       - name: Compiler cache statistics
         if: always()
         run: ccache --show-stats
@@ -33,6 +38,6 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: fplll-source
-          path: build/gcc-debug/fplll-*.tar.gz
+          path: build/debug/fplll-*.tar.gz
           if-no-files-found: error
           compression-level: 0

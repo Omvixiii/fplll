@@ -23,9 +23,9 @@ git clone git@github.com:my-github-name/fplll.git
 Build and test using the CMake presets:
 
 ```sh
-cmake --preset gcc-debug
-cmake --build --preset gcc-debug
-ctest --preset gcc-debug
+cmake --preset debug
+cmake --build --preset debug
+ctest --preset debug
 ```
 
 For verbose compiler commands, add `--verbose` to the build command. See the
@@ -97,7 +97,7 @@ We want your submission. But we also want to provide a stable experience for our
 Before you submit a pull request, please run tests:
 
 ```sh
-ctest --preset gcc-debug
+ctest --preset debug
 ```
 
 These checks are also run automatically for every pull request. Nothing failing tests will be accepted.
@@ -152,7 +152,7 @@ configuration. Keep formatting changes separate from functional changes.
 Starting from fplll 5.1.0, the coding convention is [enforced](https://github.com/fplll/fplll/pull/215) throughout the whole project. In particular, the code of every pull request has to strictly adhere to the coding convention, and a GitHub Action will error when it is not the case. Automatic formatting can (and should) be performed by the command
 
 ```sh
-cmake --build --preset gcc-debug --target format
+cmake --build --preset debug --target format
 ```
 
 This requires clang-format. The `check-style` target checks formatting without modifying files.
@@ -184,11 +184,11 @@ headers of files you change.
 With Doxygen installed, configure a preset and build the `doc` target:
 
 ```sh
-cmake --preset gcc-debug
-cmake --build --preset gcc-debug --target doc
+cmake --preset debug
+cmake --build --preset debug --target doc
 ```
 
-HTML output is written to `build/gcc-debug/doc/html/`. Library sources, the
+HTML output is written to `build/debug/doc/html/`. Library sources, the
 README, and the usage and build guides are documentation inputs; build
 configuration headers and local notes are excluded.
 Review the generated documentation before publishing to the separate `gh-pages`

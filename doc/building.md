@@ -2,38 +2,31 @@
 
 ## Requirements and presets
 
-Use CMake 3.20 or newer, Ninja, ccache, GMP and MPFR. The GCC development
-preset requires a C++23 compiler. Without a preset, the project defaults to
-C++11, which remains the minimum supported standard for consumers. The release
-preset also uses C++11. The checked-in presets use `g++` from `PATH` on Linux
-and WSL. Other toolchains can configure a separate binary directory without a
-checked-in preset. For nonstandard dependency locations, set `CMAKE_PREFIX_PATH`.
+Use CMake 3.21 or newer for the checked-in presets, Ninja, ccache, GMP and MPFR.
+The project defaults to C++11, which remains the minimum supported standard for
+consumers. CMake discovers the compiler automatically. For nonstandard dependency
+locations, set `CMAKE_PREFIX_PATH`. Direct configuration without presets supports
+CMake 3.20 or newer.
 
 ```sh
 cmake --list-presets=all
-cmake --preset gcc-debug
-cmake --build --preset gcc-debug
-ctest --preset gcc-debug
-cmake --install build/gcc-debug
+cmake --preset debug
+cmake --build --preset debug
+ctest --preset debug
+cmake --install build/debug
 ```
 
-All five configure presets have matching build and test presets. Each resolves
-`binaryDir` to `build/<preset>` and the install prefix to `_install/<preset>`,
-including inherited sanitizer and coverage variants.
-Hidden common presets share the build and test defaults without adding choices
-to the preset list. Build presets use eight jobs; override this with
-`--parallel` when needed.
-The ccache location is controlled by the local ccache configuration.
-For regular development, use `gcc-debug`. It builds only parallel enumeration
-dimension 20, leaving one generated dimension source instead of eleven; set
-`FPLLL_MAX_PARALLEL_ENUM_DIM=120` to exercise the full range. `gcc-release`
-retains the full range and checks the C++11 baseline. These two presets are the
-regular build contracts. `gcc-asan`, `gcc-ubsan`, and `gcc-coverage` are periodic
-diagnostic configurations. Feature switches such as QD remain CMake options,
-so each option combination does not require another persistent build tree.
+The `debug`, `release`, and `relwithdebinfo` configure presets have matching build
+and test presets. Each resolves `binaryDir` to `build/<preset>` and the install
+prefix to `_install/<preset>`. Put compiler selection, dependency paths, and build
+parallelism in an untracked `CMakeUserPresets.json`, or pass them on the command
+line. The ccache location is controlled by the local ccache configuration.
+For a shorter development build, set `FPLLL_MAX_PARALLEL_ENUM_DIM=20`; the default
+is 120. CI supplies its compiler, C++23 checks, sanitizer flags, and coverage flags
+explicitly, keeping diagnostic settings out of the portable project presets.
 
 For an edit/build loop, select the `fplll_cli` target in CMake Tools or build
-that target with the `gcc-debug` preset. This builds the library and CLI without
+that target with the `debug` preset. This builds the library and CLI without
 compiling every test executable. Build the default `all` target before running
 the full CTest suite. Changing the compiler, C++ standard, or configured
 features still requires recompiling the affected objects; a no-op reconfigure
@@ -80,6 +73,7 @@ The source-package and installed-consumer regression fixtures live in
 | Option | Default / purpose |
 | --- | --- |
 | `BUILD_TESTING` | `ON`; build and register the 15 numerical tests and `llldiff` |
+| `FPLLL_VERSION` | Empty; automatically determine the version, or supply `X.Y.Z` for a release |
 | `FPLLL_WITH_QD` | `OFF`; enable QD arithmetic |
 | `FPLLL_USE_MPIR`, `FPLLL_MPIR_ROOT` | Select MPIR instead of GMP |
 | `FPLLL_WITH_RECURSIVE_ENUM` | `ON`; select recursive enumeration |
@@ -92,7 +86,7 @@ The source-package and installed-consumer regression fixtures live in
 Parallel dimensions are multiples of ten between 20 and 160 and must be smaller
 than `FPLLL_MAX_ENUM_DIM`. MPIR and external enumeration require independently
 installed dependencies; their availability is separate from the default build.
-Sanitizer presets also require the matching GCC runtime libraries.
+Sanitizer builds also require the matching compiler runtime libraries.
 The `CMAKE_CXX_STANDARD` value in a preset or embedding project takes precedence
 over the C++11 default. The source-package isolation test builds without a
 standard override and verifies the C++11 baseline.
@@ -112,6 +106,29 @@ name `fplll`), `latticegen`, and tests when enabled. Optional targets are
 `latticegen_dbg`; `dbg` builds both debug executables. Shared/static variants
 reuse OBJECT libraries.
 
+## Version management
+
+The checkout has no manually maintained version file. CMake resolves the version
+in this order: an explicit `-DFPLLL_VERSION=X.Y.Z`, generated source-archive
+metadata, then the nearest reachable Git tag named `X.Y.Z` or `vX.Y.Z`. An empty
+`FPLLL_VERSION` cache entry keeps Git detection automatic on each configure.
+To return a release build directory to automatic detection, configure with
+`-DFPLLL_VERSION=`.
+
+`project(fplll VERSION ...)` supplies the numeric version for CMake package
+compatibility, pkg-config, documentation, and archive names. CLI version strings
+also identify commits after the tag and uncommitted tracked changes, for example
+`5.5.0-58-g123abcd-dirty`. With no reachable release tag, local builds use `0.0.0`
+and identify the Git commit when available; a tree without Git or archive metadata
+uses `0.0.0-dev`. Such builds do not claim to be a release.
+
+Release CI takes the numeric version from the triggering tag and passes it to
+CMake. CPack writes that resolved version into `cmake/FplllArchiveVersion.cmake`
+inside the archive staging directory. Extracted archives therefore retain the
+same version without Git, even after their source directory is renamed, and the
+checkout remains untouched. Shared-library ABI versions remain independent of
+the release version.
+
 ## Installation and downstream use
 
 ```cmake
@@ -124,13 +141,15 @@ Point `CMAKE_PREFIX_PATH` at the installation prefix. For non-CMake consumers,
 add its `lib/pkgconfig/` to `PKG_CONFIG_PATH` and use `pkg-config fplll`.
 The install includes public headers, both libraries, the two CLI programs and
 the default strategy data. `llldiff` and debug tools are not installed.
+On macOS and Unix, installed tools use a relative runtime library path when
+the library directory is relative to the install prefix.
 
 ## Source packages and build isolation
 
 ```sh
-cmake --preset gcc-debug -DFPLLL_BUILD_ISOLATION_TESTS=ON
-cmake --build --preset gcc-debug --target package_source
-ctest --preset gcc-debug -R '^test_build_isolation$'
+cmake --preset debug -DFPLLL_BUILD_ISOLATION_TESTS=ON
+cmake --build --preset debug --target package_source
+ctest --preset debug -R '^test_build_isolation$'
 ```
 
 The regression test unpacks the release source archive into a private binary
@@ -138,8 +157,9 @@ directory, checks that local notes and legacy toolchain files are absent, and
 verifies rejection of direct and symlinked in-source builds. It then plants
 an invalid source-tree configuration header to detect accidental inclusion,
 builds the core and optional variants, runs all 15 numerical tests, installs,
-and runs shared/static downstream consumers. Source file names and hashes must
-remain unchanged. Its logs stay in `test-work/DEBUG/build-isolation/sandbox/`.
+starts both installed tools, and runs shared/static downstream consumers. Source
+file names and hashes must remain unchanged. Its logs stay in
+`test-work/DEBUG/build-isolation/sandbox/`.
 CI enables `FPLLL_ISOLATION_WITH_QD` to exercise the optional QD arithmetic in
 the C++11 build and installed consumers; local runs leave it off unless QD is
 available. The standalone build reuses the parent compiler launcher, including
