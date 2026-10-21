@@ -1,0 +1,33 @@
+name: Set up fplll build environment
+description: Install Ubuntu build dependencies and restore the ccache directory
+inputs:
+  compiler:
+    description: Compiler family used by the job, for cache isolation
+    required: false
+    default: gcc
+runs:
+  using: composite
+  steps:
+    - name: Install build dependencies
+      shell: bash
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential \
+          ccache \
+          clang \
+          clang-format \
+          cmake \
+          g++ \
+          libgmp-dev \
+          libmpfr-dev \
+          libqd-dev \
+          ninja-build \
+          pkg-config
+    - name: Restore ccache
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/ccache
+        key: ${{ runner.os }}-ccache-${{ inputs.compiler }}-${{ hashFiles('CMakeLists.txt', 'CMakePresets.json', '.github/actions/setup-fplll/action.yml', 'fplll/**/*.h', 'fplll/**/*.cpp') }}
+        restore-keys: |
+          ${{ runner.os }}-ccache-${{ inputs.compiler }}-

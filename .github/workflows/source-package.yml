@@ -4,15 +4,18 @@ on:
   push:
   pull_request:
 
+concurrency:
+  group: source-package-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build-isolation:
     runs-on: ubuntu-24.04
-    container: fedora:44
     steps:
       - name: Check out
         uses: actions/checkout@v7
-      - name: Install build dependencies
-        run: dnf -y install gcc gcc-c++ ccache cmake ninja-build gmp-devel mpfr-devel pkgconf-pkg-config
+      - name: Set up build environment
+        uses: ./.github/actions/setup-fplll
       - name: Configure isolation test
         run: cmake --preset gcc-debug -DFPLLL_BUILD_ISOLATION_TESTS=ON
       - name: Build, test and install from the source archive

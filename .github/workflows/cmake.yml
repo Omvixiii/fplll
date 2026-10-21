@@ -6,11 +6,14 @@ on:
   schedule:
     - cron: '0 0 * * 0'
 
+concurrency:
+  group: cmake-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build-and-test:
     name: ${{ matrix.preset }}
     runs-on: ubuntu-24.04
-    container: fedora:44
     strategy:
       fail-fast: false
       matrix:
@@ -34,12 +37,14 @@ jobs:
     steps:
       - name: Check out
         uses: actions/checkout@v7
-      - name: Install build dependencies
-        run: dnf -y install gcc gcc-c++ clang ccache cmake ninja-build gmp-devel mpfr-devel qd-devel pkgconf-pkg-config
+      - name: Set up build environment
+        uses: ./.github/actions/setup-fplll
+        with:
+          compiler: ${{ matrix.compiler }}
       - name: Configure, build, and test
         run: |
           cmake --preset "$PRESET"
-          cmake --build --preset "$PRESET" --parallel 8
+          cmake --build --preset "$PRESET"
           ctest --preset "$PRESET"
       - name: Install and build downstream consumers
         run: |
@@ -55,7 +60,6 @@ jobs:
   feature-matrix:
     name: ${{ matrix.preset }} feature matrix
     runs-on: ubuntu-24.04
-    container: fedora:44
     strategy:
       fail-fast: false
       matrix:
@@ -68,18 +72,17 @@ jobs:
     steps:
       - name: Check out
         uses: actions/checkout@v7
-      - name: Install build dependencies
-        run: dnf -y install gcc gcc-c++ ccache cmake ninja-build gmp-devel mpfr-devel qd-devel pkgconf-pkg-config
+      - name: Set up build environment
+        uses: ./.github/actions/setup-fplll
       - name: Configure, build, and test
         run: |
           cmake --preset "$PRESET"
-          cmake --build --preset "$PRESET" --parallel 8
+          cmake --build --preset "$PRESET"
           ctest --preset "$PRESET"
 
   sanitizers:
     name: ${{ matrix.preset }} sanitizer
     runs-on: ubuntu-24.04
-    container: fedora:44
     strategy:
       fail-fast: false
       matrix:
@@ -91,12 +94,12 @@ jobs:
     steps:
       - name: Check out
         uses: actions/checkout@v7
-      - name: Install build dependencies
-        run: dnf -y install gcc gcc-c++ ccache cmake ninja-build gmp-devel mpfr-devel qd-devel pkgconf-pkg-config
+      - name: Set up build environment
+        uses: ./.github/actions/setup-fplll
       - name: Configure and build focused test targets
         run: |
           cmake --preset "$PRESET"
-          cmake --build --preset "$PRESET" --target fplll fplll_cli test_nr test_lll test_enum test_cvp test_svp --parallel 8
+          cmake --build --preset "$PRESET" --target fplll fplll_cli test_nr test_lll test_enum test_cvp test_svp
       - name: Run focused sanitizer tests
         run: ctest --preset "$PRESET" -R '^(test_nr|test_lll|test_enum|test_cvp|test_svp)$' --output-on-failure
 

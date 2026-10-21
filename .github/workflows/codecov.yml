@@ -4,19 +4,22 @@ on:
   push:
   pull_request:
 
+concurrency:
+  group: codecov-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   gcc-coverage:
     runs-on: ubuntu-24.04
-    container: fedora:44
     steps:
       - name: Check out
         uses: actions/checkout@v7
-      - name: Install build dependencies
-        run: dnf -y install gcc gcc-c++ ccache cmake ninja-build gmp-devel mpfr-devel qd-devel pkgconf-pkg-config
+      - name: Set up build environment
+        uses: ./.github/actions/setup-fplll
       - name: Configure, build, and test
         run: |
           cmake --preset gcc-coverage
-          cmake --build --preset gcc-coverage --parallel 8
+          cmake --build --preset gcc-coverage
           ctest --preset gcc-coverage
       - name: Upload coverage
         uses: codecov/codecov-action@v7.1.1
