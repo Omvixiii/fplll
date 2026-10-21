@@ -16,7 +16,11 @@ endif()
 
 project(fplll VERSION "${FPLLL_VERSION}" LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 11)
+# C++11 is the compatibility baseline. Presets and embedding projects may
+# request a newer standard without this project silently overriding it.
+if(NOT DEFINED CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 11)
+endif()
 set(CMAKE_CXX_STANDARD_REQUIRED YES)
 set(CMAKE_CXX_EXTENSIONS NO)
 
@@ -194,7 +198,6 @@ configure_file(
   cmake/fplll_config.h.in
   "${FPLLL_CONFIG_INCLUDE_DIR}/fplll_config.h"
   @ONLY)
-configure_file(cmake/config.h.in "${CMAKE_CURRENT_BINARY_DIR}/config.h" @ONLY)
 
 set(FPLLL_PARALLEL_ENUM_SOURCES)
 if(FPLLL_MAX_PARALLEL_ENUM_DIM GREATER 0)
@@ -236,6 +239,11 @@ set(FPLLL_LIBRARY_SOURCES
 
 set(FPLLL_DEFAULT_STRATEGY_PATH
   "${CMAKE_INSTALL_FULL_DATADIR}/fplll/strategies")
+# Only bkz_param.cpp reads these values. An install-prefix change should not
+# recompile every library translation unit.
+set_property(SOURCE fplll/bkz_param.cpp APPEND PROPERTY COMPILE_DEFINITIONS
+  "FPLLL_DEFAULT_STRATEGY_PATH=\"${FPLLL_DEFAULT_STRATEGY_PATH}\""
+  "FPLLL_DEFAULT_STRATEGY=\"${FPLLL_DEFAULT_STRATEGY_PATH}/default.json\"")
 function(fplll_configure_library target)
   target_include_directories(${target}
     PUBLIC
@@ -247,9 +255,6 @@ function(fplll_configure_library target)
     PRIVATE
       "${CMAKE_CURRENT_SOURCE_DIR}/fplll"
       "${CMAKE_CURRENT_SOURCE_DIR}/fplll/enum-parallel")
-  target_compile_definitions(${target} PRIVATE
-    "FPLLL_DEFAULT_STRATEGY_PATH=\"${FPLLL_DEFAULT_STRATEGY_PATH}\""
-    "FPLLL_DEFAULT_STRATEGY=\"${FPLLL_DEFAULT_STRATEGY_PATH}/default.json\"")
   target_compile_features(${target} PUBLIC cxx_std_11)
   target_link_libraries(${target} PUBLIC
     MPFR::MPFR
@@ -327,11 +332,13 @@ add_custom_target(dbg DEPENDS fplll_dbg latticegen_dbg)
 include(CTest)
 option(FPLLL_BUILD_ISOLATION_TESTS
   "Enable the slower standalone build/install isolation regression test" OFF)
+option(FPLLL_ISOLATION_WITH_QD
+  "Build the standalone isolation test with optional QD support" OFF)
 if(BUILD_TESTING)
   add_subdirectory(tests)
 endif()
 
-configure_file(cmake/fplll.h.in "${CMAKE_CURRENT_BINARY_DIR}/fplll.h" COPYONLY)
+configure_file(cmake/fplll.h "${CMAKE_CURRENT_BINARY_DIR}/fplll.h" COPYONLY)
 
 set(FPLLL_PUBLIC_HEADERS
   fplll/defs.h

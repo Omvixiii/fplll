@@ -11,8 +11,8 @@ shortest-vector enumeration, and closest-vector enumeration. See the
 ## Build from source
 
 Install CMake 3.20 or newer, Ninja, ccache, a C++ compiler, GMP, and MPFR.
-The development presets use C++23; the library retains a C++11 compatibility
-baseline. QD is optional.
+The GCC debug preset uses C++23; release builds and the default CMake
+configuration retain a C++11 compatibility baseline. QD is optional.
 
 ```sh
 cmake --preset gcc-debug
@@ -22,8 +22,8 @@ ctest --preset gcc-debug
 
 The commands place executables in `build/gcc-debug/bin/DEBUG/` and keep
 libraries, generated files, and test output under `build/gcc-debug/`.
-Use `gcc-release` for a release build or `clang-debug` and `clang-release`
-for Clang. To install a release build into `_install/gcc-release/`:
+Use `gcc-release` to check the C++11 release configuration. To install that
+build into `_install/gcc-release/`:
 
 ```sh
 cmake --preset gcc-release

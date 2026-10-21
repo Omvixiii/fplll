@@ -22,7 +22,7 @@ jobs:
         uses: ./.github/actions/setup-fplll
       - name: Build and validate release
         run: |
-          cmake --preset gcc-release -DFPLLL_MAX_PARALLEL_ENUM_DIM=20 -DFPLLL_BUILD_ISOLATION_TESTS=ON
+          cmake --preset gcc-release -DFPLLL_BUILD_ISOLATION_TESTS=ON
           cmake --build --preset gcc-release
           ctest --preset gcc-release
       - name: Publish source archive

@@ -75,9 +75,8 @@ if(link_result STREQUAL "0")
   endif()
 endif()
 
-# Simulate stale configuration headers left by a different build system.
-# Every real target must use the binary-tree headers instead.
-file(WRITE "${source}/config.h" "#error source config.h must never be included\n")
+# Simulate a stale configuration header left by a different build system.
+# Every real target must use the binary-tree header instead.
 file(WRITE "${source}/fplll/fplll_config.h"
   "#error source fplll_config.h must never be included\n")
 snapshot(before)
@@ -86,8 +85,10 @@ file(WRITE "${FPLLL_TEST_ROOT}/dependencies.cmake"
 run_step(configure "${CMAKE_COMMAND}" -S "${source}" -B "${binary}" -G Ninja
   -C "${FPLLL_TEST_ROOT}/dependencies.cmake"
   "-DCMAKE_CXX_COMPILER=${FPLLL_TEST_CXX_COMPILER}"
+  "-DCMAKE_CXX_COMPILER_LAUNCHER=${FPLLL_TEST_CXX_LAUNCHER}"
   "-DCMAKE_INSTALL_PREFIX=${prefix}" -DCMAKE_INSTALL_LIBDIR=lib
   -DCMAKE_BUILD_TYPE=Debug -DFPLLL_MAX_PARALLEL_ENUM_DIM=20
+  "-DFPLLL_WITH_QD=${FPLLL_TEST_WITH_QD}"
   -DBUILD_TESTING=ON -DFPLLL_BUILD_ISOLATION_TESTS=OFF)
 run_step(build "${CMAKE_COMMAND}" --build "${binary}" --parallel 2)
 run_step(variants "${CMAKE_COMMAND}" --build "${binary}" --parallel 2

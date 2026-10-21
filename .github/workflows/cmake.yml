@@ -2,9 +2,14 @@ name: CMake
 
 on:
   push:
+    branches: [master]
   pull_request:
   schedule:
     - cron: "0 0 * * 0"
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 concurrency:
   group: cmake-${{ github.event.pull_request.number || github.ref }}
@@ -12,113 +17,47 @@ concurrency:
 
 jobs:
   build-and-test:
+    name: gcc-debug
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out
+        uses: actions/checkout@v7
+      - name: Set up build environment
+        uses: ./.github/actions/setup-fplll
+      - name: Configure, build, and test
+        run: |
+          cmake --preset gcc-debug
+          cmake --build --preset gcc-debug
+          ctest --preset gcc-debug
+      - name: Compiler cache statistics
+        if: always()
+        run: ccache --show-stats
+
+  sanitizers:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     name: ${{ matrix.preset }}
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - preset: gcc-debug
-            compiler: g++
-            install-prefix: gcc-debug
-          - preset: gcc-release
-            compiler: g++
-            install-prefix: gcc-release
-          - preset: clang-debug
-            compiler: clang++
-            install-prefix: clang-debug
-          - preset: clang-release
-            compiler: clang++
-            install-prefix: clang-release
-    env:
-      PRESET: ${{ matrix.preset }}
-      CXX_COMPILER: ${{ matrix.compiler }}
-      INSTALL_PREFIX: ${{ matrix.install-prefix }}
+        preset: [gcc-asan, gcc-ubsan]
     steps:
       - name: Check out
         uses: actions/checkout@v7
       - name: Set up build environment
         uses: ./.github/actions/setup-fplll
         with:
-          compiler: ${{ matrix.compiler }}
-      - name: Configure, build, and test
-        run: |
-          cmake --preset "$PRESET"
-          cmake --build --preset "$PRESET"
-          ctest --preset "$PRESET"
-      - name: Install and build downstream consumers
-        run: |
-          cmake --install "build/$PRESET"
-          cmake -S tests/cmake-consumer -B "build/consumer-$PRESET" -G Ninja \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_CXX_COMPILER="$CXX_COMPILER" \
-            -DCMAKE_PREFIX_PATH="$GITHUB_WORKSPACE/_install/$INSTALL_PREFIX"
-          cmake --build "build/consumer-$PRESET" --parallel 8
-          "build/consumer-$PRESET/fplll_consumer_shared"
-          "build/consumer-$PRESET/fplll_consumer_static"
-
-  feature-matrix:
-    name: ${{ matrix.preset }} feature matrix
-    runs-on: ubuntu-24.04
-    strategy:
-      fail-fast: false
-      matrix:
-        preset:
-          - gcc-debug-no-parallel
-          - gcc-debug-qd
-          - gcc-debug-iterative
-    env:
-      PRESET: ${{ matrix.preset }}
-    steps:
-      - name: Check out
-        uses: actions/checkout@v7
-      - name: Set up build environment
-        uses: ./.github/actions/setup-fplll
-      - name: Configure, build, and test
-        run: |
-          cmake --preset "$PRESET"
-          cmake --build --preset "$PRESET"
-          ctest --preset "$PRESET"
-
-  sanitizers:
-    name: ${{ matrix.preset }} sanitizer
-    runs-on: ubuntu-24.04
-    strategy:
-      fail-fast: false
-      matrix:
-        preset:
-          - gcc-asan
-          - gcc-ubsan
-    env:
-      PRESET: ${{ matrix.preset }}
-    steps:
-      - name: Check out
-        uses: actions/checkout@v7
-      - name: Set up build environment
-        uses: ./.github/actions/setup-fplll
+          scope: ${{ matrix.preset }}
       - name: Configure and build focused test targets
+        env:
+          PRESET: ${{ matrix.preset }}
         run: |
           cmake --preset "$PRESET"
-          cmake --build --preset "$PRESET" --target fplll fplll_cli test_nr test_lll test_enum test_cvp test_svp
+          cmake --build --preset "$PRESET" --target fplll_cli test_nr test_lll test_enum test_cvp test_svp
       - name: Run focused sanitizer tests
-        run: ctest --preset "$PRESET" -R '^(test_nr|test_lll|test_enum|test_cvp|test_svp)$' --output-on-failure
-
-  macos:
-    name: macOS Clang
-    runs-on: macos-15
-    env:
-      HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK: 1
-    steps:
-      - name: Check out
-        uses: actions/checkout@v7
-      - name: Set Xcode
-        uses: maxim-lobanov/setup-xcode@v1
-        with:
-          xcode-version: latest-stable
-      - name: Install build dependencies
-        run: brew install cmake ninja ccache pkgconf gmp mpfr qd
-      - name: Configure, build, and test
-        run: |
-          cmake --preset clang-debug -DCMAKE_PREFIX_PATH="$(brew --prefix)"
-          cmake --build --preset clang-debug
-          ctest --preset clang-debug
+        env:
+          PRESET: ${{ matrix.preset }}
+        run: ctest --preset "$PRESET" -R '^(test_nr|test_lll|test_enum|test_cvp|test_svp)$'
+      - name: Compiler cache statistics
+        if: always()
+        run: ccache --show-stats

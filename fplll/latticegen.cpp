@@ -16,7 +16,7 @@
    along with fplll. If not, see <http://www.gnu.org/licenses/>. */
 
 #include "util.h"
-#include <config.h>
+#include <fplll/fplll_config.h>
 
 using namespace fplll;
 
@@ -38,7 +38,7 @@ void print_help()
 
 void print_version()
 {
-  cout << "latticegen (fplll) " << VERSION << endl
+  cout << "latticegen (fplll) " << FPLLL_VERSION << endl
        << "Copyright 2005-2011 Damien Stehle, David Cade, Xavier Pujol." << endl
        << "fplll is free software. You can redistribute it and/or modify" << endl
        << "it under the terms of the GNU Lesser General Public License as published by" << endl

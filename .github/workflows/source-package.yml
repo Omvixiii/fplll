@@ -2,7 +2,12 @@ name: Source package
 
 on:
   push:
+    branches: [master]
   pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 concurrency:
   group: source-package-${{ github.event.pull_request.number || github.ref }}
@@ -17,12 +22,17 @@ jobs:
       - name: Set up build environment
         uses: ./.github/actions/setup-fplll
       - name: Configure isolation test
-        run: cmake --preset gcc-debug -DFPLLL_BUILD_ISOLATION_TESTS=ON
+        run: cmake --preset gcc-debug -DFPLLL_BUILD_ISOLATION_TESTS=ON -DFPLLL_ISOLATION_WITH_QD=ON
       - name: Build, test and install from the source archive
         run: ctest --preset gcc-debug -R '^test_build_isolation$'
+      - name: Compiler cache statistics
+        if: always()
+        run: ccache --show-stats
       - name: Upload source archive
-        uses: actions/upload-artifact@v4
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v7
         with:
           name: fplll-source
           path: build/gcc-debug/fplll-*.tar.gz
           if-no-files-found: error
+          compression-level: 0

@@ -2,7 +2,11 @@ name: Code Coverage
 
 on:
   push:
-  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 concurrency:
   group: codecov-${{ github.event.pull_request.number || github.ref }}
@@ -10,6 +14,7 @@ concurrency:
 
 jobs:
   gcc-coverage:
+    if: github.repository == 'fplll/fplll'
     runs-on: ubuntu-24.04
     steps:
       - name: Check out
@@ -21,6 +26,9 @@ jobs:
           cmake --preset gcc-coverage
           cmake --build --preset gcc-coverage
           ctest --preset gcc-coverage
+      - name: Compiler cache statistics
+        if: always()
+        run: ccache --show-stats
       - name: Upload coverage
         uses: codecov/codecov-action@v7.1.1
         with:

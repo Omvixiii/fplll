@@ -1,6 +1,0 @@
-#ifndef FPLLL_BUILD_CONFIG_H
-#define FPLLL_BUILD_CONFIG_H
-
-#define VERSION "@PROJECT_VERSION@"
-
-#endif /* FPLLL_BUILD_CONFIG_H */

@@ -16,7 +16,7 @@
    along with fplll. If not, see <http://www.gnu.org/licenses/>. */
 
 #include "main.h"
-#include <config.h>
+#include <fplll/fplll_config.h>
 
 template <class ZT> int lll(Options &o, ZZ_mat<ZT> &b)
 {
@@ -751,7 +751,7 @@ void read_options(int argc, char **argv, Options &o)
     }
     else if (strcmp(argv[ac], "--version") == 0)
     {
-      cout << "fplll " << VERSION << endl
+      cout << "fplll " << FPLLL_VERSION << endl
            << "Copyright 2005-2012 Damien Stehle, David Cade, Xavier Pujol." << endl
            << "fplll is free software. You can redistribute it and/or modify" << endl
            << "it under the terms of the GNU Lesser General Public License as published by" << endl

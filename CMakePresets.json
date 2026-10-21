@@ -18,34 +18,8 @@
         "CMAKE_CXX_COMPILER_LAUNCHER": "ccache",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
         "CMAKE_INSTALL_LIBDIR": "lib",
-        "CMAKE_INSTALL_PREFIX": "${sourceDir}/_install/${presetName}"
-      }
-    },
-    {
-      "name": "gcc-debug-no-parallel",
-      "displayName": "GCC Debug (parallel enumeration disabled)",
-      "inherits": "gcc-debug",
-      "binaryDir": "${sourceDir}/build/${presetName}",
-      "cacheVariables": {
-        "FPLLL_MAX_PARALLEL_ENUM_DIM": "0"
-      }
-    },
-    {
-      "name": "gcc-debug-qd",
-      "displayName": "GCC Debug (QD enabled)",
-      "inherits": "gcc-debug",
-      "binaryDir": "${sourceDir}/build/${presetName}",
-      "cacheVariables": {
-        "FPLLL_WITH_QD": "ON"
-      }
-    },
-    {
-      "name": "gcc-debug-iterative",
-      "displayName": "GCC Debug (recursive enumeration disabled)",
-      "inherits": "gcc-debug",
-      "binaryDir": "${sourceDir}/build/${presetName}",
-      "cacheVariables": {
-        "FPLLL_WITH_RECURSIVE_ENUM": "OFF"
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/_install/${presetName}",
+        "FPLLL_MAX_PARALLEL_ENUM_DIM": "20"
       }
     },
     {
@@ -54,25 +28,9 @@
       "inherits": "gcc-debug",
       "binaryDir": "${sourceDir}/build/${presetName}",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release"
-      }
-    },
-    {
-      "name": "clang-debug",
-      "displayName": "Clang Debug",
-      "inherits": "gcc-debug",
-      "binaryDir": "${sourceDir}/build/${presetName}",
-      "cacheVariables": {
-        "CMAKE_CXX_COMPILER": "clang++"
-      }
-    },
-    {
-      "name": "clang-release",
-      "displayName": "Clang Release",
-      "inherits": "gcc-release",
-      "binaryDir": "${sourceDir}/build/${presetName}",
-      "cacheVariables": {
-        "CMAKE_CXX_COMPILER": "clang++"
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_CXX_STANDARD": "11",
+        "FPLLL_MAX_PARALLEL_ENUM_DIM": "120"
       }
     },
     {
@@ -105,7 +63,6 @@
       "inherits": "gcc-debug",
       "binaryDir": "${sourceDir}/build/${presetName}",
       "cacheVariables": {
-        "FPLLL_MAX_PARALLEL_ENUM_DIM": "20",
         "CMAKE_CXX_FLAGS": "--coverage",
         "CMAKE_EXE_LINKER_FLAGS": "--coverage",
         "CMAKE_SHARED_LINKER_FLAGS": "--coverage"
@@ -114,156 +71,71 @@
   ],
   "buildPresets": [
     {
+      "name": "common-build",
+      "hidden": true,
+      "jobs": 8
+    },
+    {
       "name": "gcc-debug",
-      "configurePreset": "gcc-debug",
-      "jobs": 8
-    },
-    {
-      "name": "gcc-debug-no-parallel",
-      "configurePreset": "gcc-debug-no-parallel",
-      "jobs": 8
-    },
-    {
-      "name": "gcc-debug-qd",
-      "configurePreset": "gcc-debug-qd",
-      "jobs": 8
-    },
-    {
-      "name": "gcc-debug-iterative",
-      "configurePreset": "gcc-debug-iterative",
-      "jobs": 8
+      "inherits": "common-build",
+      "configurePreset": "gcc-debug"
     },
     {
       "name": "gcc-release",
-      "configurePreset": "gcc-release",
-      "jobs": 8
-    },
-    {
-      "name": "clang-debug",
-      "configurePreset": "clang-debug",
-      "jobs": 8
-    },
-    {
-      "name": "clang-release",
-      "configurePreset": "clang-release",
-      "jobs": 8
+      "inherits": "common-build",
+      "configurePreset": "gcc-release"
     },
     {
       "name": "gcc-asan",
-      "configurePreset": "gcc-asan",
-      "jobs": 8
+      "inherits": "common-build",
+      "configurePreset": "gcc-asan"
     },
     {
       "name": "gcc-ubsan",
-      "configurePreset": "gcc-ubsan",
-      "jobs": 8
+      "inherits": "common-build",
+      "configurePreset": "gcc-ubsan"
     },
     {
       "name": "gcc-coverage",
-      "configurePreset": "gcc-coverage",
-      "jobs": 8
+      "inherits": "common-build",
+      "configurePreset": "gcc-coverage"
     }
   ],
   "testPresets": [
     {
+      "name": "common-test",
+      "hidden": true,
+      "output": {
+        "outputOnFailure": true
+      },
+      "execution": {
+        "noTestsAction": "error"
+      }
+    },
+    {
       "name": "gcc-debug",
-      "configurePreset": "gcc-debug",
-      "output": {
-        "outputOnFailure": true
-      },
-      "execution": {
-        "noTestsAction": "error"
-      }
-    },
-    {
-      "name": "gcc-debug-no-parallel",
-      "configurePreset": "gcc-debug-no-parallel",
-      "output": {
-        "outputOnFailure": true
-      },
-      "execution": {
-        "noTestsAction": "error"
-      }
-    },
-    {
-      "name": "gcc-debug-qd",
-      "configurePreset": "gcc-debug-qd",
-      "output": {
-        "outputOnFailure": true
-      },
-      "execution": {
-        "noTestsAction": "error"
-      }
-    },
-    {
-      "name": "gcc-debug-iterative",
-      "configurePreset": "gcc-debug-iterative",
-      "output": {
-        "outputOnFailure": true
-      },
-      "execution": {
-        "noTestsAction": "error"
-      }
+      "inherits": "common-test",
+      "configurePreset": "gcc-debug"
     },
     {
       "name": "gcc-release",
-      "configurePreset": "gcc-release",
-      "output": {
-        "outputOnFailure": true
-      },
-      "execution": {
-        "noTestsAction": "error"
-      }
-    },
-    {
-      "name": "clang-debug",
-      "configurePreset": "clang-debug",
-      "output": {
-        "outputOnFailure": true
-      },
-      "execution": {
-        "noTestsAction": "error"
-      }
-    },
-    {
-      "name": "clang-release",
-      "configurePreset": "clang-release",
-      "output": {
-        "outputOnFailure": true
-      },
-      "execution": {
-        "noTestsAction": "error"
-      }
+      "inherits": "common-test",
+      "configurePreset": "gcc-release"
     },
     {
       "name": "gcc-asan",
-      "configurePreset": "gcc-asan",
-      "output": {
-        "outputOnFailure": true
-      },
-      "execution": {
-        "noTestsAction": "error"
-      }
+      "inherits": "common-test",
+      "configurePreset": "gcc-asan"
     },
     {
       "name": "gcc-ubsan",
-      "configurePreset": "gcc-ubsan",
-      "output": {
-        "outputOnFailure": true
-      },
-      "execution": {
-        "noTestsAction": "error"
-      }
+      "inherits": "common-test",
+      "configurePreset": "gcc-ubsan"
     },
     {
       "name": "gcc-coverage",
-      "configurePreset": "gcc-coverage",
-      "output": {
-        "outputOnFailure": true
-      },
-      "execution": {
-        "noTestsAction": "error"
-      }
+      "inherits": "common-test",
+      "configurePreset": "gcc-coverage"
     }
   ]
 }

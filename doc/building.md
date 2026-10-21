@@ -2,12 +2,12 @@
 
 ## Requirements and presets
 
-Use CMake 3.20 or newer, Ninja, ccache, a C++11 compiler, GMP and MPFR.
-The GCC development preset enables C++23 explicitly; other consumers may use
-the C++11 compatibility baseline.
-The presets use `g++` or `clang++` from `PATH`. On macOS, install the libraries
-and tools with Homebrew and use a Clang preset. Linux and WSL use the same
-CMake commands. For nonstandard dependency locations, set `CMAKE_PREFIX_PATH`.
+Use CMake 3.20 or newer, Ninja, ccache, GMP and MPFR. The GCC development
+preset requires a C++23 compiler. Without a preset, the project defaults to
+C++11, which remains the minimum supported standard for consumers. The release
+preset also uses C++11. The checked-in presets use `g++` from `PATH` on Linux
+and WSL. Other toolchains can configure a separate binary directory without a
+checked-in preset. For nonstandard dependency locations, set `CMAKE_PREFIX_PATH`.
 
 ```sh
 cmake --list-presets=all
@@ -17,11 +17,27 @@ ctest --preset gcc-debug
 cmake --install build/gcc-debug
 ```
 
-All ten configure presets have matching build and test presets. Each resolves
+All five configure presets have matching build and test presets. Each resolves
 `binaryDir` to `build/<preset>` and the install prefix to `_install/<preset>`,
-including inherited QD, enumeration, sanitizer and coverage variants.
-Build presets use eight jobs; override this with `--parallel` when needed.
+including inherited sanitizer and coverage variants.
+Hidden common presets share the build and test defaults without adding choices
+to the preset list. Build presets use eight jobs; override this with
+`--parallel` when needed.
 The ccache location is controlled by the local ccache configuration.
+For regular development, use `gcc-debug`. It builds only parallel enumeration
+dimension 20, leaving one generated dimension source instead of eleven; set
+`FPLLL_MAX_PARALLEL_ENUM_DIM=120` to exercise the full range. `gcc-release`
+retains the full range and checks the C++11 baseline. These two presets are the
+regular build contracts. `gcc-asan`, `gcc-ubsan`, and `gcc-coverage` are periodic
+diagnostic configurations. Feature switches such as QD remain CMake options,
+so each option combination does not require another persistent build tree.
+
+For an edit/build loop, select the `fplll_cli` target in CMake Tools or build
+that target with the `gcc-debug` preset. This builds the library and CLI without
+compiling every test executable. Build the default `all` target before running
+the full CTest suite. Changing the compiler, C++ standard, or configured
+features still requires recompiling the affected objects; a no-op reconfigure
+does not.
 
 Consumers and package managers may configure a different binary directory
 using `cmake -S <source> -B <binary>`. A binary directory equal to the source
@@ -34,7 +50,6 @@ instead of attempting an in-source configure in the checkout.
 | Output | Location relative to the binary directory |
 | --- | --- |
 | Public configuration header | `fplll/fplll_config.h` |
-| Private configuration header | `config.h` |
 | Public umbrella header | `fplll.h` |
 | Generated enumeration translation units | `generated/enum-parallel/` |
 | Executables, debug tools and tests | `bin/<CONFIG>/` |
@@ -72,10 +87,24 @@ The source-package and installed-consumer regression fixtures live in
 | `FPLLL_MAX_PARALLEL_ENUM_DIM` | `120`; `0` disables parallel enumeration |
 | `FPLLL_EXTENUM_DIR`, `FPLLL_EXTENUM_LIBRARY`, `FPLLL_EXTENUM_FUNCTION` | External enumeration library and symbol |
 | `FPLLL_BUILD_ISOLATION_TESTS` | `OFF`; enable the slower source-package regression test |
+| `FPLLL_ISOLATION_WITH_QD` | `OFF`; enable QD in that regression test's standalone build |
 
 Parallel dimensions are multiples of ten between 20 and 160 and must be smaller
 than `FPLLL_MAX_ENUM_DIM`. MPIR and external enumeration require independently
 installed dependencies; their availability is separate from the default build.
+Sanitizer presets also require the matching GCC runtime libraries.
+The `CMAKE_CXX_STANDARD` value in a preset or embedding project takes precedence
+over the C++11 default. The source-package isolation test builds without a
+standard override and verifies the C++11 baseline.
+
+The remaining `.in` files contain configure-time substitutions: feature and
+version macros, per-dimension enumeration sources, package metadata, or Doxygen
+paths. The CLI programs use the version in `fplll/fplll_config.h`, so a second
+private version header is unnecessary. CMake's `configure_file()` updates
+generated outputs only when their content changes, keeping no-op
+reconfiguration from recompiling the project.
+The static umbrella header is stored as `cmake/fplll.h` and copied into the
+binary directory without template processing.
 
 Default targets include shared/static `fplll` libraries, `fplll_cli` (output
 name `fplll`), `latticegen`, and tests when enabled. Optional targets are
@@ -107,10 +136,14 @@ ctest --preset gcc-debug -R '^test_build_isolation$'
 The regression test unpacks the release source archive into a private binary
 directory, checks that local notes and legacy toolchain files are absent, and
 verifies rejection of direct and symlinked in-source builds. It then plants
-invalid source-tree configuration headers to detect accidental inclusion,
+an invalid source-tree configuration header to detect accidental inclusion,
 builds the core and optional variants, runs all 15 numerical tests, installs,
 and runs shared/static downstream consumers. Source file names and hashes must
 remain unchanged. Its logs stay in `test-work/DEBUG/build-isolation/sandbox/`.
+CI enables `FPLLL_ISOLATION_WITH_QD` to exercise the optional QD arithmetic in
+the C++11 build and installed consumers; local runs leave it off unless QD is
+available. The standalone build reuses the parent compiler launcher, including
+ccache when configured.
 
 Source archives exclude Git metadata, local notes, editor/agent state, caches,
 build outputs and installation prefixes. The `package_source` target replaces
@@ -127,6 +160,19 @@ and HTML template settings; CMake includes it through
 source/build paths. Keep both files while this documentation target exists:
 deleting the base configuration would also discard the project's custom
 documentation settings. Doxygen is optional for normal builds.
+
+## Continuous integration
+
+Pull requests run three checks on Ubuntu: C++ formatting and workflow syntax,
+the GCC C++23 build
+and numerical tests, and a C++11 source-package build with QD, numerical tests,
+installation, and downstream consumers. The formatting check installs only
+formatting tools. The two build checks use separate compiler-cache scopes.
+Upstream `master` pushes also update coverage. The weekly and manually triggered
+CMake workflow runs focused address- and undefined-behavior sanitizer tests.
+Release tags validate the C++11 release preset before publishing a source
+archive; manually triggered source-package runs also upload the archive as an
+artifact. Docker image publishing is a separate upstream-only workflow.
 
 ## Historical baseline and cleanup
 
