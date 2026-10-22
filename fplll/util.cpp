@@ -268,7 +268,7 @@ void cost_estimate(FP_NR<mpfr_t> &cost, const FP_NR<mpfr_t> &bound, const Matrix
 const char *get_red_status_str(int status)
 {
   if (status >= 0 && status < RED_STATUS_MAX)
-    return RED_STATUS_STR[status];
+    return RED_STATUS_STR[status].data();
   else
     return "unknown error";
 }

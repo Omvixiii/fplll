@@ -27,6 +27,7 @@
 #define FPLLL_WITH_ZLONG
 
 #include <algorithm>
+#include <array>
 #include <climits>
 #include <cmath>
 #include <cstddef>
@@ -40,6 +41,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 
 #include <fplll/fplll_config.h>
 #include <gmp.h>
@@ -118,25 +120,25 @@ using namespace std;
 
 /* this trick will not work on 16-bit machines*/
 #if (LONG_MAX == 2147483647L)
-const double MAX_LONG_FAST = 1073741824.0;
+inline constexpr double MAX_LONG_FAST = 1073741824.0;
 #else
-const double MAX_LONG_FAST = 9007199254740992.0;
+inline constexpr double MAX_LONG_FAST = 9007199254740992.0;
 #endif
 
-const int MAX_EXP_DOUBLE = 1000;
-const int PREC_DOUBLE    = 53;
-const int PREC_DD        = 106;
-const int PREC_QD        = 212;
+inline constexpr int MAX_EXP_DOUBLE = 1000;
+inline constexpr int PREC_DOUBLE    = 53;
+inline constexpr int PREC_DD        = 106;
+inline constexpr int PREC_QD        = 212;
 
-const double LLL_DEF_DELTA        = 0.99;
-const double LLL_DEF_ETA          = 0.51;
-const double LLL_DEF_EPSILON      = 0.01;
-const int SIZE_RED_FAILURE_THRESH = 5;
+inline constexpr double LLL_DEF_DELTA        = 0.99;
+inline constexpr double LLL_DEF_ETA          = 0.51;
+inline constexpr double LLL_DEF_EPSILON      = 0.01;
+inline constexpr int SIZE_RED_FAILURE_THRESH = 5;
 
 // Constraint: 1/2 < eta - theta
-const double HLLL_DEF_THETA = 0.001;
+inline constexpr double HLLL_DEF_THETA = 0.001;
 // Constant for the size reduction.
-const double HLLL_DEF_C = 0.1;
+inline constexpr double HLLL_DEF_C = 0.1;
 
 enum RedStatus
 {
@@ -156,7 +158,7 @@ enum RedStatus
   RED_STATUS_MAX        = 13
 };
 
-const char *const RED_STATUS_STR[RED_STATUS_MAX] = {
+inline constexpr std::array<std::string_view, RED_STATUS_MAX> RED_STATUS_STR = {
     "success",
     "",
     "infinite number in GSO",
@@ -179,11 +181,13 @@ enum LLLMethod
   LM_FAST      = 3
 };
 
-const char *const LLL_METHOD_STR[6] = {"wrapper", "proved", "heuristic", "fast"};
+inline constexpr std::array<std::string_view, 4> LLL_METHOD_STR = {"wrapper", "proved", "heuristic",
+                                                                   "fast"};
 
 // LM_HEURISTIC is not (yet) an option for HLLL and cannot be called from the fplll binary, then
 // we leave empty the third string.
-const char *const HLLL_METHOD_STR[4] = {"wrapper", "proved", "", "fast"};
+inline constexpr std::array<std::string_view, 4> HLLL_METHOD_STR = {"wrapper", "proved", "",
+                                                                    "fast"};
 
 enum IntType
 {
@@ -191,7 +195,7 @@ enum IntType
   ZT_LONG = 1
 };
 
-const char *const INT_TYPE_STR[2] = {"mpz", "long"};
+inline constexpr std::array<std::string_view, 2> INT_TYPE_STR = {"mpz", "long"};
 
 enum FloatType
 {
@@ -204,7 +208,8 @@ enum FloatType
   FT_MPFR        = 6
 };
 
-const char *const FLOAT_TYPE_STR[7] = {"", "double", "long double", "dpe", "dd", "qd", "mpfr"};
+inline constexpr std::array<std::string_view, 7> FLOAT_TYPE_STR = {
+    "", "double", "long double", "dpe", "dd", "qd", "mpfr"};
 
 enum LLLFlags
 {
@@ -240,11 +245,11 @@ enum CVPFlags
   CVP_VERBOSE = SVP_VERBOSE
 };
 
-const double BKZ_DEF_AUTO_ABORT_SCALE        = 1.0;
-const int BKZ_DEF_AUTO_ABORT_MAX_NO_DEC      = 5;
-const double BKZ_DEF_GH_FACTOR               = 1.1;
-const double BKZ_DEF_MIN_SUCCESS_PROBABILITY = 0.5;
-const int BKZ_DEF_RERANDOMIZATION_DENSITY    = 3;
+inline constexpr double BKZ_DEF_AUTO_ABORT_SCALE        = 1.0;
+inline constexpr int BKZ_DEF_AUTO_ABORT_MAX_NO_DEC      = 5;
+inline constexpr double BKZ_DEF_GH_FACTOR               = 1.1;
+inline constexpr double BKZ_DEF_MIN_SUCCESS_PROBABILITY = 0.5;
+inline constexpr int BKZ_DEF_RERANDOMIZATION_DENSITY    = 3;
 
 enum BKZFlags
 {

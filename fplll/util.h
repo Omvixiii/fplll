@@ -50,7 +50,7 @@ void vector_matrix_product(NumVect<ZT> &result, const NumVect<ZT> &x, const Matr
       result[j].addmul(x[i], m(i, j));
 }
 
-const double DEF_GSO_PREC_EPSILON = 0.03;
+inline constexpr double DEF_GSO_PREC_EPSILON = 0.03;
 
 /**
  * Returns the minimum precision required to ensure that error bounds on the
