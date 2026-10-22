@@ -14,10 +14,10 @@
 #define FPLLL_MICRO_VERSION @PROJECT_VERSION_PATCH@
 
 /* fplll version */
-#define FPLLL_VERSION "@FPLLL_VERSION_INFO@"
+#define FPLLL_VERSION "@PROJECT_VERSION@"
 
 /* fplll version info */
-#define FPLLL_VERSION_INFO "@FPLLL_VERSION_INFO@"
+#define FPLLL_VERSION_INFO "@PROJECT_VERSION@"
 
 /* Maximum supported enumeration dimension */
 #define FPLLL_MAX_ENUM_DIM @FPLLL_MAX_ENUM_DIM@

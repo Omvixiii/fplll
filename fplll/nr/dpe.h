@@ -14,7 +14,7 @@
    License for more details.
 
    You should have received a copy of the GNU Lesser General Public License
-   along with the DPE Library; see the file COPYING.LIB.  If not, see
+   along with the DPE Library; see the file LICENSE.  If not, see
    <https://www.gnu.org/licenses/>. */
 
 /* WARNING: Patched version */

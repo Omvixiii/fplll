@@ -8,9 +8,8 @@ if(FPLLL_SOURCE_DIR_REAL STREQUAL FPLLL_BINARY_DIR_REAL)
     "In-source builds are disabled. Configure with a CMake Preset or pass a separate -B binary directory.")
 endif()
 
-include(cmake/FplllVersion.cmake)
-project(fplll VERSION "${FPLLL_VERSION}" LANGUAGES CXX)
-message(STATUS "fplll version: ${FPLLL_VERSION_INFO}")
+project(fplll VERSION 5.5.0 LANGUAGES CXX)
+message(STATUS "fplll version: ${PROJECT_VERSION}")
 
 # C++11 is the compatibility baseline. Presets and embedding projects may
 # request a newer standard without this project silently overriding it.
@@ -267,7 +266,7 @@ fplll_configure_library(fplll_objects)
 
 add_library(fplll SHARED $<TARGET_OBJECTS:fplll_objects>)
 add_library(fplll::fplll ALIAS fplll)
-set_target_properties(fplll PROPERTIES VERSION 9.0.0 SOVERSION 9)
+set_target_properties(fplll PROPERTIES VERSION "${PROJECT_VERSION}" SOVERSION 9)
 fplll_configure_library(fplll)
 
 add_library(fplll_static STATIC $<TARGET_OBJECTS:fplll_objects>)
@@ -280,7 +279,7 @@ fplll_configure_library(fplll_static)
 
 # Optional variant/debug targets for downstream packagers and developers.
 add_library(fplllv SHARED EXCLUDE_FROM_ALL $<TARGET_OBJECTS:fplll_objects>)
-set_target_properties(fplllv PROPERTIES VERSION 9.0.0 SOVERSION 9)
+set_target_properties(fplllv PROPERTIES VERSION "${PROJECT_VERSION}" SOVERSION 9)
 fplll_configure_library(fplllv)
 
 add_library(fplll_debug_objects OBJECT EXCLUDE_FROM_ALL ${FPLLL_LIBRARY_SOURCES})
@@ -289,7 +288,7 @@ fplll_configure_library(fplll_debug_objects)
 target_compile_definitions(fplll_debug_objects PRIVATE DEBUG)
 
 add_library(fpllld SHARED EXCLUDE_FROM_ALL $<TARGET_OBJECTS:fplll_debug_objects>)
-set_target_properties(fpllld PROPERTIES VERSION 9.0.0 SOVERSION 9)
+set_target_properties(fpllld PROPERTIES VERSION "${PROJECT_VERSION}" SOVERSION 9)
 fplll_configure_library(fpllld)
 target_compile_definitions(fpllld PUBLIC DEBUG)
 
@@ -477,9 +476,6 @@ set(CPACK_SOURCE_GENERATOR TGZ)
 set(CPACK_SOURCE_PACKAGE_FILE_NAME "fplll-${PROJECT_VERSION}")
 set(CPACK_SOURCE_INSTALLED_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR};/")
 set(CPACK_VERBATIM_VARIABLES YES)
-configure_file(cmake/CPackSourceVersion.cmake.in
-  "${CMAKE_CURRENT_BINARY_DIR}/CPackSourceVersion.cmake" @ONLY)
-list(APPEND CPACK_PRE_BUILD_SCRIPTS "${CMAKE_CURRENT_BINARY_DIR}/CPackSourceVersion.cmake")
 string(REGEX REPLACE "([][+.*()^$?|\\\\])" "\\\\\\1"
   FPLLL_SOURCE_REGEX "${CMAKE_CURRENT_SOURCE_DIR}")
 string(REGEX REPLACE "([][+.*()^$?|\\\\])" "\\\\\\1"

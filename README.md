@@ -89,8 +89,7 @@ local API reference pages. Its configuration is explained in the
 ## License and project information
 
 fplll is licensed under the [GNU Lesser General Public License, version 2.1 or
-later](COPYING). The full text is retained as `COPYING`, the conventional GNU
-license filename also referenced by source files.
+later](LICENSE). The full license text is available in `LICENSE`.
 
 Changes are recorded in [CHANGELOG.md](CHANGELOG.md); contributor guidance is
 in [CONTRIBUTING.md](CONTRIBUTING.md). For bug reports and feature requests,

@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.20)
 # checkout itself: even the intentionally rejected in-source configure may
 # leave CMake's initial cache behind.
 foreach(required FPLLL_SOURCE_DIR FPLLL_TEST_ROOT FPLLL_TEST_CXX_COMPILER
-    FPLLL_PARENT_BINARY_DIR FPLLL_VERSION)
+    FPLLL_PARENT_BINARY_DIR FPLLL_PROJECT_VERSION)
   if(NOT DEFINED ${required} OR "${${required}}" STREQUAL "")
     message(FATAL_ERROR "${required} is required")
   endif()
@@ -46,19 +46,15 @@ endfunction()
 # The source distribution is the same artifact that users build on release.
 run_step(package "${CMAKE_COMMAND}" --build "${FPLLL_PARENT_BINARY_DIR}"
   --target package_source)
-set(archive "${FPLLL_PARENT_BINARY_DIR}/fplll-${FPLLL_VERSION}.tar.gz")
+set(archive "${FPLLL_PARENT_BINARY_DIR}/fplll-${FPLLL_PROJECT_VERSION}.tar.gz")
 file(ARCHIVE_EXTRACT INPUT "${archive}" DESTINATION "${FPLLL_TEST_ROOT}/unpacked")
-file(RENAME "${FPLLL_TEST_ROOT}/unpacked/fplll-${FPLLL_VERSION}" "${source}")
+file(RENAME "${FPLLL_TEST_ROOT}/unpacked/fplll-${FPLLL_PROJECT_VERSION}" "${source}")
 foreach(forbidden m4 configure.ac autogen.sh Makefile.am fplll/Makefile.am
     tests/Makefile.am fplll/fplll_config.h.in notes .git build _install VERSION VERSION.txt)
   if(EXISTS "${source}/${forbidden}")
     message(FATAL_ERROR "Source archive contains forbidden entry: ${forbidden}")
   endif()
 endforeach()
-if(NOT EXISTS "${source}/cmake/FplllArchiveVersion.cmake")
-  message(FATAL_ERROR "Source archive is missing its generated version metadata")
-endif()
-
 # Reject both the direct and symlink spellings of an in-source binary path.
 set(rejected "${FPLLL_TEST_ROOT}/in-source")
 file(MAKE_DIRECTORY "${rejected}")
@@ -106,7 +102,7 @@ run_step(consumer-configure "${CMAKE_COMMAND}"
   -S "${source}/tests/cmake/consumer" -B "${FPLLL_TEST_ROOT}/consumer" -G Ninja
   -C "${FPLLL_TEST_ROOT}/consumer-prefix.cmake"
   "-DCMAKE_CXX_COMPILER=${FPLLL_TEST_CXX_COMPILER}"
-  "-DFPLLL_EXPECTED_VERSION=${FPLLL_VERSION}"
+  "-DFPLLL_EXPECTED_VERSION=${FPLLL_PROJECT_VERSION}"
   "-DCMAKE_PREFIX_PATH=${prefix};${FPLLL_TEST_PREFIX_PATH}")
 run_step(consumer-build "${CMAKE_COMMAND}"
   --build "${FPLLL_TEST_ROOT}/consumer" --parallel 2)
