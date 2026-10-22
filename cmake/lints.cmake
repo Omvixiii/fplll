@@ -9,10 +9,11 @@ if(NOT EXISTS "${FPLLL_SOURCE_DIR}/.clang-format")
 endif()
 find_program(CLANG_FORMAT_EXECUTABLE NAMES clang-format REQUIRED)
 
-# Discover files at invocation time, including test helpers and public headers.
-# This list does not control compilation, so new files need no reconfiguration.
+# Discover files at invocation time, including test helpers, tools, benchmarks
+# and public headers. This list does not control compilation, so new files need
+# no reconfiguration.
 set(sources)
-foreach(directory fplll tests)
+foreach(directory fplll tests tools bench)
   foreach(extension cpp h hpp inl)
     file(GLOB_RECURSE files LIST_DIRECTORIES FALSE
       "${FPLLL_SOURCE_DIR}/${directory}/*.${extension}")

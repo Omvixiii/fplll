@@ -32,9 +32,24 @@ include(GNUInstallDirs)
 list(PREPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules")
 find_package(Threads REQUIRED)
 
+# Optional strict warnings for project sources. Vendored headers are included
+# through normal include paths and are not part of the warning policy.
+if(FPLLL_WARNINGS)
+  if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    add_compile_options(-Wall -Wextra -Wpedantic -Wshadow -Wnon-virtual-dtor
+      -Woverloaded-virtual)
+  endif()
+  if(FPLLL_WARNINGS_AS_ERRORS)
+    add_compile_options(-Werror)
+  endif()
+endif()
+
 option(FPLLL_USE_MPIR "Use MPIR instead of GMP" OFF)
 option(FPLLL_WITH_QD "Enable quad-double support when libqd is available" OFF)
 option(FPLLL_WITH_RECURSIVE_ENUM "Enable recursive enumeration" ON)
+option(FPLLL_WARNINGS "Enable the project's strict warnings" OFF)
+option(FPLLL_WARNINGS_AS_ERRORS "Treat compiler warnings as errors" OFF)
+option(FPLLL_BUILD_BENCHMARKS "Build the microbenchmark executable" OFF)
 set(FPLLL_MPIR_ROOT "" CACHE PATH "MPIR installation prefix")
 set(FPLLL_MAX_ENUM_DIM 256 CACHE STRING "Maximum supported enumeration dimension")
 set(FPLLL_MAX_PARALLEL_ENUM_DIM 120 CACHE STRING
@@ -351,6 +366,10 @@ if(PROJECT_IS_TOP_LEVEL)
 
   include(cmake/documentation.cmake)
   fplll_add_documentation()
+
+  if(FPLLL_BUILD_BENCHMARKS)
+    add_subdirectory(bench)
+  endif()
 
   # Full release lifecycle check; the script reads the parent configuration
   # from this build tree's CMakeCache.txt.

@@ -126,12 +126,12 @@ using namespace std;
 #if (LONG_MAX == 2147483647L)
 const int CPU_SIZE         = 32;
 const int CPU_SIZE_1       = 30;
-const double MAX_LONG_FAST = 0x1p30;
+const double MAX_LONG_FAST = 1073741824.0;
 const long int EXPO_MAX    = 30;
 #else
 const int CPU_SIZE         = 64;
 const int CPU_SIZE_1       = 53;
-const double MAX_LONG_FAST = 0x1p53;
+const double MAX_LONG_FAST = 9007199254740992.0;
 const long int EXPO_MAX    = 53;
 #endif
 

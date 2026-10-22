@@ -1,0 +1,37 @@
+# Conservative clang-tidy configuration for the modernization program.
+# Vendored headers are excluded through the header filter; the project is in
+# transition, so checks that would require large mechanical rewrites are not
+# enabled yet.
+Checks: >
+  -*,
+  bugprone-*,
+  performance-*,
+  modernize-*,
+  -modernize-use-trailing-return-type,
+  -modernize-use-nodiscard,
+  -modernize-avoid-c-arrays,
+  readability-braces-around-statements,
+  readability-const-return-type,
+  readability-container-size-empty,
+  readability-deleted-default,
+  readability-duplicate-include,
+  readability-misleading-indentation,
+  readability-misplaced-array-index,
+  readability-non-const-parameter,
+  readability-redundant-*,
+  readability-static-accessed-through-instance,
+  readability-static-definition-in-anonymous-namespace,
+  readability-string-compare,
+  readability-uniqueptr-delete-release,
+  readability-use-equals-default,
+  readability-use-equals-delete,
+  llvm-namespace-comment,
+  misc-unused-parameters,
+  misc-unused-using-decls
+WarningsAsErrors: ''
+HeaderFilterRegex: '^(fplll|tools|tests|bench)/'
+ExcludeHeaderFilterRegex: '^fplll/io/(json|thread_pool)\.hpp$'
+FormatStyle: file
+CheckOptions:
+  - key: readability-identifier-naming.ClassCase
+    value: CamelCase

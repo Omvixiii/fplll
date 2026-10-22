@@ -23,6 +23,7 @@
 #define FPLLL_DPE_H
 #define __DPE
 
+#include <cmath>    /* for std::isfinite */
 #include <math.h>   /* for round, floor, ceil */
 #include <stdio.h>  /* For fprintf and fscanf */
 #include <stdlib.h> /* For exit */

@@ -36,6 +36,32 @@
       "cacheVariables": {
         "CMAKE_CXX_FLAGS": "-fsanitize=undefined -fno-sanitize-recover=undefined -fno-omit-frame-pointer"
       }
+    },
+    {
+      "name": "warnings",
+      "inherits": "debug",
+      "cacheVariables": {
+        "FPLLL_WARNINGS": true,
+        "FPLLL_WARNINGS_AS_ERRORS": true
+      }
+    },
+    {
+      "name": "asan",
+      "inherits": "debug",
+      "cacheVariables": {
+        "CMAKE_CXX_FLAGS": "-fsanitize=address,undefined -fno-sanitize-recover=undefined -fno-omit-frame-pointer -g",
+        "CMAKE_EXE_LINKER_FLAGS": "-fsanitize=address,undefined",
+        "CMAKE_SHARED_LINKER_FLAGS": "-fsanitize=address,undefined"
+      }
+    },
+    {
+      "name": "tsan",
+      "inherits": "debug",
+      "cacheVariables": {
+        "CMAKE_CXX_FLAGS": "-fsanitize=thread -fno-omit-frame-pointer -g",
+        "CMAKE_EXE_LINKER_FLAGS": "-fsanitize=thread",
+        "CMAKE_SHARED_LINKER_FLAGS": "-fsanitize=thread"
+      }
     }
   ],
   "buildPresets": [
@@ -50,6 +76,18 @@
     {
       "name": "ubsan",
       "configurePreset": "ubsan"
+    },
+    {
+      "name": "warnings",
+      "configurePreset": "warnings"
+    },
+    {
+      "name": "asan",
+      "configurePreset": "asan"
+    },
+    {
+      "name": "tsan",
+      "configurePreset": "tsan"
     },
     {
       "name": "distcheck",
@@ -82,6 +120,21 @@
       "name": "ubsan",
       "inherits": "base",
       "configurePreset": "ubsan"
+    },
+    {
+      "name": "warnings",
+      "inherits": "base",
+      "configurePreset": "warnings"
+    },
+    {
+      "name": "asan",
+      "inherits": "base",
+      "configurePreset": "asan"
+    },
+    {
+      "name": "tsan",
+      "inherits": "base",
+      "configurePreset": "tsan"
     }
   ],
   "workflowPresets": [
@@ -91,6 +144,22 @@
         {"type": "configure", "name": "debug"},
         {"type": "build", "name": "debug"},
         {"type": "test", "name": "debug"}
+      ]
+    },
+    {
+      "name": "warnings",
+      "steps": [
+        {"type": "configure", "name": "warnings"},
+        {"type": "build", "name": "warnings"},
+        {"type": "test", "name": "warnings"}
+      ]
+    },
+    {
+      "name": "asan",
+      "steps": [
+        {"type": "configure", "name": "asan"},
+        {"type": "build", "name": "asan"},
+        {"type": "test", "name": "asan"}
       ]
     },
     {
