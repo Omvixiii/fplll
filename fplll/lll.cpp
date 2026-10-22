@@ -18,6 +18,7 @@
 /* Template source file */
 
 #include "lll.h"
+#include "detail/cpu_time.h"
 #include "util.h"
 
 FPLLL_BEGIN_NAMESPACE
@@ -49,10 +50,10 @@ bool LLLReduction<ZT, FT>::lll(int kappa_min, int kappa_start, int kappa_end,
     kappa_end = m.d;
 
   FPLLL_DEBUG_CHECK(kappa_min <= kappa_start && kappa_start < kappa_end && kappa_end <= m.d);
-  int start_time = (verbose) ? cputime() : 0;
-  int kappa      = kappa_start + 1;
-  int kappa_max  = 0;
-  int d          = kappa_end - kappa_min;
+  std::int64_t start_time = (verbose) ? detail::cpu_time_milliseconds() : 0;
+  int kappa               = kappa_start + 1;
+  int kappa_max           = 0;
+  int d                   = kappa_end - kappa_min;
 
   zeros       = 0;
   n_swaps     = 0;
@@ -86,7 +87,7 @@ bool LLLReduction<ZT, FT>::lll(int kappa_min, int kappa_start, int kappa_end,
       if (verbose)
       {
         log_stream() << "Discovering vector " << kappa - kappa_min + 1 + zeros << "/" << d
-                     << " cputime=" << cputime() - start_time << '\n';
+                     << " cputime=" << detail::cpu_time_milliseconds() - start_time << '\n';
       }
       kappa_max = kappa;
       if (enable_early_red && is_power_of_2(kappa) && kappa > last_early_red)

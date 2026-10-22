@@ -20,6 +20,17 @@
 - Consolidate historical release notes here; keep local migration notes out of
   version control and source packages.
 
+### Changed
+
+- Library diagnostics are silent by default and go through
+  `fplll::set_log_stream()`; the CLI enables them for verbose and pruning runs.
+- Integer randomization uses `std::mt19937_64` with a deterministic default
+  seed; the GMP random state is seeded from the same API.
+- CPU timings use `clock_gettime`/`std::clock` through an internal helper; the
+  POSIX headers are gone from the public headers.
+- Numeric command-line arguments and `Z_NR<long>`/`FP_NR<double>` string
+  parsing use `std::from_chars` and reject malformed input.
+
 ## Historical releases
 
 The entries below preserve the release notes previously stored in NEWS.

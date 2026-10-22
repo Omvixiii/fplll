@@ -20,6 +20,7 @@
 
 #include "bkz.h"
 #include "bkz_param.h"
+#include "detail/cpu_time.h"
 #include "enum/enumerate.h"
 #include "util.h"
 #include "wrapper.h"
@@ -374,7 +375,7 @@ bool BKZReduction<ZT, FT>::tour(const int loop, int &kappa_max, const BKZParam &
   if (par.flags & BKZ_DUMP_GSO)
   {
     dump_gso(par.dump_gso_filename, true, "End of BKZ loop", loop,
-             (cputime() - cputime_start) * 0.001);
+             (detail::cpu_time_seconds() - cputime_start));
   }
 
   // Symmetrize the Gram matrix
@@ -455,7 +456,7 @@ bool BKZReduction<ZT, FT>::sd_tour(const int loop, const BKZParam &par, int min_
   if (par.flags & BKZ_DUMP_GSO)
   {
     dump_gso(par.dump_gso_filename, true, "End of SD-BKZ loop", loop,
-             (cputime() - cputime_start) * 0.001);
+             (detail::cpu_time_seconds() - cputime_start));
   }
 
   return clean;
@@ -507,7 +508,7 @@ bool BKZReduction<ZT, FT>::slide_tour(const int loop, const BKZParam &par, int m
   if (par.flags & BKZ_DUMP_GSO)
   {
     dump_gso(par.dump_gso_filename, true, "End of SLD loop", loop,
-             (cputime() - cputime_start) * 0.001);
+             (detail::cpu_time_seconds() - cputime_start));
   }
 
   // we check the potential function to see if we made progress
@@ -560,7 +561,8 @@ template <class ZT, class FT> bool BKZReduction<ZT, FT>::bkz()
     log_stream() << '\n';
   }
 
-  cputime_start = ((flags & BKZ_DUMP_GSO) || (flags & BKZ_MAX_TIME)) ? cputime() : 0;
+  cputime_start =
+      ((flags & BKZ_DUMP_GSO) || (flags & BKZ_MAX_TIME)) ? detail::cpu_time_seconds() : 0;
 
   m.discover_all_rows();
 
@@ -585,7 +587,7 @@ template <class ZT, class FT> bool BKZReduction<ZT, FT>::bkz()
       final_status = RED_BKZ_LOOPS_LIMIT;
       break;
     }
-    if ((flags & BKZ_MAX_TIME) && (cputime() - cputime_start) * 0.001 >= param.max_time)
+    if ((flags & BKZ_MAX_TIME) && (detail::cpu_time_seconds() - cputime_start) >= param.max_time)
     {
       final_status = RED_BKZ_TIME_LIMIT;
       break;
@@ -666,7 +668,8 @@ template <class ZT, class FT> bool BKZReduction<ZT, FT>::bkz()
 
   if (flags & BKZ_DUMP_GSO)
   {
-    dump_gso(param.dump_gso_filename, true, "Output", -1, (cputime() - cputime_start) * 0.001);
+    dump_gso(param.dump_gso_filename, true, "Output", -1,
+             (detail::cpu_time_seconds() - cputime_start));
   }
   return set_status(final_status);
 }
@@ -682,7 +685,7 @@ void BKZReduction<ZT, FT>::print_tour(const int loop, int min_row, int max_row)
   fr0.mul_2si(fr0, expo);
   log_stream() << "End of " << algorithm << " loop " << std::setw(4) << loop
                << ", time = " << std::fixed << std::setw(9) << std::setprecision(3)
-               << (cputime() - cputime_start) * 0.001 << "s";
+               << (detail::cpu_time_seconds() - cputime_start) << "s";
   log_stream() << ", r_" << min_row << " = " << fr0;
   log_stream() << ", slope = " << std::setw(9) << std::setprecision(6)
                << m.get_current_slope(min_row, max_row);

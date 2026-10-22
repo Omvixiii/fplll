@@ -19,6 +19,7 @@
 /* Template source file */
 
 #include "hlll.h"
+#include "detail/cpu_time.h"
 #include "util.h"
 
 FPLLL_BEGIN_NAMESPACE
@@ -33,7 +34,7 @@ template <class ZT, class FT> bool HLLLReduction<ZT, FT>::hlll()
    * Experimentally, the delta used during the computation must be equal to
    * (delta + (0.01 or 0.02) to have an basis which is HLLL-reduced w.r.t delta.
    */
-  int start_time = (verbose) ? cputime() : 0;
+  std::int64_t start_time = (verbose) ? detail::cpu_time_milliseconds() : 0;
   // True if the corresponding vector is weak size-reduced
   bool status_sr = true;
 
@@ -42,8 +43,8 @@ template <class ZT, class FT> bool HLLLReduction<ZT, FT>::hlll()
     // Print the parameters of the computation
     print_params();
     // Discover b[0]
-    log_stream() << "Discovering vector 1/" << m.get_d() << " cputime=" << cputime() - start_time
-                 << '\n';
+    log_stream() << "Discovering vector 1/" << m.get_d()
+                 << " cputime=" << detail::cpu_time_milliseconds() - start_time << '\n';
   }
 
   // Set R[0] and bf[0] to b[0], precompute ||b[0]||^2
@@ -69,8 +70,8 @@ template <class ZT, class FT> bool HLLLReduction<ZT, FT>::hlll()
   if (verbose)
   {
     // Discover b[1]
-    log_stream() << "Discovering vector 2/" << m.get_d() << " cputime=" << cputime() - start_time
-                 << '\n';
+    log_stream() << "Discovering vector 2/" << m.get_d()
+                 << " cputime=" << detail::cpu_time_milliseconds() - start_time << '\n';
   }
 
   // Set R[1] and bf[1] to b[1], precompute ||b[1]||^2
@@ -124,7 +125,7 @@ template <class ZT, class FT> bool HLLLReduction<ZT, FT>::hlll()
           if (verbose)
           {
             log_stream() << "Discovering vector " << k + 1 << "/" << m.get_d()
-                         << " cputime=" << cputime() - start_time << '\n';
+                         << " cputime=" << detail::cpu_time_milliseconds() - start_time << '\n';
           }
           k_max = k;
           // Set R[k] and bf[k] to b[k], precompute ||b[k]||^2

@@ -1,3 +1,6 @@
+#include <charconv>
+#include <cstring>
+#include <system_error>
 /************************
  * Z=long specialization
  ************************/
@@ -50,11 +53,16 @@ template <> inline long Z_NR<long>::exponent() const
 /** set data */
 template <> inline bool Z_NR<long>::set_str(const char *s)
 {
-  data = strtol(s, nullptr, 10);
-  // From https://cplusplus.com/reference/cstdlib/strtol/:
-  // If no valid conversion could be performed, 'data = 0L'.
-  // If the value read is out of the range of representable values by a long int, return false.
-  return !((data == LONG_MAX || data == LONG_MIN) && errno == ERANGE);
+  const char *end   = s + std::strlen(s);
+  long parsed       = 0;
+  const auto result = std::from_chars(s, end, parsed);
+  if (result.ec != std::errc() || result.ptr != end)
+  {
+    data = 0;
+    return false;
+  }
+  data = parsed;
+  return true;
 }
 
 /** comparison */

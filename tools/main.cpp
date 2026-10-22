@@ -487,31 +487,31 @@ void read_options(int argc, char **argv, Options &o)
     {
       ++ac;
       CHECK(ac < argc, "missing value after -b switch");
-      o.block_size = atoi(argv[ac]);
+      o.block_size = parse_option<int>(argv[ac], "option");
     }
     else if (strcmp(argv[ac], "-prustart") == 0)
     {
       ++ac;
       CHECK(ac < argc, "missing value after -prustart switch");
-      o.prune_start = atoi(argv[ac]);
+      o.prune_start = parse_option<int>(argv[ac], "option");
     }
     else if (strcmp(argv[ac], "-pruend") == 0)
     {
       ++ac;
       CHECK(ac < argc, "missing value after -pruend switch");
-      o.prune_end = atoi(argv[ac]);
+      o.prune_end = parse_option<int>(argv[ac], "option");
     }
     else if (strcmp(argv[ac], "-pruprenodes") == 0)
     {
       ++ac;
       CHECK(ac < argc, "missing value after '-pruprenodes'");
-      o.prune_pre_nodes = atof(argv[ac]);
+      o.prune_pre_nodes = parse_option<double>(argv[ac], "option");
     }
     else if (strcmp(argv[ac], "-pruminprob") == 0)
     {
       ++ac;
       CHECK(ac < argc, "missing value after '-pruminprob'");
-      o.prune_min_prob = atof(argv[ac]);
+      o.prune_min_prob = parse_option<double>(argv[ac], "option");
     }
     else if (strcmp(argv[ac], "-bkzboundedlll") == 0)
     {
@@ -521,14 +521,14 @@ void read_options(int argc, char **argv, Options &o)
     {
       ++ac;
       CHECK(ac < argc, "missing value after '-bkzmaxloops'");
-      o.bkz_max_loops = atoi(argv[ac]);
+      o.bkz_max_loops = parse_option<int>(argv[ac], "option");
       o.bkz_flags |= BKZ_MAX_LOOPS;
     }
     else if (strcmp(argv[ac], "-bkzmaxtime") == 0)
     {
       ++ac;
       CHECK(ac < argc, "missing value after '-bkzmaxtime'");
-      o.bkz_max_time = atof(argv[ac]);
+      o.bkz_max_time = parse_option<double>(argv[ac], "option");
       o.bkz_flags |= BKZ_MAX_TIME;
     }
     else if (strcmp(argv[ac], "-bkzautoabort") == 0)
@@ -546,32 +546,32 @@ void read_options(int argc, char **argv, Options &o)
     {
       ++ac;
       CHECK(ac < argc, "missing value after -c/-r switch");
-      o.c = atof(argv[ac]);
+      o.c = parse_option<double>(argv[ac], "option");
     }
     else if (strcmp(argv[ac], "-bkzghbound") == 0)
     {
       ++ac;
       CHECK(ac < argc, "missing value after '-bkzghbound'");
-      o.bkz_gh_factor = atof(argv[ac]);
+      o.bkz_gh_factor = parse_option<double>(argv[ac], "option");
       o.bkz_flags |= BKZ_GH_BND;
     }
     else if (strcmp(argv[ac], "-d") == 0 || strcmp(argv[ac], "-delta") == 0)
     {
       ++ac;
       CHECK(ac < argc, "missing value after -d switch");
-      o.delta = atof(argv[ac]);
+      o.delta = parse_option<double>(argv[ac], "option");
     }
     else if (strcmp(argv[ac], "-e") == 0 || strcmp(argv[ac], "-eta") == 0)
     {
       ++ac;
       CHECK(ac < argc, "missing value after -e switch");
-      o.eta = atof(argv[ac]);
+      o.eta = parse_option<double>(argv[ac], "option");
     }
     else if (strcmp(argv[ac], "-t") == 0 || strcmp(argv[ac], "-theta") == 0)
     {
       ++ac;
       CHECK(ac < argc, "missing value after -t switch");
-      o.theta = atof(argv[ac]);
+      o.theta = parse_option<double>(argv[ac], "option");
     }
     else if (strcmp(argv[ac], "-f") == 0)
     {
@@ -602,7 +602,7 @@ void read_options(int argc, char **argv, Options &o)
     {
       ++ac;
       CHECK(ac < argc, "missing value after -l switch");
-      o.siegel = !atoi(argv[ac]);
+      o.siegel = !parse_option<int>(argv[ac], "option");
     }
     else if (strcmp(argv[ac], "-m") == 0)
     {
@@ -639,7 +639,7 @@ void read_options(int argc, char **argv, Options &o)
     {
       ++ac;
       CHECK(ac < argc, "missing value after -p switch");
-      o.precision = atoi(argv[ac]);
+      o.precision = parse_option<int>(argv[ac], "option");
     }
     else if (strcmp(argv[ac], "-v") == 0)
     {

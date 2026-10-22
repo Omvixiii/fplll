@@ -18,17 +18,30 @@
 #ifndef FPLLL_MAIN_H
 #define FPLLL_MAIN_H
 
+#include <charconv>
 #include <cstring>
 #include <fplll/fplll.h>
+#include <system_error>
 
 #define ABORT_MSG(y)                                                                               \
   {                                                                                                \
-    cerr << "fplll: " << y << '\n';                                                                \
+    std::cerr << "fplll: " << y << '\n';                                                           \
     exit(1);                                                                                       \
   }
 #define CHECK(x, y)                                                                                \
   if (!(x))                                                                                        \
   ABORT_MSG(y)
+
+/** Parses a complete numeric argument, rejecting trailing characters. */
+template <class T> T parse_option(const char *text, const char *option)
+{
+  T value{};
+  const char *end                     = text + std::strlen(text);
+  const std::from_chars_result result = std::from_chars(text, end, value);
+  if (result.ec != std::errc() || result.ptr != end)
+    ABORT_MSG("invalid value for " << option << ": '" << text << "'");
+  return value;
+}
 
 using namespace std;
 using namespace fplll;

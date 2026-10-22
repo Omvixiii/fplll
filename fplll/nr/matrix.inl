@@ -490,7 +490,7 @@ template <class ZT> inline void ZZ_mat<ZT>::gen_trg2(FP_NR<mpfr_t> *w)
     {
       ztmp2 = 0;
       matrix[j][i].randm(ztmp);
-      if (rand() % 2 == 1)
+      if (RandGenInt::get_bit() < 0)
         matrix[j][i].sub(ztmp2, matrix[j][i]);
       matrix[i][j] = 0;
     }

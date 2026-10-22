@@ -25,7 +25,6 @@
 
 #define FPLLL_WITH_DPE
 #define FPLLL_WITH_ZLONG
-#define FPLLL_WITH_GETRUSAGE
 
 #include <algorithm>
 #include <climits>
@@ -41,12 +40,6 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
-
-#ifdef FPLLL_WITH_GETRUSAGE
-#include <sys/resource.h>
-#include <sys/time.h>
-#include <unistd.h>
-#endif
 
 #include <fplll/fplll_config.h>
 #include <gmp.h>

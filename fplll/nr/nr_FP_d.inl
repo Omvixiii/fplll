@@ -7,6 +7,9 @@
 
 #include "../defs.h"
 #include "nr_FP.inl"
+#include <charconv>
+#include <cstring>
+#include <system_error>
 
 FPLLL_BEGIN_NAMESPACE
 
@@ -100,7 +103,10 @@ template <> inline FP_NR<double> &FP_NR<double>::operator=(double d)
 
 template <> inline FP_NR<double> &FP_NR<double>::operator=(const char *s)
 {
-  data = strtod(s, nullptr);
+  const char *end   = s + std::strlen(s);
+  double parsed     = 0.0;
+  const auto result = std::from_chars(s, end, parsed);
+  data              = (result.ec == std::errc() && result.ptr == end) ? parsed : 0.0;
   return *this;
 }
 

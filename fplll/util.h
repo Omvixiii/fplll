@@ -24,17 +24,6 @@
 
 FPLLL_BEGIN_NAMESPACE
 
-static inline int cputime()
-{
-#ifdef FPLLL_WITH_GETRUSAGE
-  struct rusage rus;
-  getrusage(RUSAGE_SELF, &rus);
-  return rus.ru_utime.tv_sec * 1000 + rus.ru_utime.tv_usec / 1000;
-#else
-  return time(nullptr) * 1000;
-#endif
-}
-
 /* Computes result = x * m (it is not required that result is initialized,
    x.size() must be equal to m.GetNumRows()) */
 template <class ZT>

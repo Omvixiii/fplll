@@ -18,6 +18,8 @@
 #include <fplll/fplll_config.h>
 #include <fplll/nr/matrix.h>
 
+#include "main.h"
+
 using namespace fplll;
 
 void print_help()
@@ -78,7 +80,7 @@ int main(int argc, char *argv[])
     }
     else
     {
-      RandGen::init_with_seed(atol(argv[iArg]));
+      RandGen::init_with_seed(parse_option<unsigned long>(argv[iArg], "-randseed"));
     }
     iArg++;
   }
@@ -86,7 +88,7 @@ int main(int argc, char *argv[])
   if (argc - iArg < 2)
     fatal_error("you must specify a method and a dimension");
   char genMethod = argv[iArg][0];
-  int d          = atoi(argv[iArg + 1]);
+  int d          = parse_option<int>(argv[iArg + 1], "option");
   iArg += 2;
 
   ZZ_mat<mpz_t> m;
@@ -98,7 +100,7 @@ int main(int argc, char *argv[])
   {
     if (argc - iArg < 1)
       fatal_error("method 'r' requires 2 arguments");
-    int b = atoi(argv[iArg]);
+    int b = parse_option<int>(argv[iArg], "option");
     m.resize(d, d + 1);
     m.gen_intrel(b);
     break;
@@ -107,8 +109,8 @@ int main(int argc, char *argv[])
   {
     if (argc - iArg < 2)
       fatal_error("method 's' requires 3 arguments");
-    int b  = atoi(argv[iArg]);
-    int b2 = atoi(argv[iArg + 1]);
+    int b  = parse_option<int>(argv[iArg], "option");
+    int b2 = parse_option<int>(argv[iArg + 1], "option");
     m.resize(d + 1, d + 1);
     m.gen_simdioph(b, b2);
     break;
@@ -117,7 +119,7 @@ int main(int argc, char *argv[])
   {
     if (argc - iArg < 1)
       fatal_error("method 'u' requires 2 arguments");
-    int b = atoi(argv[iArg]);
+    int b = parse_option<int>(argv[iArg], "option");
     m.resize(d, d);
     m.gen_uniform(b);
     break;
@@ -132,7 +134,7 @@ int main(int argc, char *argv[])
     {
     case 'b':
     {
-      int b = atoi(argv[iArg]);
+      int b = parse_option<int>(argv[iArg], "option");
       if (b <= 0)
         fatal_error("parameter b must be at least 1");
       m.gen_ntrulike_bits(b);
@@ -165,7 +167,7 @@ int main(int argc, char *argv[])
     {
     case 'b':
     {
-      int b = atoi(argv[iArg]);
+      int b = parse_option<int>(argv[iArg], "option");
       if (b <= 0)
         fatal_error("parameter b must be at least 1");
       m.gen_ntrulike2_bits(b);
@@ -192,14 +194,14 @@ int main(int argc, char *argv[])
   {
     if (argc - iArg < 3)
       fatal_error("method 'q' requires 4 arguments");
-    int k  = atoi(argv[iArg]);
+    int k  = parse_option<int>(argv[iArg], "option");
     char c = argv[iArg + 2][0];
     m.resize(d, d);
     switch (c)
     {
     case 'b':
     {
-      int b = atoi(argv[iArg + 1]);
+      int b = parse_option<int>(argv[iArg + 1], "option");
       if (b <= 0)
         fatal_error("parameter b must be at least 1");
       m.gen_qary_bits(k, b);
@@ -217,7 +219,7 @@ int main(int argc, char *argv[])
     }
     case 'p':
     {
-      int b = atoi(argv[iArg + 1]);
+      int b = parse_option<int>(argv[iArg + 1], "option");
       if (b <= 0)
         fatal_error("parameter b must be at least 1");
       m.gen_qary_prime(k, b);
@@ -234,7 +236,7 @@ int main(int argc, char *argv[])
   {
     if (argc - iArg < 1)
       fatal_error("method 't' requires 2 arguments");
-    double alpha = atof(argv[iArg]);
+    double alpha = parse_option<double>(argv[iArg], "option");
     m.resize(d, d);
     m.gen_trg(alpha);
     break;
