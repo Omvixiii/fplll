@@ -20,7 +20,6 @@
 
 FPLLL_BEGIN_NAMESPACE
 
-#ifdef FPLLL_WITH_RECURSIVE_ENUM
 template <int kk, int kk_start, bool dualenum, bool findsubsols, bool enable_reset>
 inline void EnumerationBase::enumerate_recursive(
     EnumerationBase::opts<kk, kk_start, dualenum, findsubsols, enable_reset>)
@@ -147,8 +146,6 @@ inline void EnumerationBase::enumerate_recursive_dispatch(int kk)
   (this->*lookup[kk])();
 }
 
-#endif
-
 template <bool dualenum, bool findsubsols, bool enable_reset> void EnumerationBase::enumerate_loop()
 {
   if (k >= k_end)
@@ -184,66 +181,7 @@ template <bool dualenum, bool findsubsols, bool enable_reset> void EnumerationBa
 
   k = k_end - 1;
 
-#ifdef FPLLL_WITH_RECURSIVE_ENUM
   enumerate_recursive_dispatch<dualenum, findsubsols, enable_reset>(k);
-  return;
-#endif
-
-  finished = false;
-  while (!finished)
-  {
-    enumf alphak  = x[k] - center[k];
-    enumf newdist = partdist[k] + alphak * alphak * rdiag[k];
-    FPLLL_TRACE("Level k=" << k << " dist_k=" << partdist[k] << " x_k=" << x[k]
-                           << " newdist=" << newdist << " partdistbounds_k=" << partdistbounds[k]);
-    if (newdist <= partdistbounds[k])
-    {
-      ++nodes[k];
-      alpha[k] = alphak;
-      if (findsubsols && newdist < subsoldists[k] && newdist != 0.0)
-      {
-        subsoldists[k] = newdist;
-        process_subsolution(k, newdist);
-      }
-      --k;
-      if (k < 0)
-      {
-        if (newdist > 0.0 || !is_svp)
-          process_solution(newdist);
-        finished = !next_pos_up();
-        continue;
-      }
-      if (enable_reset &&
-          k < reset_depth)  // in CVP, below the max GS vector, we reset the partial distance
-      {
-        reset(newdist, k);
-        finished = !next_pos_up();
-        continue;
-      }
-      if (dualenum)
-      {
-        for (int j = center_partsum_begin[k + 1]; j > k; --j)
-          center_partsums[k][j] = center_partsums[k][j + 1] - alpha[j] * mut[k][j];
-      }
-      else
-      {
-        for (int j = center_partsum_begin[k + 1]; j > k; --j)
-          center_partsums[k][j] = center_partsums[k][j + 1] - x[j] * mut[k][j];
-      }
-      center_partsum_begin[k]     = max(center_partsum_begin[k], center_partsum_begin[k + 1]);
-      center_partsum_begin[k + 1] = k + 1;
-
-      enumf newcenter = center_partsums[k][k + 1];
-      center[k]       = newcenter;
-      partdist[k]     = newdist;
-      roundto(x[k], newcenter);
-      dx[k] = ddx[k] = (((int)(newcenter >= x[k]) & 1) << 1) - 1;
-    }
-    else
-    {
-      finished = !next_pos_up();
-    }
-  }
 }
 
 template void EnumerationBase::enumerate_loop<false, false, true>();

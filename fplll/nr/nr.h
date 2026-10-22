@@ -13,7 +13,6 @@
 #include "nr_FP_d.inl"
 #include "nr_FP_ld.inl"
 #include "nr_Z.inl"
-#include "nr_Z_d.inl"
 #include "nr_Z_l.inl"
 #include "nr_Z_mpz.inl"
 

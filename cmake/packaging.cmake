@@ -9,16 +9,6 @@ function(fplll_install_pkgconfig)
     set(FPLLL_PC_CFLAGS "-pthread")
     set(FPLLL_PC_LIBS "-pthread")
   endif()
-  if(FPLLL_USE_MPIR)
-    # MPIR has no pkg-config module; use explicit flags for the backend.
-    set(FPLLL_PC_REQUIRES "")
-    get_filename_component(mpfr_libdir "${MPFR_LIBRARY}" DIRECTORY)
-    get_filename_component(integer_libdir "${MPIR_LIBRARY}" DIRECTORY)
-    list(APPEND FPLLL_PC_CFLAGS
-      "-I${MPIR_INCLUDE_DIR}" "-I${MPIR_GMP_INCLUDE_DIR}" "-I${MPFR_INCLUDE_DIR}")
-    list(APPEND FPLLL_PC_LIBS
-      "-L${mpfr_libdir}" -lmpfr "-L${integer_libdir}" -lmpir)
-  endif()
   if(FPLLL_WITH_QD)
     # QD installs qd.pc both upstream and in distributions.
     list(PREPEND FPLLL_PC_REQUIRES qd)
@@ -62,58 +52,26 @@ function(fplll_configure_packaging)
   install(FILES "${CMAKE_CURRENT_BINARY_DIR}/fplll.h"
     DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
 
-  set(FPLLL_PUBLIC_HEADERS
-    fplll/defs.h
-    fplll/fplll.h
-    fplll/util.h
-    fplll/svpcvp.h
-    fplll/bkz.h
-    fplll/lll.h
-    fplll/gso_interface.h
-    fplll/gso_gram.h
-    fplll/gso.h
-    fplll/wrapper.h
-    fplll/bkz_param.h
-    fplll/householder.h
-    fplll/hlll.h
-    fplll/threadpool.h)
-  install(FILES ${FPLLL_PUBLIC_HEADERS}
-    "${FPLLL_CONFIG_INCLUDE_DIR}/fplll_config.h"
-    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/fplll")
-  install(FILES
-    fplll/nr/dpe.h
-    fplll/nr/matrix.h
-    fplll/nr/matrix.cpp
-    fplll/nr/nr_FP_dd.inl
-    fplll/nr/nr_FP_d.inl
-    fplll/nr/nr_FP_dpe.inl
-    fplll/nr/nr_FP.inl
-    fplll/nr/nr_FP_ld.inl
-    fplll/nr/nr_FP_misc.inl
-    fplll/nr/nr_FP_mpfr.inl
-    fplll/nr/nr_FP_qd.inl
-    fplll/nr/nr.h
-    fplll/nr/nr_rand.inl
-    fplll/nr/nr_Z_d.inl
-    fplll/nr/nr_Z.inl
-    fplll/nr/nr_Z_l.inl
-    fplll/nr/nr_Z_misc.inl
-    fplll/nr/nr_Z_mpz.inl
-    fplll/nr/numvect.h
-    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/fplll/nr")
-  install(FILES
-    fplll/enum/evaluator.h
-    fplll/enum/enumerate.h
-    fplll/enum/enumerate_base.h
-    fplll/enum/enumerate_ext.h
-    fplll/enum/enumerate_ext_api.h
-    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/fplll/enum")
-  install(FILES
-    fplll/pruner/pruner.h
-    fplll/pruner/pruner_simplex.h
+  # Public headers are the installed subset of the fplll/ tree; implementation
+  # headers that must stay out of the install are listed as exclusions below.
+  # Only nr/ ships implementation-include fragments (.inl), so installing those
+  # is scoped to that subdirectory instead of a tree-wide *.inl pattern.
+  install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/fplll/"
+    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/fplll"
+    FILES_MATCHING
+      PATTERN "*.h"
+      PATTERN "*.hpp"
+      PATTERN "enum-parallel" EXCLUDE
+      PATTERN "json.hpp" EXCLUDE)
+  install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/fplll/nr/"
+    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/fplll/nr"
+    FILES_MATCHING PATTERN "*.inl")
+  # pruner.h includes this implementation fragment; the other pruner/*.inl
+  # files are private to pruner.cpp and must not be installed.
+  install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/fplll/pruner/pruner_simplex.inl"
     DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/fplll/pruner")
-  install(FILES fplll/io/thread_pool.hpp
-    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/fplll/io")
+  install(FILES "${FPLLL_CONFIG_INCLUDE_DIR}/fplll_config.h"
+    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/fplll")
   install(TARGETS fplll fplll_static EXPORT fplllTargets
     LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
     ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
@@ -130,13 +88,7 @@ function(fplll_configure_packaging)
 
   include(CMakePackageConfigHelpers)
   set(FPLLL_CMAKE_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/cmake/fplll")
-  set(FPLLL_PACKAGE_DEPENDENCIES Threads)
-  if(FPLLL_USE_MPIR)
-    list(APPEND FPLLL_PACKAGE_DEPENDENCIES MPIR)
-  else()
-    list(APPEND FPLLL_PACKAGE_DEPENDENCIES GMP)
-  endif()
-  list(APPEND FPLLL_PACKAGE_DEPENDENCIES MPFR)
+  set(FPLLL_PACKAGE_DEPENDENCIES Threads GMP MPFR)
   if(FPLLL_WITH_QD)
     list(APPEND FPLLL_PACKAGE_DEPENDENCIES QD)
   endif()
@@ -194,6 +146,7 @@ function(fplll_configure_packaging)
     "${source_entry}[.]git($|/)"
     "${source_entry}[.]venv($|/)"
     "${source_entry}[.]vscode($|/)"
+    "${source_entry}notes($|/)"
     "${source_entry}CMakeUserPresets[.]json$"
     "${source_entry}compile_commands[.]json$"
     "${source_entry}CMakeCache[.]txt$"

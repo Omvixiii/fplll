@@ -60,55 +60,6 @@ template <> template <> inline void Z_NR<long>::get_f_exp(FP_NR<mpfr_t> & /*f*/,
 #endif
 
 /* get_f_exp (double to double) */
-#ifdef FPLLL_WITH_ZDOUBLE
-
-template <> template <> inline void Z_NR<double>::get_f_exp(FP_NR<double> &f, long &expo)
-{
-  int int_expo;
-  f.get_data() = frexp(data, &int_expo);
-  expo         = int_expo;
-}
-
-#ifdef FPLLL_WITH_LONG_DOUBLE
-template <> template <> inline void Z_NR<double>::get_f_exp(FP_NR<long double> &f, long &expo)
-{
-  int int_expo;
-  f.get_data() = static_cast<long double>(frexp(data, &int_expo));
-  expo         = int_expo;
-}
-#endif
-
-#ifdef FPLLL_WITH_DPE
-template <> template <> inline void Z_NR<double>::get_f_exp(FP_NR<dpe_t> & /*f*/, long & /*expo*/)
-{
-  FPLLL_DEBUG_ABORT("get_f_exp unimplemented for dpe_t");
-}
-#endif
-
-#ifdef FPLLL_WITH_QD
-template <> template <> inline void Z_NR<double>::get_f_exp(FP_NR<dd_real> &f, long &expo)
-{
-  int int_expo;
-  f.get_data() = frexp(data, &int_expo);
-  expo         = int_expo;
-}
-template <> template <> inline void Z_NR<double>::get_f_exp(FP_NR<qd_real> &f, long &expo)
-{
-  int int_expo;
-  f.get_data() = frexp(data, &int_expo);
-  expo         = int_expo;
-}
-#endif
-
-template <> template <> inline void Z_NR<double>::get_f_exp(FP_NR<mpfr_t> &f, long &expo)
-{
-  int int_expo;
-  f    = frexp(data, &int_expo);
-  expo = int_expo;
-  FPLLL_DEBUG_ABORT("get_f_exp unimplemented for mpfr_t");
-}
-
-#endif
 
 /* get_f_exp (mpz_t to double) */
 template <> template <> inline void Z_NR<mpz_t>::get_f_exp(FP_NR<double> &f, long &expo)
@@ -183,41 +134,6 @@ template <> template <> inline void Z_NR<long>::set_f(const FP_NR<mpfr_t> &a) { 
 #endif  // #ifdef FPLLL_WITH_ZLONG
 
 /* set_f (FP_NR to Zdouble) */
-#ifdef FPLLL_WITH_ZDOUBLE
-
-template <> template <> inline void Z_NR<double>::set_f(const FP_NR<double> &a)
-{
-  data = a.get_d();
-}
-
-#ifdef FPLLL_WITH_LONG_DOUBLE
-template <> template <> inline void Z_NR<double>::set_f(const FP_NR<long double> &a)
-{
-  data = a.get_d();
-}
-#endif
-
-#ifdef FPLLL_WITH_DPE
-template <> template <> inline void Z_NR<double>::set_f(const FP_NR<dpe_t> &a) { data = a.get_d(); }
-#endif
-
-#ifdef FPLLL_WITH_QD
-template <> template <> inline void Z_NR<double>::set_f(const FP_NR<dd_real> &a)
-{
-  data = a.get_d();
-}
-
-template <> template <> inline void Z_NR<double>::set_f(const FP_NR<qd_real> &a)
-{
-  data = a.get_d();
-}
-#endif
-
-template <> template <> inline void Z_NR<double>::set_f(const FP_NR<mpfr_t> &a)
-{
-  data = a.get_d();
-}
-#endif  // #ifdef FPLLL_WITH_ZDOUBLE
 
 /* set_f (FP_NR to mpz_t) */
 template <> template <> inline void Z_NR<mpz_t>::set_f(const FP_NR<double> &a)

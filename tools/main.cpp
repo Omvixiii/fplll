@@ -683,10 +683,8 @@ void read_options(int argc, char **argv, Options &o)
         o.int_type = ZT_MPZ;
       else if (strcmp("long", argv[ac]) == 0 || strcmp("int", argv[ac]) == 0)
         o.int_type = ZT_LONG;
-      else if (strcmp("double", argv[ac]) == 0)
-        o.int_type = ZT_DOUBLE;
       else
-        ABORT_MSG("parse error in -z switch : int, double or mpz expected");
+        ABORT_MSG("parse error in -z switch : int, long or mpz expected");
     }
     else if ((strcmp(argv[ac], "-h") == 0) || (strcmp(argv[ac], "--help") == 0))
     {
@@ -720,7 +718,7 @@ void read_options(int argc, char **argv, Options &o)
            << "       Floating-point type in LLL\n"
            << "  -p <precision>\n"
            << "       Floating-point precision (only with -f mpfr)\n"
-           << "  -z [mpz|int|long|double]\n"
+           << "  -z [mpz|int|long]\n"
            << "       Integer type in LLL (default: mpz; long is an alias to int)\n"
            << "  -m [wrapper|fast|heuristic|proved]\n"
            << "       LLL version (default: wrapper)\n"
@@ -788,11 +786,6 @@ int main(int argc, char **argv)
 #ifdef FPLLL_WITH_ZLONG
   case ZT_LONG:
     result = run_action<long int>(o);
-    break;
-#endif
-#ifdef FPLLL_WITH_ZDOUBLE
-  case ZT_DOUBLE:
-    result = run_action<double>(o);
     break;
 #endif
   default:

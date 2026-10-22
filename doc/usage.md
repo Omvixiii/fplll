@@ -64,7 +64,6 @@ Options for LLL-reduction:
 * `-z mpz` : sets the integer type to mpz, the integer type of GMP (default).
 * `-z int` : sets the integer type to int.
 * `-z long` : as `-z int`.
-* `-z double` : sets the integer type to double.
 
 * `-m wrapper` : uses the wrapper. (default if `z=mpz`).
 * `-m fast` : uses the fast method, works only with `-f double`.

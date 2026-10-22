@@ -7,7 +7,7 @@ shortest-vector enumeration, and closest-vector enumeration. See the
 
 ## Build from source
 
-Install CMake 3.25 or newer, Ninja, a C++11-capable compiler, GMP 4.2 or
+Install CMake 3.25 or newer, Ninja, a C++23-capable compiler, GMP 4.2 or
 newer, and MPFR 2.3 or newer. Choose the final installation prefix when
 configuring, then build, test, and install:
 

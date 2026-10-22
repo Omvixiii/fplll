@@ -14,7 +14,7 @@ function(fplll_generate_configuration)
       file(CONFIGURE OUTPUT "${enum_source}" CONTENT [=[
 // Generated in the binary directory; do not edit.
 #define ENUMDIMENSION @dimension@
-#include "enumlib_dim.cpp"
+#include <fplll/enum-parallel/enumlib_dim.cpp>
 ]=] @ONLY)
       list(APPEND parallel_enum_sources "${enum_source}")
     endforeach()

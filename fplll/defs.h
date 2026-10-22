@@ -24,7 +24,6 @@
 #endif
 
 #define FPLLL_WITH_DPE
-#define FPLLL_WITH_ZDOUBLE
 #define FPLLL_WITH_ZLONG
 #define FPLLL_WITH_GETRUSAGE
 
@@ -50,12 +49,7 @@
 #endif
 
 #include <fplll/fplll_config.h>
-#ifdef HAVE_LIBMPIR
-#include <mpir.h>
-#endif
-#ifdef HAVE_LIBGMP
 #include <gmp.h>
-#endif
 #include <mpfr.h>
 #ifdef FPLLL_WITH_DPE
 #include "nr/dpe.h"
@@ -199,12 +193,11 @@ const char *const HLLL_METHOD_STR[4] = {"wrapper", "proved", "", "fast"};
 
 enum IntType
 {
-  ZT_MPZ    = 0,
-  ZT_LONG   = 1,
-  ZT_DOUBLE = 2
+  ZT_MPZ  = 0,
+  ZT_LONG = 1
 };
 
-const char *const INT_TYPE_STR[5] = {"mpz", "long", "double"};
+const char *const INT_TYPE_STR[2] = {"mpz", "long"};
 
 enum FloatType
 {

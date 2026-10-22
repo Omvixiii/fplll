@@ -18,8 +18,8 @@
 #ifndef FPLLL_MATRIX_CPP
 #define FPLLL_MATRIX_CPP
 
-#include "matrix.h"
 #include "../defs.h"
+#include "matrix.h"
 
 FPLLL_BEGIN_NAMESPACE
 

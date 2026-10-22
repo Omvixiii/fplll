@@ -22,9 +22,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - compiler: gcc-13
-            cc: gcc-13
-            cxx: g++-13
           - compiler: clang-18
             cc: clang-18
             cxx: clang++-18
@@ -34,7 +31,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y ninja-build cmake libgmp-dev libmpfr-dev pkg-config \
-            g++-13 clang-18
+            clang-18
       - name: Configure
         env:
           CC: ${{ matrix.cc }}
@@ -158,10 +155,10 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y ninja-build cmake libgmp-dev libmpfr-dev pkg-config g++-13
+          sudo apt-get install -y ninja-build cmake libgmp-dev libmpfr-dev pkg-config clang-18
       - name: Configure
         env:
-          CXX: g++-13
+          CXX: clang++-18
         run: >
           cmake -S . -B build -G Ninja
           -DCMAKE_BUILD_TYPE=Release
@@ -171,13 +168,15 @@ jobs:
       - name: Install
         run: cmake --install build
       - name: Check install manifest
-        run: python3 scripts/check_install_manifest.py --prefix _install
+        run: >
+          python3 scripts/check_install_manifest.py --prefix _install
+          --forbid-installed-cpp --forbid-private-fragments
       - name: Check installed headers
         run: >
           python3 scripts/check_headers.py
           --include-dir _install/include
-          --compiler g++-13
-          --std c++11
+          --compiler clang++-18
+          --std c++23
       - name: Build and run consumer
         run: |
           cmake -S tests/consumer -B consumer-build -G Ninja \
@@ -203,10 +202,10 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y ninja-build cmake libgmp-dev libmpfr-dev pkg-config g++-13
+          sudo apt-get install -y ninja-build cmake libgmp-dev libmpfr-dev pkg-config clang-18
       - name: Configure
         env:
-          CXX: g++-13
+          CXX: clang++-18
         run: >
           cmake -S . -B build -G Ninja
           -DCMAKE_BUILD_TYPE=Release
@@ -217,16 +216,16 @@ jobs:
         run: ./build/bin/fplll_bench --dims 20,30 --bits 30 --repeats 1
 
   distcheck:
-    name: release lifecycle
+    name: release lifecycle (gcc-14 container)
     runs-on: ubuntu-24.04
+    container: gcc:14
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - name: Install dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y ninja-build cmake libgmp-dev libmpfr-dev pkg-config \
-            gcc g++ cpack
+          apt-get update
+          apt-get install -y git cmake ninja-build libgmp-dev libmpfr-dev pkg-config
       - name: Configure
         run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
       - name: Build

@@ -10,11 +10,9 @@ endif()
 
 project(fplll VERSION 5.5.0 LANGUAGES CXX)
 
-# C++11 is the compatibility baseline. Presets and embedding projects may
-# request a newer standard without this project silently overriding it.
-if(NOT DEFINED CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 11)
-endif()
+# C++23 is the project baseline. Embedders may request a newer standard; the
+# target-level feature below rejects older ones with a clear configure error.
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED YES)
 set(CMAKE_CXX_EXTENSIONS NO)
 
@@ -44,13 +42,10 @@ if(FPLLL_WARNINGS)
   endif()
 endif()
 
-option(FPLLL_USE_MPIR "Use MPIR instead of GMP" OFF)
 option(FPLLL_WITH_QD "Enable quad-double support when libqd is available" OFF)
-option(FPLLL_WITH_RECURSIVE_ENUM "Enable recursive enumeration" ON)
 option(FPLLL_WARNINGS "Enable the project's strict warnings" OFF)
 option(FPLLL_WARNINGS_AS_ERRORS "Treat compiler warnings as errors" OFF)
 option(FPLLL_BUILD_BENCHMARKS "Build the microbenchmark executable" OFF)
-set(FPLLL_MPIR_ROOT "" CACHE PATH "MPIR installation prefix")
 set(FPLLL_MAX_ENUM_DIM 256 CACHE STRING "Maximum supported enumeration dimension")
 set(FPLLL_MAX_PARALLEL_ENUM_DIM 120 CACHE STRING
   "Maximum parallel enumeration dimension (0 disables parallel enumeration)")
@@ -70,44 +65,23 @@ if(FPLLL_MAX_PARALLEL_ENUM_DIM GREATER_EQUAL FPLLL_MAX_ENUM_DIM)
   message(FATAL_ERROR "FPLLL_MAX_ENUM_DIM must exceed FPLLL_MAX_PARALLEL_ENUM_DIM")
 endif()
 
-set(HAVE_LIBGMP 0)
-set(HAVE_LIBMPIR 0)
-if(FPLLL_USE_MPIR)
-  find_package(MPIR REQUIRED)
-  set(GMP_INCLUDE_DIR "${MPIR_GMP_INCLUDE_DIR}")
-  set(FPLLL_INTEGER_TARGET MPIR::MPIR)
-  set(FPLLL_INTEGER_LIBRARY "${MPIR_LIBRARY}")
-  set(FPLLL_INTEGER_HEADER mpir.h)
-  set(FPLLL_INTEGER_LIBRARY_NAME mpir)
-  set(HAVE_LIBMPIR 1)
-else()
-  find_package(GMP REQUIRED)
-  set(FPLLL_INTEGER_TARGET GMP::GMP)
-  set(FPLLL_INTEGER_LIBRARY "${GMP_LIBRARY}")
-  set(FPLLL_INTEGER_HEADER gmp.h)
-  set(FPLLL_INTEGER_LIBRARY_NAME gmp)
-  set(HAVE_LIBGMP 1)
-endif()
+find_package(GMP REQUIRED)
+set(FPLLL_INTEGER_TARGET GMP::GMP)
+set(FPLLL_INTEGER_LIBRARY "${GMP_LIBRARY}")
+set(FPLLL_INTEGER_HEADER gmp.h)
 
 find_package(MPFR REQUIRED)
-set(HAVE_LIBMPFR 1)
 
 # find_path()/find_library() cannot tell whether headers and libraries belong to
 # the same working installation, and version macros are only checked once here.
 include(CheckCXXSourceCompiles)
 include(CMakePushCheckState)
-set(_FPLLL_INTEGER_VERSION_CHECK "")
-if(NOT FPLLL_USE_MPIR)
-  set(_FPLLL_INTEGER_VERSION_CHECK
+set(_FPLLL_INTEGER_VERSION_CHECK
 "#if __GNU_MP_VERSION * 10000 + __GNU_MP_VERSION_MINOR * 100 + __GNU_MP_VERSION_PATCHLEVEL < 40200
 #error \"GMP >= 4.2 is required\"
 #endif")
-endif()
 cmake_push_check_state(RESET)
 set(CMAKE_REQUIRED_INCLUDES "${GMP_INCLUDE_DIR}" "${MPFR_INCLUDE_DIR}")
-if(FPLLL_USE_MPIR)
-  list(APPEND CMAKE_REQUIRED_INCLUDES "${MPIR_INCLUDE_DIR}")
-endif()
 set(CMAKE_REQUIRED_LIBRARIES "${MPFR_LIBRARY}" "${FPLLL_INTEGER_LIBRARY}")
 check_cxx_source_compiles("
 #include <${FPLLL_INTEGER_HEADER}>
@@ -202,9 +176,8 @@ include(cmake/configuration.cmake)
 fplll_generate_configuration()
 
 set(FPLLL_LIBRARY_SOURCES
-  fplll/fplll.cpp
+  fplll/svpcvp.cpp
   fplll/util.cpp
-  fplll/enum/topenum.cpp
   fplll/enum/enumerate.cpp
   fplll/enum/enumerate_base.cpp
   fplll/enum/enumerate_ext.cpp
@@ -217,12 +190,6 @@ set(FPLLL_LIBRARY_SOURCES
   fplll/gso_gram.cpp
   fplll/gso.cpp
   fplll/pruner/pruner.cpp
-  fplll/pruner/pruner_cost.cpp
-  fplll/pruner/pruner_optimize.cpp
-  fplll/pruner/pruner_optimize_tc.cpp
-  fplll/pruner/pruner_optimize_tp.cpp
-  fplll/pruner/pruner_prob.cpp
-  fplll/pruner/pruner_util.cpp
   fplll/householder.cpp
   fplll/hlll.cpp
   fplll/threadpool.cpp
@@ -240,11 +207,8 @@ function(fplll_configure_library target)
     PUBLIC
       $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-      $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
-    PRIVATE
-      "${CMAKE_CURRENT_SOURCE_DIR}/fplll"
-      "${CMAKE_CURRENT_SOURCE_DIR}/fplll/enum-parallel")
-  target_compile_features(${target} PUBLIC cxx_std_11)
+      $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+  target_compile_features(${target} PUBLIC cxx_std_23)
   target_link_libraries(${target} PRIVATE "${FPLLL_EXTENUM_TARGET}")
   target_link_libraries(${target} PUBLIC
     MPFR::MPFR
@@ -313,41 +277,10 @@ set_target_properties(fplllv_static PROPERTIES
   POSITION_INDEPENDENT_CODE ON)
 fplll_configure_library(fplllv_static)
 
-add_executable(fplll_cli fplll/main.cpp)
-set_target_properties(fplll_cli PROPERTIES
-  OUTPUT_NAME fplll)
-target_link_libraries(fplll_cli PRIVATE fplll)
-
-add_executable(latticegen fplll/latticegen.cpp)
-target_link_libraries(latticegen PRIVATE fplll)
-
-# Installed tools find the library relative to the configured final prefix.
-if(APPLE OR UNIX)
-  if(IS_ABSOLUTE "${CMAKE_INSTALL_LIBDIR}")
-    set(FPLLL_TOOL_INSTALL_RPATH "${CMAKE_INSTALL_LIBDIR}")
-  else()
-    file(RELATIVE_PATH FPLLL_BINDIR_TO_LIBDIR
-      "${CMAKE_INSTALL_FULL_BINDIR}" "${CMAKE_INSTALL_FULL_LIBDIR}")
-    if(APPLE)
-      set(FPLLL_TOOL_INSTALL_RPATH "@loader_path/${FPLLL_BINDIR_TO_LIBDIR}")
-    else()
-      set(FPLLL_TOOL_INSTALL_RPATH "$ORIGIN/${FPLLL_BINDIR_TO_LIBDIR}")
-    endif()
-  endif()
-  set_target_properties(fplll_cli latticegen PROPERTIES
-    INSTALL_RPATH "${FPLLL_TOOL_INSTALL_RPATH}")
-endif()
-
-add_executable(fplll_dbg EXCLUDE_FROM_ALL fplll/main.cpp)
-target_compile_definitions(fplll_dbg PRIVATE DEBUG)
-target_link_libraries(fplll_dbg PRIVATE fpllld)
-
-add_executable(latticegen_dbg EXCLUDE_FROM_ALL fplll/latticegen.cpp)
-target_compile_definitions(latticegen_dbg PRIVATE DEBUG)
-target_link_libraries(latticegen_dbg PRIVATE fpllld)
+# Command-line programs; tools/ also owns their debug variants and the dbg target.
+add_subdirectory(tools)
 
 if(PROJECT_IS_TOP_LEVEL)
-  add_custom_target(dbg DEPENDS fplll_dbg latticegen_dbg)
   include(CTest)
   if(BUILD_TESTING)
     add_subdirectory(tests)

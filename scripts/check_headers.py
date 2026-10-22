@@ -19,7 +19,7 @@ import sys
 import tempfile
 
 # Installed in the current tree, but only valid when included from pruner.h.
-KNOWN_NON_STANDALONE = {"fplll/pruner/pruner_simplex.h"}
+KNOWN_NON_STANDALONE = set()
 
 
 def pkg_config_cflags():

@@ -18,8 +18,8 @@
 #ifndef FPLLL_MAIN_H
 #define FPLLL_MAIN_H
 
-#include "fplll.h"
 #include <cstring>
+#include <fplll/fplll.h>
 
 #define ABORT_MSG(y)                                                                               \
   {                                                                                                \

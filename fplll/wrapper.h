@@ -152,10 +152,6 @@ FPLLL_DECLARE_LLL(mpz_t)
 FPLLL_DECLARE_LLL(long)
 #endif
 
-#ifdef FPLLL_WITH_ZDOUBLE
-FPLLL_DECLARE_LLL(double)
-#endif
-
 // HLLL
 
 /**
@@ -182,10 +178,6 @@ FPLLL_DECLARE_HLLL(mpz_t)
 
 #ifdef FPLLL_WITH_ZLONG
 FPLLL_DECLARE_HLLL(long)
-#endif
-
-#ifdef FPLLL_WITH_ZDOUBLE
-FPLLL_DECLARE_HLLL(double)
 #endif
 
 FPLLL_END_NAMESPACE

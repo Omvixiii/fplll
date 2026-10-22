@@ -18,13 +18,13 @@
 #include "../factorial.const"
 #include "../fplll.h"
 
-// add components
-#include "pruner_cost.cpp"
-#include "pruner_optimize.cpp"
-#include "pruner_optimize_tc.cpp"
-#include "pruner_optimize_tp.cpp"
-#include "pruner_prob.cpp"
-#include "pruner_util.cpp"
+// Implementation-include components; these are not separate translation units.
+#include "pruner_cost.inl"
+#include "pruner_optimize.inl"
+#include "pruner_optimize_tc.inl"
+#include "pruner_optimize_tp.inl"
+#include "pruner_prob.inl"
+#include "pruner_util.inl"
 
 FPLLL_BEGIN_NAMESPACE
 

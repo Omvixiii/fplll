@@ -2,7 +2,7 @@
 
 ## Requirements and first build
 
-The library requires CMake 3.25 or newer, Ninja, a C++11-capable compiler,
+The library requires CMake 3.25 or newer, Ninja, a C++23-capable compiler,
 GMP 4.2 or newer, and MPFR 2.3 or newer.
 QD is optional. CMake discovers the compiler automatically; use
 `CMAKE_PREFIX_PATH` for dependencies installed outside standard search paths.
@@ -112,18 +112,16 @@ directories are generated in the binary tree and are never source files.
 | --- | --- |
 | `BUILD_TESTING` | `ON`; build and register the 15 numerical tests and `llldiff` |
 | `FPLLL_WITH_QD` | `OFF`; enable QD arithmetic |
-| `FPLLL_USE_MPIR`, `FPLLL_MPIR_ROOT` | Select MPIR instead of GMP |
-| `FPLLL_WITH_RECURSIVE_ENUM` | `ON`; select recursive enumeration |
 | `FPLLL_MAX_ENUM_DIM` | `256`; maximum enumeration dimension |
 | `FPLLL_MAX_PARALLEL_ENUM_DIM` | `120`; `0` disables parallel enumeration |
 | `FPLLL_EXTENUM_DIR`, `FPLLL_EXTENUM_LIBRARY`, `FPLLL_EXTENUM_FUNCTION` | External enumeration library and symbol |
 
 Parallel dimensions are multiples of ten between 20 and 160 and must be smaller
-than `FPLLL_MAX_ENUM_DIM`. MPIR and external enumeration require independently
-installed dependencies; their availability is separate from the default build.
+than `FPLLL_MAX_ENUM_DIM`. External enumeration requires an independently
+installed dependency; its availability is separate from the default build.
 The ubsan build also requires the matching compiler runtime library.
-The `CMAKE_CXX_STANDARD` value in a preset or embedding project takes precedence
-over the C++11 default.
+The project requires C++23. Presets or embedding projects may request a newer
+standard, but not an older one.
 
 QD is explicitly disabled by default. `-DFPLLL_WITH_QD=ON` requires a usable QD
 installation and fails if it cannot be found; unlike the historical Autotools
@@ -283,7 +281,8 @@ not run this full release lifecycle.
 The `lint` target checks C++ formatting without changing source files.
 The `format` target applies clang-format.
 Both use `cmake/lints.cmake`, scan `.cpp`, `.h`, `.hpp`, and `.inl` files under
-`fplll/` and `tests/`, and preserve bundled `json.hpp` and `thread_pool.hpp`.
+`fplll/`, `tests/`, `tools/`, and `bench/`, and preserve bundled `json.hpp`
+and `thread_pool.hpp`.
 The repository's `.clang-format` is always used, and formatting warnings or
 incomplete formatting fail the command. These are formatting checks; semantic
 static analysis requires a separate tool such as clang-tidy.
@@ -414,8 +413,11 @@ no upload. Use the corrected report as the baseline for subsequent comparisons
 with the same compiler, features, and test selection.
 
 Verified local baseline on 2026-10-22: Apple Clang 21.0.0 on arm64 macOS,
-C++11 Debug, GMP/MPFR, QD disabled, and parallel enumeration dimension 20.
+C++23 Debug, GMP/MPFR, QD disabled, and parallel enumeration dimension 20.
 All 15 tests passed in two clean measurements, with identical covered-line sets.
+The table below predates moving the command-line programs to `tools/`; the
+coverage filter only includes `fplll/` library sources, so regenerate the
+baseline after that layout change.
 
 | Files | Executable lines | Covered | Uncovered | Coverage (rounded down) |
 | --- | --- | --- | --- | --- |

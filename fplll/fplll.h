@@ -18,12 +18,8 @@
 #ifndef FPLLL_H
 #define FPLLL_H
 
-#if defined(_MSVC_LANG)
-#if _MSVC_LANG < 201103L
-#error fplll needs at least a C++11 compliant compiler
-#endif
-#elif __cplusplus < 201103L
-#error fplll needs at least a C++11 compliant compiler
+#if __cplusplus < 202302L
+#error fplll needs at least a C++23 compliant compiler
 #endif
 
 #include "bkz.h"            // IWYU pragma: export

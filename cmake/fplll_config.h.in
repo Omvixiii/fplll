@@ -3,10 +3,6 @@
 
 /* Build features must retain their defined/undefined semantics for consumers. */
 #cmakedefine FPLLL_WITH_QD 1
-#cmakedefine FPLLL_WITH_RECURSIVE_ENUM 1
-#cmakedefine HAVE_LIBGMP 1
-#cmakedefine HAVE_LIBMPIR 1
-#define HAVE_LIBMPFR 1
 #cmakedefine FPLLL_EXTENUM_FUNC @FPLLL_EXTENUM_FUNCTION@
 
 #define FPLLL_MAJOR_VERSION @PROJECT_VERSION_MAJOR@

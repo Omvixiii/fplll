@@ -1,6 +1,6 @@
 /**
  *  Inline functions for computing the volume of even simplex (used in
- *  pruner_prob.cpp and pruner_cost.cpp.
+ *  pruner_prob.inl and pruner_cost.inl.
  */
 template <class FT> inline FT Pruner<FT>::eval_poly(const int ld, /*i*/ const poly &p, const FT x)
 {

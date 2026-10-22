@@ -1,7 +1,7 @@
 # Keep test targets and CTest registrations beside their sources. CMake's
 # CMakeFiles/ and CTestTestfile.cmake in this directory's binary counterpart
 # are generated metadata, not source files.
-add_executable(llldiff "${PROJECT_SOURCE_DIR}/fplll/llldiff.cpp")
+add_executable(llldiff llldiff.cpp)
 target_link_libraries(llldiff PRIVATE fplll)
 
 set(FPLLL_TESTS

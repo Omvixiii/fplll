@@ -294,9 +294,4 @@ template void zeros_first<long>(ZZ_mat<long> &, ZZ_mat<long> &, ZZ_mat<long> &);
 template void zeros_last<long>(ZZ_mat<long> &, ZZ_mat<long> &, ZZ_mat<long> &);
 #endif
 
-#ifdef FPLLL_WITH_ZDOUBLE
-template void zeros_first<double>(ZZ_mat<double> &, ZZ_mat<double> &, ZZ_mat<double> &);
-template void zeros_last<double>(ZZ_mat<double> &, ZZ_mat<double> &, ZZ_mat<double> &);
-#endif
-
 FPLLL_END_NAMESPACE

@@ -1054,7 +1054,7 @@ template <class FT> inline bool Pruner<FT>::enforce(/*io*/ vec &b, /*opt i*/ con
 }
 
 // put here to avoid warnings on inlines function should be in the header.
-#include "pruner_simplex.h"
+#include "pruner_simplex.inl"
 
 FPLLL_END_NAMESPACE
 

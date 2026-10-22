@@ -20,7 +20,7 @@ Now clone your git repo where my-github-name is your account name on GitHub:
 git clone git@github.com:my-github-name/fplll.git
 ```
 
-Install CMake 3.25 or newer, Ninja, a C++11-capable compiler, GMP, and MPFR.
+Install CMake 3.25 or newer, Ninja, a C++23-capable compiler, GMP, and MPFR.
 Configure, build, and test with the shared workflow:
 
 ```sh
@@ -119,8 +119,8 @@ Pull requests should be as small/atomic as possible.
 
 ### Coding Conventions
 
-The public library and default builds remain compatible with C++11. A newer
-compiler mode used locally must not introduce requirements beyond that baseline.
+The project requires C++23 for the library, installed headers, command-line
+tools, tests and benchmarks. Compiler modes older than C++23 are not supported.
 
 Please keep your code as clean and straightforward as possible. Code is written for the consumption by compilers and for the consumption by human beings. By making code clear and easy to understand, others can build on it and fix issues should they arise.
 

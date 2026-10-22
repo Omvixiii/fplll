@@ -509,34 +509,28 @@ void MatGSO<ZT, FT>::babai(vector<ZT> &w, const vector<FT> &v, int start, int di
 }
 
 template class MatGSO<Z_NR<long>, FP_NR<double>>;
-template class MatGSO<Z_NR<double>, FP_NR<double>>;
 template class MatGSO<Z_NR<mpz_t>, FP_NR<double>>;
 
 #ifdef FPLLL_WITH_LONG_DOUBLE
 template class MatGSO<Z_NR<long>, FP_NR<long double>>;
-template class MatGSO<Z_NR<double>, FP_NR<long double>>;
 template class MatGSO<Z_NR<mpz_t>, FP_NR<long double>>;
 
 #endif
 
 #ifdef FPLLL_WITH_QD
 template class MatGSO<Z_NR<long>, FP_NR<dd_real>>;
-template class MatGSO<Z_NR<double>, FP_NR<dd_real>>;
 template class MatGSO<Z_NR<mpz_t>, FP_NR<dd_real>>;
 
 template class MatGSO<Z_NR<long>, FP_NR<qd_real>>;
-template class MatGSO<Z_NR<double>, FP_NR<qd_real>>;
 template class MatGSO<Z_NR<mpz_t>, FP_NR<qd_real>>;
 #endif
 
 #ifdef FPLLL_WITH_DPE
 template class MatGSO<Z_NR<long>, FP_NR<dpe_t>>;
-template class MatGSO<Z_NR<double>, FP_NR<dpe_t>>;
 template class MatGSO<Z_NR<mpz_t>, FP_NR<dpe_t>>;
 #endif
 
 template class MatGSO<Z_NR<long>, FP_NR<mpfr_t>>;
-template class MatGSO<Z_NR<double>, FP_NR<mpfr_t>>;
 template class MatGSO<Z_NR<mpz_t>, FP_NR<mpfr_t>>;
 
 FPLLL_END_NAMESPACE

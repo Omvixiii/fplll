@@ -5,7 +5,11 @@
 ### Build and development
 
 - Use CMake as the sole build toolchain; remove the legacy build scripts and
-  macro files while keeping C++11 as the public compatibility baseline.
+  macro files.
+- Require C++23 for the library, installed headers, tools, tests and
+  benchmarks.
+- Remove the MPIR backend, the recursive-enumeration build switch and the
+  `ZZ_mat<double>` integer backend.
 - Provide configure, build and test presets with independent build and install
   directories. Reject in-source builds.
 - Generate configuration headers and enumeration sources in the binary tree;

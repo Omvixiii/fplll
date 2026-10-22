@@ -14,9 +14,9 @@ load_cache("${FPLLL_BINARY_DIR}" READ_WITH_PREFIX parent_
   CMAKE_CXX_COMPILER CMAKE_CXX_STANDARD CMAKE_CXX_FLAGS CMAKE_BUILD_TYPE
   CMAKE_PREFIX_PATH CMAKE_INSTALL_LIBDIR
   CMAKE_OSX_SYSROOT CMAKE_OSX_ARCHITECTURES CMAKE_OSX_DEPLOYMENT_TARGET
-  FPLLL_USE_MPIR FPLLL_WITH_QD FPLLL_WITH_RECURSIVE_ENUM
+  FPLLL_WITH_QD
   FPLLL_MAX_ENUM_DIM FPLLL_MAX_PARALLEL_ENUM_DIM
-  GMP_LIBRARY GMP_INCLUDE_DIR MPIR_LIBRARY MPIR_INCLUDE_DIR MPIR_GMP_INCLUDE_DIR
+  GMP_LIBRARY GMP_INCLUDE_DIR
   MPFR_LIBRARY MPFR_INCLUDE_DIR QD_LIBRARY QD_INCLUDE_DIR
   FPLLL_EXTENUM_LIBRARY FPLLL_EXTENUM_FUNCTION)
 if(NOT parent_CMAKE_BUILD_TYPE)
@@ -108,18 +108,10 @@ if(NOT libdir)
 endif()
 
 set(dependency_args
+  "-DGMP_LIBRARY=${parent_GMP_LIBRARY}"
+  "-DGMP_INCLUDE_DIR=${parent_GMP_INCLUDE_DIR}"
   "-DMPFR_LIBRARY=${parent_MPFR_LIBRARY}"
   "-DMPFR_INCLUDE_DIR=${parent_MPFR_INCLUDE_DIR}")
-if(parent_FPLLL_USE_MPIR)
-  list(APPEND dependency_args
-    "-DMPIR_LIBRARY=${parent_MPIR_LIBRARY}"
-    "-DMPIR_INCLUDE_DIR=${parent_MPIR_INCLUDE_DIR}"
-    "-DMPIR_GMP_INCLUDE_DIR=${parent_MPIR_GMP_INCLUDE_DIR}")
-else()
-  list(APPEND dependency_args
-    "-DGMP_LIBRARY=${parent_GMP_LIBRARY}"
-    "-DGMP_INCLUDE_DIR=${parent_GMP_INCLUDE_DIR}")
-endif()
 if(parent_FPLLL_WITH_QD)
   if(parent_QD_INCLUDE_DIR)
     list(APPEND dependency_args "-DQD_INCLUDE_DIR=${parent_QD_INCLUDE_DIR}")
@@ -190,9 +182,7 @@ set(configure_args
   "-DCMAKE_INSTALL_LIBDIR=${libdir}"
   "-DCMAKE_CXX_COMPILER=${parent_CMAKE_CXX_COMPILER}"
   -DBUILD_TESTING=ON
-  "-DFPLLL_USE_MPIR=${parent_FPLLL_USE_MPIR}"
   "-DFPLLL_WITH_QD=${parent_FPLLL_WITH_QD}"
-  "-DFPLLL_WITH_RECURSIVE_ENUM=${parent_FPLLL_WITH_RECURSIVE_ENUM}"
   "-DFPLLL_MAX_ENUM_DIM=${parent_FPLLL_MAX_ENUM_DIM}"
   "-DFPLLL_MAX_PARALLEL_ENUM_DIM=${parent_FPLLL_MAX_PARALLEL_ENUM_DIM}"
   "-DFPLLL_EXTENUM_LIBRARY=${parent_FPLLL_EXTENUM_LIBRARY}"
@@ -233,7 +223,7 @@ endif()
 # The installed .pc file resolves gmp/mpfr through pkg-config modules.
 set(pc_paths "${prefix}/${libdir}/pkgconfig")
 foreach(dependency_library IN ITEMS
-    "${parent_GMP_LIBRARY}" "${parent_MPIR_LIBRARY}" "${parent_MPFR_LIBRARY}" "${parent_QD_LIBRARY}")
+    "${parent_GMP_LIBRARY}" "${parent_MPFR_LIBRARY}" "${parent_QD_LIBRARY}")
   if(dependency_library)
     get_filename_component(dependency_dir "${dependency_library}" DIRECTORY)
     if(EXISTS "${dependency_dir}/pkgconfig")

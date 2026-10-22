@@ -371,6 +371,6 @@ public:
 
 FPLLL_END_NAMESPACE
 
-#include "matrix.cpp"
+#include "matrix.inl"
 
 #endif

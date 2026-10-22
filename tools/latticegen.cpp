@@ -15,8 +15,8 @@
    You should have received a copy of the GNU Lesser General Public License
    along with fplll. If not, see <http://www.gnu.org/licenses/>. */
 
-#include "nr/matrix.h"
 #include <fplll/fplll_config.h>
+#include <fplll/nr/matrix.h>
 
 using namespace fplll;
 
