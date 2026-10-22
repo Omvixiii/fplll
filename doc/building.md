@@ -43,7 +43,6 @@ instead of attempting an in-source configure in the checkout.
 | Output | Location relative to the binary directory |
 | --- | --- |
 | Public configuration header | `fplll/fplll_config.h` |
-| Public umbrella header | `fplll.h` |
 | Generated enumeration translation units | `generated/enum-parallel/` |
 | Executables, debug tools and tests | `bin/<CONFIG>/` |
 | Shared and static libraries, including variants | `lib/<CONFIG>/` |
@@ -65,8 +64,6 @@ inputs; tests must write relative to their isolated CTest working directories.
 Run tests through CTest to establish those directories.
 The test registrations live in `tests/CMakeLists.txt`; CMake's `CMakeFiles/`
 directories are generated in the binary tree and are never source files.
-The source-package and installed-consumer regression fixtures live in
-`tests/cmake/`.
 
 ## Build options and targets
 
@@ -80,25 +77,44 @@ The source-package and installed-consumer regression fixtures live in
 | `FPLLL_MAX_ENUM_DIM` | `256`; maximum enumeration dimension |
 | `FPLLL_MAX_PARALLEL_ENUM_DIM` | `120`; `0` disables parallel enumeration |
 | `FPLLL_EXTENUM_DIR`, `FPLLL_EXTENUM_LIBRARY`, `FPLLL_EXTENUM_FUNCTION` | External enumeration library and symbol |
-| `FPLLL_BUILD_ISOLATION_TESTS` | `OFF`; enable the slower source-package regression test |
-| `FPLLL_ISOLATION_WITH_QD` | `OFF`; enable QD in that regression test's standalone build |
 
 Parallel dimensions are multiples of ten between 20 and 160 and must be smaller
 than `FPLLL_MAX_ENUM_DIM`. MPIR and external enumeration require independently
 installed dependencies; their availability is separate from the default build.
 Sanitizer builds also require the matching compiler runtime libraries.
 The `CMAKE_CXX_STANDARD` value in a preset or embedding project takes precedence
-over the C++11 default. The source-package isolation test builds without a
-standard override and verifies the C++11 baseline.
+over the C++11 default.
 
-The remaining `.in` files contain configure-time substitutions: feature and
-version macros, per-dimension enumeration sources, or package metadata.
-The CLI programs use the version in `fplll/fplll_config.h`, so a second
-private version header is unnecessary. CMake's `configure_file()` updates
-generated outputs only when their content changes, keeping no-op
-reconfiguration from recompiling the project.
-The static umbrella header is stored as `cmake/fplll.h` and copied into the
-binary directory without template processing.
+CMake's `configure_file()` generates the public configuration header from
+`cmake/fplll_config.h.in`. The shorter per-dimension enumeration sources and
+pkg-config metadata use `file(CONFIGURE CONTENT ...)` directly. Bracket
+arguments keep these short snippets readable without escaping quotes, and
+`@ONLY` preserves pkg-config's own `${variable}` references. Both commands
+update outputs only when their content changes, so a no-op reconfiguration
+does not trigger recompilation.
+Feature macros retain their defined/undefined semantics for existing consumers.
+The CLI programs use the version in `fplll/fplll_config.h`, so a second private
+version header is unnecessary.
+
+The public umbrella header is `fplll/fplll.h`, used as
+`#include <fplll/fplll.h>` in both the build and installation trees.
+
+`cmake/configuration.cmake` owns generated headers and enumeration sources.
+`cmake/packaging.cmake` owns header and target installation, pkg-config metadata,
+CMake package exports, and source archives. The installed package is generated
+from `cmake/fplllConfig.cmake.in` using `configure_package_config_file()`.
+Build-time and installed-package dependency discovery share the find modules
+under `cmake/modules/`; consumers can locate dependencies through
+`CMAKE_PREFIX_PATH` or the corresponding package's `<PackageName>_ROOT` variable.
+The installed configuration keeps its module search path local and propagates
+`QUIET` and `REQUIRED` through `find_dependency()`.
+
+The two multiline templates remain separate from generation logic. Shared
+VS Code language mappings in `.vscode/settings.json` recognize `.h.in`,
+`.cpp.in`, and `.cmake.in` files without changing each developer's user settings.
+For C++ templates under `cmake/`, `.clangd` suppresses diagnostics and skips
+background indexing because CMake placeholders and directives are not valid C++.
+Generated headers and sources retain normal clangd analysis.
 
 Default targets include shared/static `fplll` libraries, `fplll_cli` (output
 name `fplll`), `latticegen`, and tests when enabled. Optional targets are
@@ -144,36 +160,37 @@ the default strategy data. `llldiff` and debug tools are not installed.
 On macOS and Unix, installed tools use a relative runtime library path when
 the library directory is relative to the install prefix.
 
-## Source packages and build isolation
+## Source packages
 
 ```sh
-cmake --preset debug -DFPLLL_BUILD_ISOLATION_TESTS=ON
+cmake --preset debug
 cmake --build --preset debug --target package_source
-ctest --preset debug -R '^test_build_isolation$'
 ```
-
-The regression test unpacks the release source archive into a private binary
-directory, checks that local notes and legacy toolchain files are absent, and
-verifies rejection of direct and symlinked in-source builds. It then plants
-an invalid source-tree configuration header to detect accidental inclusion,
-builds the core and optional variants, runs all 15 numerical tests, installs,
-starts both installed tools, and runs shared/static downstream consumers. Source
-file names and hashes must remain unchanged. Its logs stay in
-`test-work/DEBUG/build-isolation/sandbox/`.
-CI enables `FPLLL_ISOLATION_WITH_QD` to exercise the optional QD arithmetic in
-the C++11 build and installed consumers; local runs leave it off unless QD is
-available. The standalone build reuses the parent compiler launcher, including
-ccache when configured.
 
 Source archives exclude Git metadata, local notes, editor/agent state, caches,
 build outputs and installation prefixes. The `package_source` target replaces
-the old source distribution workflow; the isolation test verifies the archive.
+the old source distribution workflow.
 
 ## Development utilities
 
-The `check-style` target checks C++ formatting without changing source files.
-The `format` target applies clang-format. With Doxygen 1.9.8 or newer installed
-at configure time, build the `doc` target to generate API documentation:
+The `lint` target checks C++ formatting without changing source files.
+The `format` target applies clang-format.
+Both use `cmake/lints.cmake`, scan `.cpp`, `.h`, `.hpp`, and `.inl` files under
+`fplll/` and `tests/`, and preserve bundled `json.hpp` and `thread_pool.hpp`.
+The repository's `.clang-format` is always used, and formatting warnings or
+incomplete formatting fail the command. These are formatting checks; semantic
+static analysis requires a separate tool such as clang-tidy.
+
+The script can also run before configuring the project, without compiling or
+discovering library dependencies:
+
+```sh
+cmake -P cmake/lints.cmake
+cmake -DFPLLL_FORMAT=ON -P cmake/lints.cmake
+```
+
+With Doxygen 1.9.8 or newer installed at configure time, build the `doc` target
+to generate API documentation:
 
 ```sh
 cmake --preset debug
@@ -227,7 +244,7 @@ cmake --preset debug -B "$coverage_build" \
   -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_CXX_FLAGS=--coverage \
   -DCMAKE_EXE_LINKER_FLAGS=--coverage -DCMAKE_SHARED_LINKER_FLAGS=--coverage \
   -DFPLLL_MAX_PARALLEL_ENUM_DIM=20 \
-  -DBUILD_TESTING=ON -DFPLLL_BUILD_ISOLATION_TESTS=OFF
+  -DBUILD_TESTING=ON
 cmake --build "$coverage_build" --parallel 4
 find "$coverage_build" -type f \( -name '*.gcda' -o -name '*.gcov' \) -delete
 rm -f "$coverage_build/coverage-lines.tsv" "$coverage_build/coverage-summary.txt"
@@ -299,11 +316,9 @@ All 15 tests passed in two clean measurements, with identical covered-line sets.
 
 ## Continuous integration
 
-Pull requests run three checks on Ubuntu: C++ formatting and workflow syntax,
-the GCC C++23 build
-and numerical tests, and a C++11 source-package build with QD, numerical tests,
-installation, and downstream consumers. The formatting check installs only
-formatting tools. The two build checks use separate compiler-cache scopes.
+Pull requests check C++ formatting and workflow syntax, and build and run the
+numerical tests with GCC C++23. The formatting check installs only formatting
+tools. Build checks use compiler caches.
 Upstream `master` pushes also update coverage. The weekly and manually triggered
 CMake workflow runs focused address- and undefined-behavior sanitizer tests.
 Release tags validate the C++11 release preset before publishing a source

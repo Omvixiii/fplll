@@ -1,2 +1,11 @@
 CompileFlags:
   CompilationDatabase: build/debug
+
+---
+# CMake input templates use placeholders and directives that are not C++.
+If:
+  PathMatch: cmake/.*\.(h|cpp)\.in
+Diagnostics:
+  Suppress: '*'
+Index:
+  Background: Skip

@@ -155,7 +155,10 @@ Starting from fplll 5.1.0, the coding convention is [enforced](https://github.co
 cmake --build --preset debug --target format
 ```
 
-This requires clang-format. The `check-style` target checks formatting without modifying files.
+This requires clang-format. The `lint` target checks formatting without modifying
+files. You can also run `cmake -P cmake/lints.cmake`
+without configuring the project. Both commands include test headers and inline
+implementation files, and exclude bundled third-party headers.
 
 In order to improve readability, some situations might require manual formatting. Clang-format [includes a comment trigger](http://llvm.org/releases/6.0.0/tools/clang/docs/https://releases.llvm.org/6.0.0/tools/clang/docs/ClangFormatStyleOptions.html#disabling-formatting-on-a-piece-of-code) to _locally_ disable the formatting. The code between a comment `// clang-format off` or `/* clang-format off */` up to a comment `// clang-format on` or `/* clang-format on */` will not be formatted.
 

@@ -1,39 +1,21 @@
 #ifndef FPLLL_CONFIG__H
 #define FPLLL_CONFIG__H
 
-/* use quaddouble library */
+/* Build features must retain their defined/undefined semantics for consumers. */
 #cmakedefine FPLLL_WITH_QD 1
-
-/* fplll major version */
-#define FPLLL_MAJOR_VERSION @PROJECT_VERSION_MAJOR@
-
-/* fplll minor version */
-#define FPLLL_MINOR_VERSION @PROJECT_VERSION_MINOR@
-
-/* fplll micro version */
-#define FPLLL_MICRO_VERSION @PROJECT_VERSION_PATCH@
-
-/* fplll version */
-#define FPLLL_VERSION "@PROJECT_VERSION@"
-
-/* fplll version info */
-#define FPLLL_VERSION_INFO "@PROJECT_VERSION@"
-
-/* Maximum supported enumeration dimension */
-#define FPLLL_MAX_ENUM_DIM @FPLLL_MAX_ENUM_DIM@
-
-/* Recursive enumeration enabled */
 #cmakedefine FPLLL_WITH_RECURSIVE_ENUM 1
-
-/* Maximum supported parallel enumeration dimension */
-#define FPLLL_MAX_PARALLEL_ENUM_DIM @FPLLL_MAX_PARALLEL_ENUM_DIM@
-
-/* Switch between GMP and MPIR */
 #cmakedefine HAVE_LIBGMP 1
 #cmakedefine HAVE_LIBMPIR 1
 #define HAVE_LIBMPFR 1
-
-/* external enumeration */
 #cmakedefine FPLLL_EXTENUM_FUNC @FPLLL_EXTENUM_FUNCTION@
+
+#define FPLLL_MAJOR_VERSION @PROJECT_VERSION_MAJOR@
+#define FPLLL_MINOR_VERSION @PROJECT_VERSION_MINOR@
+#define FPLLL_MICRO_VERSION @PROJECT_VERSION_PATCH@
+#define FPLLL_VERSION "@PROJECT_VERSION@"
+#define FPLLL_VERSION_INFO "@PROJECT_VERSION@"
+
+#define FPLLL_MAX_ENUM_DIM @FPLLL_MAX_ENUM_DIM@
+#define FPLLL_MAX_PARALLEL_ENUM_DIM @FPLLL_MAX_PARALLEL_ENUM_DIM@
 
 #endif /* FPLLL_CONFIG__H */

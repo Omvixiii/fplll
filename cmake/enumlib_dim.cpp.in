@@ -1,3 +1,0 @@
-// Generated in the binary directory; do not edit.
-#define ENUMDIMENSION @dimension@
-#include "enumlib_dim.cpp"
