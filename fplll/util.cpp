@@ -17,6 +17,7 @@
 #include "detail/precision.h"
 
 #include <atomic>
+#include <numbers>
 #include <streambuf>
 
 #ifdef DEBUG
@@ -225,7 +226,7 @@ int hlll_min_prec(int d_i, int n_i, double delta_d, double eta_d, double theta_d
 void sphere_volume(FP_NR<mpfr_t> &volume, int d)
 {
   FP_NR<mpfr_t> rtmp1;
-  volume = pow(M_PI, (double)(d / 2));
+  volume = pow(std::numbers::pi, static_cast<double>(d / 2));
 
   if (d % 2 == 0)
     for (int i = 1; i <= d / 2; i++)

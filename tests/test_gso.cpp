@@ -64,7 +64,7 @@ template <class ZT, class FT> bool rs_are_equal(MatGSO<ZT, FT> M1, MatGSOGram<ZT
   if (max_entry > error)
   {
     diff.print(cerr);
-    cerr << endl << endl;
+    cerr << '\n' << '\n';
     return false;
   }
   return true;
@@ -74,7 +74,7 @@ template <class FT> void assert_diag_R(FT rhd, int i, int &status)
 {
   if (rhd.cmp(0.0) <= 0)
   {
-    cerr << "R(" << i << ", " << i << ") must be positive." << endl;
+    cerr << "R(" << i << ", " << i << ") must be positive." << '\n';
     status = 1;
   }
 }
@@ -83,12 +83,12 @@ template <class FT> void assert_mu_r_householder(FT rh, FT rhd, FT mu, FT r, int
 {
   if (abs(mu - rh / rhd) > 0.001)
   {
-    cerr << "Error (mu): " << mu << " != " << rh / rhd << endl;
+    cerr << "Error (mu): " << mu << " != " << rh / rhd << '\n';
     status = 1;
   }
   if (abs(r - rh * rhd) > 0.001)
   {
-    cerr << "Error (r): " << r << " != " << rh * rhd << endl;
+    cerr << "Error (r): " << r << " != " << rh * rhd << '\n';
     status = 1;
   }
 }
@@ -431,7 +431,7 @@ int main(int /*argc*/, char ** /*argv*/)
 
   if (status == 0)
   {
-    cerr << "All tests passed." << endl;
+    cerr << "All tests passed." << '\n';
     return 0;
   }
   else

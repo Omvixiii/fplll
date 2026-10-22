@@ -25,7 +25,7 @@ public:
   static void init_with_time()
   {
     init();
-    gmp_randseed_ui(gmp_state, time(NULL));
+    gmp_randseed_ui(gmp_state, time(nullptr));
   }
   static gmp_randstate_t &get_gmp_state()
   {
@@ -45,7 +45,7 @@ public:
   static void init()
   {
     initialized = true;
-    srand(time(NULL));
+    srand(time(nullptr));
   }
   static int get()
   {

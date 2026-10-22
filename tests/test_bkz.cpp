@@ -51,7 +51,7 @@ int test_bkz(ZZ_mat<ZT> &A, const int block_size, FloatType float_type, int flag
   if (status != RED_SUCCESS)
   {
     cerr << "BKZ reduction failed with error '" << get_red_status_str(status);
-    cerr << " for float type " << FLOAT_TYPE_STR[float_type] << endl;
+    cerr << " for float type " << FLOAT_TYPE_STR[float_type] << '\n';
   }
   return status;
 }
@@ -95,10 +95,10 @@ int test_bkz_param(ZZ_mat<ZT> &A, const int block_size, int flags = BKZ_DEFAULT,
   params.flags             = flags;
   params.dump_gso_filename = dump_gso_filename;
   // zero on success
-  status = bkz_reduction(&A, NULL, params, FT_DEFAULT, 53);
+  status = bkz_reduction(&A, nullptr, params, FT_DEFAULT, 53);
   if (status != RED_SUCCESS)
   {
-    cerr << "BKZ parameter test failed with error '" << get_red_status_str(status) << "'" << endl;
+    cerr << "BKZ parameter test failed with error '" << get_red_status_str(status) << "'" << '\n';
   }
   return status;
 }
@@ -144,10 +144,10 @@ int test_bkz_param_linear_pruning(ZZ_mat<ZT> &A, const int block_size, int flags
   BKZParam params(block_size, strategies);
   params.flags = flags;
   // zero on success
-  status = bkz_reduction(&A, NULL, params, FT_DEFAULT, 53);
+  status = bkz_reduction(&A, nullptr, params, FT_DEFAULT, 53);
   if (status != RED_SUCCESS)
   {
-    cerr << "BKZ parameter test failed with error '" << get_red_status_str(status) << "'" << endl;
+    cerr << "BKZ parameter test failed with error '" << get_red_status_str(status) << "'" << '\n';
   }
   return status;
 }
@@ -162,10 +162,10 @@ int test_bkz_param_pruning(ZZ_mat<ZT> &A, const int block_size, int flags = BKZ_
   BKZParam params(block_size, strategies);
   params.flags = flags;
   // zero on success
-  status = bkz_reduction(&A, NULL, params, FT_DEFAULT, 53);
+  status = bkz_reduction(&A, nullptr, params, FT_DEFAULT, 53);
   if (status != RED_SUCCESS)
   {
-    cerr << "BKZ parameter test failed with error '" << get_red_status_str(status) << "'" << endl;
+    cerr << "BKZ parameter test failed with error '" << get_red_status_str(status) << "'" << '\n';
   }
   return status;
 }
@@ -197,7 +197,7 @@ int test_int_rel_bkz_dump_gso(int d, int b, const int block_size,
 
   if (status != 0)
   {
-    cerr << "Error in test_bkz_param." << endl;
+    cerr << "Error in test_bkz_param." << '\n';
     return status;
   }
 
@@ -205,7 +205,7 @@ int test_int_rel_bkz_dump_gso(int d, int b, const int block_size,
   std::ifstream fs(file_bkz_dump_gso);
   if (fs.fail())
   {
-    cerr << "File " << file_bkz_dump_gso << " cannot be loaded." << endl;
+    cerr << "File " << file_bkz_dump_gso << " cannot be loaded." << '\n';
     return 1;
   }
   fs >> js;
@@ -217,7 +217,7 @@ int test_int_rel_bkz_dump_gso(int d, int b, const int block_size,
     if (A.get_rows() != (int)i["norms"].size())
     {
       cerr << "The array \"norms\" does not contain enough values (" << A.get_rows()
-           << " expected but " << i["norms"].size() << " found)." << endl;
+           << " expected but " << i["norms"].size() << " found)." << '\n';
       return 1;
     }
 
@@ -230,7 +230,7 @@ int test_int_rel_bkz_dump_gso(int d, int b, const int block_size,
     {
       if (loop_js != -1)
       {
-        cerr << "Steps Input or Output are not with \"loop\" = -1." << endl;
+        cerr << "Steps Input or Output are not with \"loop\" = -1." << '\n';
         return 1;
       }
     }
@@ -240,13 +240,13 @@ int test_int_rel_bkz_dump_gso(int d, int b, const int block_size,
       loop++;
       if (loop_js != loop)
       {
-        cerr << "Loop does not increase." << endl;
+        cerr << "Loop does not increase." << '\n';
         return 1;
       }
       // Verify that time increases
       if (time > time_js)
       {
-        cerr << "Time does not increase." << endl;
+        cerr << "Time does not increase." << '\n';
         return 1;
       }
       time = time_js;
@@ -379,7 +379,7 @@ int main(int /*argc*/, char ** /*argv*/)
 
   if (status == 0)
   {
-    cerr << "All tests passed." << endl;
+    cerr << "All tests passed." << '\n';
     return 0;
   }
   else

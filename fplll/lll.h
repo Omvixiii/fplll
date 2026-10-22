@@ -124,7 +124,7 @@ inline bool LLLReduction<ZT, FT>::early_reduction(int start, int size_reduction_
   m.lock_cols();
   if (verbose)
   {
-    log_stream() << "Early reduction start=" << start + 1 << endl;
+    log_stream() << "Early reduction start=" << start + 1 << '\n';
   }
   for (int i = start; i < m.d; i++)
   {
@@ -144,7 +144,7 @@ template <class ZT, class FT> inline void LLLReduction<ZT, FT>::print_params()
                << "\nrow_expo = " << static_cast<int>(m.enable_row_expo)
                << "\nearly_red = " << static_cast<int>(enable_early_red)
                << "\nsiegel_cond = " << static_cast<int>(siegel)
-               << "\nlong_in_babai = " << static_cast<int>(m.row_op_force_long) << endl;
+               << "\nlong_in_babai = " << static_cast<int>(m.row_op_force_long) << '\n';
 }
 
 template <class ZT, class FT> inline bool LLLReduction<ZT, FT>::set_status(int new_status)
@@ -154,12 +154,12 @@ template <class ZT, class FT> inline bool LLLReduction<ZT, FT>::set_status(int n
   {
     if (status == RED_SUCCESS)
     {
-      log_stream() << "End of LLL: success" << endl;
+      log_stream() << "End of LLL: success" << '\n';
     }
     else
     {
-      log_stream() << "End of LLL: failure: " << RED_STATUS_STR[status] << endl;
-      log_stream() << RED_STATUS_STR[RedStatus::RED_URL_ERR] << endl;
+      log_stream() << "End of LLL: failure: " << RED_STATUS_STR[status] << '\n';
+      log_stream() << RED_STATUS_STR[RedStatus::RED_URL_ERR] << '\n';
     }
   }
   return status == RED_SUCCESS;

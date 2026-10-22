@@ -58,17 +58,17 @@ namespace enumlib
 
 using namespace std;
 
-typedef fplll_float float_type;
-typedef std::mutex mutex_type;
-typedef std::lock_guard<std::mutex> lock_type;
+using float_type = fplll_float;
+using mutex_type = std::mutex;
+using lock_type  = std::lock_guard<std::mutex>;
 
-typedef atomic<float_type> global_A_t;
-typedef array<atomic_int_fast8_t, 256> global_signal_t;
+using global_A_t      = atomic<float_type>;
+using global_signal_t = array<atomic_int_fast8_t, 256>;
 
 template <int N> struct globals_t
 {
-  typedef array<int, N> introw_t;
-  typedef pair<introw_t, pair<float_type, float_type>> swirl_item_t;
+  using introw_t     = array<int, N>;
+  using swirl_item_t = pair<introw_t, pair<float_type, float_type>>;
 
   mutex_type mutex;
   global_A_t A;
@@ -85,9 +85,9 @@ extern mutex_type global_mutex;
 template <int N, int SWIRLY, int SWIRLY2BUF, int SWIRLY1FRACTION, bool findsubsols = false>
 struct lattice_enum_t
 {
-  typedef array<float_type, N> fltrow_t;
-  typedef array<int, N> introw_t;
-  typedef pair<introw_t, pair<float_type, float_type>> swirl_item_t;
+  using fltrow_t     = array<float_type, N>;
+  using introw_t     = array<int, N>;
+  using swirl_item_t = pair<introw_t, pair<float_type, float_type>>;
 
   /* inputs */
   float_type muT[N][N];
@@ -504,7 +504,7 @@ struct lattice_enum_t
       swirlys[1].erase(swirlys[1].begin(), swirlys[1].begin() + swirly1end);
     }
 #ifndef NOCOUNTS
-//		if (enumlib_loglevel >= 1) cout << "[enumlib] counts: " << _counts << endl;
+//		if (enumlib_loglevel >= 1) cout << "[enumlib] counts: " << _counts << '\n';
 #endif
 #endif
   }

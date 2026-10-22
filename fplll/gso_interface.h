@@ -647,17 +647,17 @@ template <class ZT, class FT> inline void MatGSOInterface<ZT, FT>::symmetrize_g(
 
 template <class ZT, class FT> inline void MatGSOInterface<ZT, FT>::print_mu_r_g(ostream &os)
 {
-  os << "mu = " << endl;
+  os << "mu = " << '\n';
   mu.print(os);
-  os << endl << "r = " << endl;
+  os << '\n' << "r = " << '\n';
   r.print(os);
-  os << endl;
+  os << '\n';
   if (gptr != nullptr)
   {
-    os << "g = " << endl;
+    os << "g = " << '\n';
     symmetrize_g();
     gptr->print(os);
-    os << endl << endl;
+    os << '\n' << '\n';
   }
 }
 

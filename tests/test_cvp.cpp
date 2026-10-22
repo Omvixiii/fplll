@@ -38,12 +38,12 @@ int test_cvp(ZZ_mat<ZT> &A, vector<Z_NR<mpz_t>> &target, vector<Z_NR<mpz_t>> &b,
   vector<Z_NR<mpz_t>> solution;
   ZZ_mat<mpz_t> u;
 
-  // cerr << "A " << endl << A << endl;
+  // cerr << "A " << '\n' << A << '\n';
   int status =
       lll_reduction(A, u, LLL_DEF_DELTA, LLL_DEF_ETA, LM_WRAPPER, FT_DEFAULT, 0, LLL_DEFAULT);
   if (status != RED_SUCCESS)
   {
-    cerr << "LLL reduction failed: " << get_red_status_str(status) << endl;
+    cerr << "LLL reduction failed: " << get_red_status_str(status) << '\n';
     return status;
   }
 
@@ -51,17 +51,17 @@ int test_cvp(ZZ_mat<ZT> &A, vector<Z_NR<mpz_t>> &target, vector<Z_NR<mpz_t>> &b,
 
   if (status != RED_SUCCESS)
   {
-    cerr << "Failure: " << get_red_status_str(status) << endl;
+    cerr << "Failure: " << get_red_status_str(status) << '\n';
     return status;
   }
 
   vector_matrix_product(solution, sol_coord, A);
 
-  // cerr << "A red" << endl << A << endl;
-  // cerr << "sol_coord : " << sol_coord << endl;
-  // cerr << "solution : " << solution << endl;
-  // cerr << "expected : " << b << endl;
-  // cerr << "target : " << target << endl;
+  // cerr << "A red" << '\n' << A << '\n';
+  // cerr << "sol_coord : " << sol_coord << '\n';
+  // cerr << "solution : " << solution << '\n';
+  // cerr << "expected : " << b << '\n';
+  // cerr << "target : " << target << '\n';
 
   bool correct = true;
   for (int i = 0; i < A.get_cols(); i++)
@@ -131,7 +131,7 @@ int main(int argc, char *argv[])
 
   if (status == 0)
   {
-    cerr << "All tests passed." << endl;
+    cerr << "All tests passed." << '\n';
     return 0;
   }
   else

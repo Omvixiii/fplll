@@ -73,11 +73,11 @@ void set_log_stream(std::ostream *stream);
 
 #define FPLLL_INFO(x)                                                                              \
   {                                                                                                \
-    ::fplll::log_stream() << x << std::endl;                                                       \
+    ::fplll::log_stream() << x << '\n';                                                            \
   }
 #define FPLLL_ABORT(x)                                                                             \
   {                                                                                                \
-    cerr << "fplll: " << x << endl;                                                                \
+    cerr << "fplll: " << x << '\n';                                                                \
     abort();                                                                                       \
   }
 #define FPLLL_CHECK(x, y)                                                                          \
@@ -89,7 +89,7 @@ void set_log_stream(std::ostream *stream);
 #ifdef DEBUG
 #include <cassert>
 extern int debug_depth;
-#define FPLLL_TRACE(x) std::cerr << "TRACE: " << std::string(debug_depth * 2, ' ') << x << std::endl
+#define FPLLL_TRACE(x) std::cerr << "TRACE: " << std::string(debug_depth * 2, ' ') << x << '\n'
 struct DebugTracer
 {
   DebugTracer(const char *f) : f(f) { debug_depth++; }

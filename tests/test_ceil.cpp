@@ -41,7 +41,7 @@ int main(int, char **)
 
   if (status == 0)
   {
-    std::cerr << "All tests passed" << std::endl;
+    std::cerr << "All tests passed" << '\n';
     return 0;
   }
   else

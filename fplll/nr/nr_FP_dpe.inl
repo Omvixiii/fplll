@@ -93,9 +93,9 @@ template <> inline FP_NR<dpe_t> &FP_NR<dpe_t>::operator=(const char *s)
 {
   DPE_DOUBLE d;
 #ifdef DPE_USE_DOUBLE
-  d = strtod(s, NULL);
+  d = strtod(s, nullptr);
 #else
-  d = strtold(s, NULL);
+  d = strtold(s, nullptr);
 #endif
   dpe_set_d(data, d);
   return *this;

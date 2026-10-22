@@ -23,7 +23,7 @@
 
 #define ABORT_MSG(y)                                                                               \
   {                                                                                                \
-    cerr << "fplll: " << y << endl;                                                                \
+    cerr << "fplll: " << y << '\n';                                                                \
     exit(1);                                                                                       \
   }
 #define CHECK(x, y)                                                                                \

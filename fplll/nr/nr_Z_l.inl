@@ -50,7 +50,7 @@ template <> inline long Z_NR<long>::exponent() const
 /** set data */
 template <> inline bool Z_NR<long>::set_str(const char *s)
 {
-  data = strtol(s, NULL, 10);
+  data = strtol(s, nullptr, 10);
   // From https://cplusplus.com/reference/cstdlib/strtol/:
   // If no valid conversion could be performed, 'data = 0L'.
   // If the value read is out of the range of representable values by a long int, return false.

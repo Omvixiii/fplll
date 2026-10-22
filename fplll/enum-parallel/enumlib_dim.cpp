@@ -54,7 +54,7 @@ enumerate_dim_detail(int dim, float_type maxdist,
   static const int SWIRLY          = enumerate_traits<dimension>::SWIRLY;
   static const int SWIRLY2BUF      = enumerate_traits<dimension>::SWIRLY2BUF;
   static const int SWIRLY1FRACTION = enumerate_traits<dimension>::SWIRLY1FRACTION;
-  typedef lattice_enum_t<dimension, SWIRLY, SWIRLY2BUF, SWIRLY1FRACTION, findsubsols> lat_t;
+  using lat_t = lattice_enum_t<dimension, SWIRLY, SWIRLY2BUF, SWIRLY1FRACTION, findsubsols>;
 
   globals_t<dimension> globals;
   globals.A              = maxdist;
@@ -134,7 +134,7 @@ array<uint64_t, FPLLL_EXTENUM_MAX_EXTENUM_DIM> DIMFUNC(ENUMDIMENSION)(
     GENENUM(d);
   }
 
-  log_stream() << "[enumlib] " << ENUMDIMENSION << ":" << dim << " wrong dimension!" << endl;
+  log_stream() << "[enumlib] " << ENUMDIMENSION << ":" << dim << " wrong dimension!" << '\n';
   std::array<uint64_t, FPLLL_EXTENUM_MAX_EXTENUM_DIM> arr{};
   arr[0] = ~uint64_t(0);
   return arr;

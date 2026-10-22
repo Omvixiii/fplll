@@ -31,12 +31,12 @@ template <class ZT> int lll(Options &o, ZZ_mat<ZT> &b)
   if (o.siegel)
     flags |= LLL_SIEGEL;
 
-  if (strchr(format, 'v') != NULL)
+  if (strchr(format, 'v') != nullptr)
   {
     // LLL-reduction with transform and inverse transform
     status = lll_reduction(b, u, u_inv, o.delta, o.eta, o.method, o.float_type, o.precision, flags);
   }
-  else if (strchr(format, 'u') != NULL)
+  else if (strchr(format, 'u') != nullptr)
   {
     // LLL-reduction with transform
     status = lll_reduction(b, u, o.delta, o.eta, o.method, o.float_type, o.precision, flags);
@@ -57,7 +57,7 @@ template <class ZT> int lll(Options &o, ZZ_mat<ZT> &b)
         i++;
       }
       else
-        cout << b << endl;
+        cout << b << '\n';
       break;
     case 'u':
       if (format[i + 1] == 'k')
@@ -66,7 +66,7 @@ template <class ZT> int lll(Options &o, ZZ_mat<ZT> &b)
         i++;
       }
       else
-        cout << u << endl;
+        cout << u << '\n';
       break;
     case 'v':
       if (format[i + 1] == 'k')
@@ -75,19 +75,19 @@ template <class ZT> int lll(Options &o, ZZ_mat<ZT> &b)
         i++;
       }
       else
-        cout << u_inv << endl;
+        cout << u_inv << '\n';
       break;
     case 't':
-      cout << status << endl;
+      cout << status << '\n';
       break;
     case ' ':
-      cout << endl;
+      cout << '\n';
       break;
     }
   }
   if (status != RED_SUCCESS)
   {
-    cerr << "Failure: " << get_red_status_str(status) << endl;
+    cerr << "Failure: " << get_red_status_str(status) << '\n';
   }
   return status;
 }
@@ -127,7 +127,7 @@ template <> int bkz(Options &o, ZZ_mat<mpz_t> &b)
   if (o.no_lll)
     param.flags |= BKZ_NO_LLL;
 
-  status = bkz_reduction(&b, strchr(format, 'u') ? &u : NULL, param, o.float_type, o.precision);
+  status = bkz_reduction(&b, strchr(format, 'u') ? &u : nullptr, param, o.float_type, o.precision);
 
   for (int i = 0; format[i]; i++)
   {
@@ -140,7 +140,7 @@ template <> int bkz(Options &o, ZZ_mat<mpz_t> &b)
         i++;
       }
       else
-        cout << b << endl;
+        cout << b << '\n';
       break;
     case 'u':
       if (format[i + 1] == 'k')
@@ -149,19 +149,19 @@ template <> int bkz(Options &o, ZZ_mat<mpz_t> &b)
         i++;
       }
       else
-        cout << u << endl;
+        cout << u << '\n';
       break;
     case 't':
-      cout << status << endl;
+      cout << status << '\n';
       break;
     case ' ':
-      cout << endl;
+      cout << '\n';
       break;
     }
   }
   if (status != RED_SUCCESS)
   {
-    cerr << "Failure: " << get_red_status_str(status) << endl;
+    cerr << "Failure: " << get_red_status_str(status) << '\n';
   }
   return status;
 }
@@ -189,12 +189,12 @@ template <> int hkz(Options &o, ZZ_mat<mpz_t> &b)
         i++;
       }
       else
-        cout << b << endl;
+        cout << b << '\n';
     }
   }
   if (status != RED_SUCCESS)
   {
-    cerr << "Failure: " << get_red_status_str(status) << endl;
+    cerr << "Failure: " << get_red_status_str(status) << '\n';
   }
   return status;
 }
@@ -220,8 +220,8 @@ template <> int svpcvp(Options &o, ZZ_mat<mpz_t> &b, const vector<Z_NR<mpz_t>> &
   vector<Z_NR<mpz_t>> sol_coord_2;  // In the initial basis
   vector<Z_NR<mpz_t>> solution;
   ZZ_mat<mpz_t> u;
-  bool with_coord     = strchr(format, 'c') != NULL;
-  bool with_coord_std = strchr(format, 's') != NULL;
+  bool with_coord     = strchr(format, 'c') != nullptr;
+  bool with_coord_std = strchr(format, 's') != nullptr;
   int flagsLLL        = LLL_DEFAULT | (o.verbose ? LLL_VERBOSE : 0);
   int flags;
   int status;
@@ -238,7 +238,7 @@ template <> int svpcvp(Options &o, ZZ_mat<mpz_t> &b, const vector<Z_NR<mpz_t>> &
     }
     if (status != RED_SUCCESS)
     {
-      cerr << "LLL reduction failed: " << get_red_status_str(status) << endl;
+      cerr << "LLL reduction failed: " << get_red_status_str(status) << '\n';
       return status;
     }
   }
@@ -256,7 +256,7 @@ template <> int svpcvp(Options &o, ZZ_mat<mpz_t> &b, const vector<Z_NR<mpz_t>> &
 
   if (status != RED_SUCCESS)
   {
-    cerr << "Failure: " << get_red_status_str(status) << endl;
+    cerr << "Failure: " << get_red_status_str(status) << '\n';
     return status;
   }
   if (with_coord)
@@ -276,16 +276,16 @@ template <> int svpcvp(Options &o, ZZ_mat<mpz_t> &b, const vector<Z_NR<mpz_t>> &
     switch (format[i])
     {
     case 'c':
-      cout << sol_coord_2 << endl;
+      cout << sol_coord_2 << '\n';
       break;
     case 's':
-      cout << solution << endl;
+      cout << solution << '\n';
       break;
     case 't':
-      cout << status << endl;
+      cout << status << '\n';
       break;
     case ' ':
-      cout << endl;
+      cout << '\n';
       break;
     }
   }
@@ -301,12 +301,12 @@ template <class ZT> int hlll(Options &o, ZZ_mat<ZT> &b)
   if (o.verbose)
     flags |= LLL_VERBOSE;
 
-  if (strchr(format, 'v') != NULL)
+  if (strchr(format, 'v') != nullptr)
   {
     status = hlll_reduction(b, u, u_inv, o.delta, o.eta, o.theta, o.c, o.method, o.float_type,
                             o.precision, flags, o.no_lll);
   }
-  else if (strchr(format, 'u') != NULL)
+  else if (strchr(format, 'u') != nullptr)
   {
     status = hlll_reduction(b, u, o.delta, o.eta, o.theta, o.c, o.method, o.float_type, o.precision,
                             flags, o.no_lll);
@@ -328,7 +328,7 @@ template <class ZT> int hlll(Options &o, ZZ_mat<ZT> &b)
         i++;
       }
       else
-        cout << b << endl;
+        cout << b << '\n';
       break;
     case 'u':
       if (format[i + 1] == 'k')
@@ -337,7 +337,7 @@ template <class ZT> int hlll(Options &o, ZZ_mat<ZT> &b)
         i++;
       }
       else
-        cout << u << endl;
+        cout << u << '\n';
       break;
     case 'v':
       if (format[i + 1] == 'k')
@@ -346,17 +346,17 @@ template <class ZT> int hlll(Options &o, ZZ_mat<ZT> &b)
         i++;
       }
       else
-        cout << u_inv << endl;
+        cout << u_inv << '\n';
       break;
     case ' ':
-      cout << endl;
+      cout << '\n';
       break;
     }
   }
 
   if (status != RED_SUCCESS)
   {
-    cerr << "Failure: " << get_red_status_str(status) << endl;
+    cerr << "Failure: " << get_red_status_str(status) << '\n';
   }
   return status;
 }
@@ -389,7 +389,7 @@ template <> int prune(Options &o, ZZ_mat<mpz_t> &b)
 
   if (status != RED_SUCCESS)
   {
-    cerr << "Failure: " << get_red_status_str(status) << endl;
+    cerr << "Failure: " << get_red_status_str(status) << '\n';
   }
   return status;
 }
@@ -724,12 +724,12 @@ void read_options(int argc, char **argv, Options &o)
     }
     else if (strcmp(argv[ac], "--version") == 0)
     {
-      cout << "fplll " << FPLLL_VERSION << endl
-           << "Copyright 2005-2012 Damien Stehle, David Cade, Xavier Pujol." << endl
-           << "fplll is free software. You can redistribute it and/or modify" << endl
-           << "it under the terms of the GNU Lesser General Public License as published by" << endl
-           << "the Free Software Foundation, either version 2.1 of the License, or" << endl
-           << "(at your option) any later version." << endl;
+      cout << "fplll " << FPLLL_VERSION << '\n'
+           << "Copyright 2005-2012 Damien Stehle, David Cade, Xavier Pujol." << '\n'
+           << "fplll is free software. You can redistribute it and/or modify" << '\n'
+           << "it under the terms of the GNU Lesser General Public License as published by" << '\n'
+           << "the Free Software Foundation, either version 2.1 of the License, or" << '\n'
+           << "(at your option) any later version." << '\n';
       exit(0);
     }
     else if (argv[ac][0] == '-')

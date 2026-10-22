@@ -30,7 +30,7 @@ FPLLL_BEGIN_NAMESPACE
 template <class ZT, class FT>
 BKZReduction<ZT, FT>::BKZReduction(MatGSOInterface<ZT, FT> &m, LLLReduction<ZT, FT> &lll_obj,
                                    const BKZParam &param)
-    : status(RED_SUCCESS), nodes(0), param(param), m(m), lll_obj(lll_obj), algorithm(NULL),
+    : status(RED_SUCCESS), nodes(0), param(param), m(m), lll_obj(lll_obj), algorithm(nullptr),
       cputime_start(0)
 {
   for (num_rows = m.d; num_rows > 0 && m.b_row_is_zero(num_rows - 1); num_rows--)
@@ -395,7 +395,7 @@ bool BKZReduction<ZT, FT>::trunc_tour(int &kappa_max, const BKZParam &par, int m
     if ((par.flags & BKZ_VERBOSE) && kappa_max < kappa && clean)
     {
       log_stream() << "Block [1-" << setw(4) << kappa + 1 << "] BKZ-" << setw(0) << par.block_size
-                   << " reduced for the first time" << endl;
+                   << " reduced for the first time" << '\n';
       kappa_max = kappa;
     }
   }
@@ -428,7 +428,7 @@ bool BKZReduction<ZT, FT>::hkz(int &kappa_max, const BKZParam &param, int min_ro
     if ((param.flags & BKZ_VERBOSE) && kappa_max < kappa && clean)
     {
       log_stream() << "Block [1-" << setw(4) << kappa + 1 << "] BKZ-" << setw(0) << param.block_size
-                   << " reduced for the first time" << endl;
+                   << " reduced for the first time" << '\n';
       kappa_max = kappa;
     }
   }
@@ -549,15 +549,15 @@ template <class ZT, class FT> bool BKZReduction<ZT, FT>::bkz()
     log_stream()
         << "Warning: SD Variant of BKZ requires explicit termination condition. Turning auto "
            "abort on!"
-        << endl;
+        << '\n';
     flags |= BKZ_AUTO_ABORT;
   }
 
   if (flags & BKZ_VERBOSE)
   {
-    log_stream() << "Entering " << algorithm << ":" << endl;
+    log_stream() << "Entering " << algorithm << ":" << '\n';
     print_params(param, log_stream());
-    log_stream() << endl;
+    log_stream() << '\n';
   }
 
   cputime_start = ((flags & BKZ_DUMP_GSO) || (flags & BKZ_MAX_TIME)) ? cputime() : 0;
@@ -686,7 +686,7 @@ void BKZReduction<ZT, FT>::print_tour(const int loop, int min_row, int max_row)
   log_stream() << ", r_" << min_row << " = " << fr0;
   log_stream() << ", slope = " << std::setw(9) << std::setprecision(6)
                << m.get_current_slope(min_row, max_row);
-  log_stream() << ", log2(nodes) = " << std::setw(9) << std::setprecision(6) << log2(nodes) << endl;
+  log_stream() << ", log2(nodes) = " << std::setw(9) << std::setprecision(6) << log2(nodes) << '\n';
 }
 
 template <class ZT, class FT>
@@ -708,7 +708,7 @@ void BKZReduction<ZT, FT>::print_params(const BKZParam &param, ostream &out)
   {
     out << "autoAbort: (     -,  -), ";
   }
-  out << endl;
+  out << '\n';
 }
 
 template <class ZT, class FT> bool BKZReduction<ZT, FT>::set_status(int new_status)
@@ -717,9 +717,9 @@ template <class ZT, class FT> bool BKZReduction<ZT, FT>::set_status(int new_stat
   if (param.flags & BKZ_VERBOSE)
   {
     if (status == RED_SUCCESS)
-      log_stream() << "End of " << algorithm << ": success" << endl;
+      log_stream() << "End of " << algorithm << ": success" << '\n';
     else
-      log_stream() << "End of " << algorithm << ": failure: " << RED_STATUS_STR[status] << endl;
+      log_stream() << "End of " << algorithm << ": failure: " << RED_STATUS_STR[status] << '\n';
   }
   return status == RED_SUCCESS;
 }
@@ -743,25 +743,25 @@ void BKZReduction<ZT, FT>::dump_gso(const std::string &filename, bool append,
     else
     {
       dump.open(filename.c_str());
-      dump << "[" << endl;
+      dump << "[" << '\n';
     }
   }
   catch (const ios_base::failure &e)
   {
-    log_stream() << "Cannot open " << filename << endl;
+    log_stream() << "Cannot open " << filename << '\n';
     throw;
   }
 
   try
   {
-    dump << string(8, ' ') << "{" << endl;
-    dump << string(16, ' ') << "\"step\": \"" << step << "\"," << endl;
-    dump << string(16, ' ') << "\"loop\": " << loop << "," << endl;
-    dump << string(16, ' ') << "\"time\": " << time << "," << endl;
+    dump << string(8, ' ') << "{" << '\n';
+    dump << string(16, ' ') << "\"step\": \"" << step << "\"," << '\n';
+    dump << string(16, ' ') << "\"loop\": " << loop << "," << '\n';
+    dump << string(16, ' ') << "\"time\": " << time << "," << '\n';
   }
   catch (const ios_base::failure &e)
   {
-    log_stream() << "Cannot open " << filename << endl;
+    log_stream() << "Cannot open " << filename << '\n';
     throw;
   }
 
@@ -778,20 +778,20 @@ void BKZReduction<ZT, FT>::dump_gso(const std::string &filename, bool append,
   string s = ss.str();
   try
   {
-    dump << string(16, ' ') << "\"norms\": [" << s.substr(0, s.size() - 2) << "]" << endl;
+    dump << string(16, ' ') << "\"norms\": [" << s.substr(0, s.size() - 2) << "]" << '\n';
     dump << string(8, ' ') << "}";
     if (step.compare("Output") == 0)
     {
-      dump << endl << "]";
+      dump << '\n' << "]";
     }
     else
     {
-      dump << "," << endl;
+      dump << "," << '\n';
     }
   }
   catch (const ios_base::failure &e)
   {
-    log_stream() << "Cannot open " << filename << endl;
+    log_stream() << "Cannot open " << filename << '\n';
     throw;
   }
 
@@ -853,7 +853,7 @@ int bkz_reduction(ZZ_mat<mpz_t> *B, ZZ_mat<mpz_t> *U, const BKZParam &param, Flo
   ZZ_mat<mpz_t> empty_mat;
   ZZ_mat<mpz_t> &u     = U ? *U : empty_mat;
   ZZ_mat<mpz_t> &u_inv = empty_mat;
-  FPLLL_CHECK(B, "B == NULL in bkzReduction");
+  FPLLL_CHECK(B, "B == nullptr in bkzReduction");
 
   if (U && (!u.empty()))
   {
@@ -931,7 +931,7 @@ int bkz_reduction(ZZ_mat<mpz_t> &b, int block_size, int flags, FloatType float_t
   vector<Strategy> strategies;
   BKZParam param(block_size, strategies);
   param.flags = flags;
-  return bkz_reduction(&b, NULL, param, float_type, precision);
+  return bkz_reduction(&b, nullptr, param, float_type, precision);
 }
 
 int bkz_reduction(ZZ_mat<mpz_t> &b, ZZ_mat<mpz_t> &u, int block_size, int flags,
@@ -951,7 +951,7 @@ int hkz_reduction(ZZ_mat<mpz_t> &b, int flags, FloatType float_type, int precisi
   param.delta      = 1;
   if (flags & HKZ_VERBOSE)
     param.flags |= BKZ_VERBOSE;
-  return bkz_reduction(&b, NULL, param, float_type, precision);
+  return bkz_reduction(&b, nullptr, param, float_type, precision);
 }
 
 /** enforce instantiation of complete templates **/

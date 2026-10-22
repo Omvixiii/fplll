@@ -89,12 +89,12 @@ int main(int argc, char **argv)
     }
     else if (strcmp(argv[ac], "--help") == 0)
     {
-      cout << "Usage: cat matrix1 matrix2 | " << argv[0] << endl;
+      cout << "Usage: cat matrix1 matrix2 | " << argv[0] << '\n';
       return 0;
     }
     else if (argv[ac][0] == '-')
     {
-      cerr << "llldiff: invalid option '" << argv[ac] << "'" << endl;
+      cerr << "llldiff: invalid option '" << argv[ac] << "'" << '\n';
       return 1;
     }
     else
@@ -122,7 +122,7 @@ int main(int argc, char **argv)
 
   if (difference)
   {
-    cerr << "===INVALID RESULT===" << endl;
+    cerr << "===INVALID RESULT===" << '\n';
   }
 
   return difference;

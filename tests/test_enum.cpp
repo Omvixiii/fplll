@@ -62,7 +62,7 @@ template <class FT> int test_list_cvp()
   status |= lll_reduction(A);
   if (status != RED_SUCCESS)
   {
-    cerr << "LLL reduction failed: " << get_red_status_str(status) << endl;
+    cerr << "LLL reduction failed: " << get_red_status_str(status) << '\n';
     return status;
   }
 
@@ -78,7 +78,7 @@ template <class FT> int test_list_cvp()
   size_t d = A.get_rows();
   if (d != 24)
   {
-    cerr << "Expected a lattice of dimension 24, got : " << d << endl;
+    cerr << "Expected a lattice of dimension 24, got : " << d << '\n';
     return 1;
   }
 
@@ -95,10 +95,10 @@ template <class FT> int test_list_cvp()
     if (evaluator.size() != right_answer)
     {
       cerr << "list CVP failed (center at 0), expected 196561 solutions, got : " << evaluator.size()
-           << endl;
+           << '\n';
       return 1;
     }
-    // cerr << "list CVP (at 0) PASSED : " << evaluator.size() << endl;
+    // cerr << "list CVP (at 0) PASSED : " << evaluator.size() << '\n';
   }
 
   {
@@ -111,10 +111,10 @@ template <class FT> int test_list_cvp()
     if (evaluator.size() != right_answer)
     {
       cerr << "list CVP failed (center near 0), expected 196561 solutions, got : "
-           << evaluator.size() << endl;
+           << evaluator.size() << '\n';
       return 1;
     }
-    // cerr << "list CVP (near 0) PASSED : " << evaluator.size() << endl;
+    // cerr << "list CVP (near 0) PASSED : " << evaluator.size() << '\n';
   }
 
   for (size_t rep = 0; rep < 24; ++rep)
@@ -165,10 +165,10 @@ template <class FT> int test_list_cvp()
     if (evaluator.size() != 2 && evaluator.size() != 48)
     {
       cerr << "list CVP failed (halfway), expected 2 or 48 solutions, got : " << evaluator.size()
-           << endl;
+           << '\n';
       return 1;
     }
-    // cerr << "list CVP failed (halfway) PASSED : " << evaluator.size() << endl;
+    // cerr << "list CVP failed (halfway) PASSED : " << evaluator.size() << '\n';
   }
 
   return 0;
@@ -227,7 +227,7 @@ int main(int argc, char *argv[])
   status |= test_list_cvp<double>();
   if (status == 0)
   {
-    std::cerr << "All tests passed." << std::endl;
+    std::cerr << "All tests passed." << '\n';
     return 0;
   }
   else

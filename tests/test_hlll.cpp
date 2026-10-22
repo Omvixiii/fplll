@@ -45,7 +45,7 @@ template <class ZT> int test_test(ZZ_mat<ZT> &A)
       is_hlll_reduced<Z_NR<ZT>, FP_NR<mpfr_t>>(M, LLL_DEF_DELTA, LLL_DEF_ETA, HLLL_DEF_THETA);
 
   if (is_reduced == RED_SUCCESS)
-    cerr << "is_hlll_reduced reports success when it should not" << endl;
+    cerr << "is_hlll_reduced reports success when it should not" << '\n';
 
   return (is_reduced == RED_SUCCESS);
 }
@@ -84,7 +84,7 @@ int test_hlll(ZZ_mat<ZT> &A, LLLMethod method, FloatType float_type, int flags =
   {
     cerr << "HLLL reduction failed with error '" << get_red_status_str(status);
     cerr << "' for method " << LLL_METHOD_STR[method];
-    cerr << " and float type " << FLOAT_TYPE_STR[float_type] << endl;
+    cerr << " and float type " << FLOAT_TYPE_STR[float_type] << '\n';
     return status;
   }
 
@@ -102,7 +102,7 @@ int test_hlll(ZZ_mat<ZT> &A, LLLMethod method, FloatType float_type, int flags =
 
   if (status != RED_SUCCESS)
     cerr << "Output of HLLL reduction is not HLLL reduced with method " << LLL_METHOD_STR[method]
-         << endl;
+         << '\n';
 
   return (status != RED_SUCCESS);
 }
@@ -169,7 +169,7 @@ int main(int /*argc*/, char ** /*argv*/)
 
   if (status == 0)
   {
-    cerr << "All tests passed." << endl;
+    cerr << "All tests passed." << '\n';
     return 0;
   }
   else

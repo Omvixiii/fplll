@@ -243,7 +243,7 @@ template <class T> istream &operator>>(istream &is, Matrix<T> &m)
 template <class ZT> class ZZ_mat : public Matrix<Z_NR<ZT>>
 {
 public:
-  typedef Z_NR<ZT> T;
+  using T = Z_NR<ZT>;
   using Matrix<T>::r;
   using Matrix<T>::c;
   using Matrix<T>::matrix;
@@ -361,7 +361,7 @@ bool convert(ZZ_mat<ZTto> &Ato, const ZZ_mat<ZTfrom> &Afrom, int buffer = 0);
 template <class FT> class FP_mat : public Matrix<FP_NR<FT>>
 {
 public:
-  typedef FP_NR<FT> T;
+  using T = FP_NR<FT>;
   /** Creates an empty matrix (0 x 0). */
   FP_mat() : Matrix<T>() {}
   /** Creates a matrix of dimensions rows x cols. All elements are

@@ -42,7 +42,7 @@ void print_status(int status)
   if (status > last_status)
   {
     last_status = status;
-    cerr << endl << "FAILURES: " << status << endl;
+    cerr << '\n' << "FAILURES: " << status << '\n';
   }
 }
 
@@ -80,14 +80,14 @@ public:
     print_status(status);
     status += !((b[d - 1] >= 1.) && (b[d - 1] <= 1.));
     print_status(status);
-    cerr << "Checking enforced bounds: Increasing, 1-terminated, keeping b[13] = .5" << endl;
+    cerr << "Checking enforced bounds: Increasing, 1-terminated, keeping b[13] = .5" << '\n';
     for (int i = 0; i < d - 1; ++i)
     {
       status += !(b[i + 1] >= b[i]);
       print_status(status);
       cerr << b[i] << " , ";
     }
-    cerr << b[d - 1] << endl;
+    cerr << b[d - 1] << '\n';
     return status;
   }
 
@@ -103,8 +103,8 @@ public:
     p[3]   = 3;
 
     y = pru.eval_poly(ld, p, x);
-    cerr << "Testing eval_poly" << endl;
-    cerr << y << endl;
+    cerr << "Testing eval_poly" << '\n';
+    cerr << y << '\n';
     return abs(y - 1.561) > 1e-10;
   }
   int test_integrate_poly()
@@ -117,12 +117,12 @@ public:
     p[2]       = 2.;
     p[3]       = 3.;
     pru.integrate_poly(ld, p);
-    cerr << "Testing integrate_poly" << endl;
+    cerr << "Testing integrate_poly" << '\n';
     for (int i = 0; i < 5; ++i)
     {
       cerr << p[i] << " ";
     }
-    cerr << endl;
+    cerr << '\n';
     status += abs(p[0] - 0.0) > 1e-10;
     print_status(status);
     status += abs(p[1] - 1.0) > 1e-10;
@@ -156,7 +156,7 @@ public:
   int test_relative_volume()
   {
     vector<double> pr(n);
-    cerr << "Testing relative volume" << endl;
+    cerr << "Testing relative volume" << '\n';
     int status = 0;
 
     double proba, error;
@@ -169,7 +169,7 @@ public:
 
     proba = fplll::svp_probability<FP_NR<double>>(pr).get_d();
     error = std::abs(1 - proba / 0.07822479096);
-    cerr << proba << " relative error " << error << endl;
+    cerr << proba << " relative error " << error << '\n';
     status += error > .05;
     print_status(status);
 
@@ -181,7 +181,7 @@ public:
 
     proba = fplll::svp_probability<FP_NR<double>>(pr).get_d();
     error = std::abs(1 - proba / 0.5);
-    cerr << proba << " relative error " << error << endl;
+    cerr << proba << " relative error " << error << '\n';
     status += error > .05;
     print_status(status);
 
@@ -193,7 +193,7 @@ public:
 
     proba = fplll::svp_probability<FP_NR<double>>(pr).get_d();
     error = std::abs(1 - proba / 0.92177520904);
-    cerr << proba << " relative error " << error << endl;
+    cerr << proba << " relative error " << error << '\n';
     status += error > .05;
     print_status(status);
 
@@ -213,7 +213,7 @@ void set_up_gso_norms(vector<double> &gso_sq_norms)
 template <class FT> int test_prepruned()
 {
   int status = 0;
-  cerr << endl << "Checking Pre-pruned" << endl;
+  cerr << '\n' << "Checking Pre-pruned" << '\n';
 
   vector<double> gso_sq_norms;
   set_up_gso_norms(gso_sq_norms);
@@ -230,13 +230,13 @@ template <class FT> int test_prepruned()
 
   Pruner<FT> pru(.85, 20000., gso_sq_norms);
   double cost = pru.single_enum_cost(pr);
-  cerr << "Cost per enum " << cost << endl;
+  cerr << "Cost per enum " << cost << '\n';
   status += std::isnan(cost);
   print_status(status);
   status += (abs(1 - cost / 2.01206e+07) > .01);
   print_status(status);
   double proba = pru.measure_metric(pr);
-  cerr << "success proba " << proba << endl;
+  cerr << "success proba " << proba << '\n';
   status += (abs(1 - proba / .556) > .01);
   print_status(status);
   status += std::isnan(proba);
@@ -248,7 +248,7 @@ template <class FT> int test_unpruned()
 {
 
   int status = 0;
-  cerr << "Checking Un-pruned" << endl;
+  cerr << "Checking Un-pruned" << '\n';
   vector<double> gso_sq_norms;
   set_up_gso_norms(gso_sq_norms);
 
@@ -260,13 +260,13 @@ template <class FT> int test_unpruned()
   Pruner<FT> pru(.85, 20000., gso_sq_norms);
 
   double cost = pru.single_enum_cost(pr);
-  cerr << "Cost per enum " << cost << endl;
+  cerr << "Cost per enum " << cost << '\n';
   status += (abs(1 - cost / 3.20e+10) > .02);
   print_status(status);
   status += std::isnan(cost);
   print_status(status);
   double proba = pru.measure_metric(pr);
-  cerr << "success proba " << proba << endl;
+  cerr << "success proba " << proba << '\n';
   status += (abs(1 - proba) > .02);
   print_status(status);
   status += std::isnan(proba);
@@ -289,17 +289,17 @@ template <class FT> int test_unpruned()
 
   gso_sq_norms_vec.emplace_back(v3);
 
-  cerr << "Repeating same checks with 3 bases" << endl;
+  cerr << "Repeating same checks with 3 bases" << '\n';
   Pruner<FT> pru2(.85, 0., gso_sq_norms_vec);
 
   cost = pru2.single_enum_cost(pr);
-  cerr << "Cost per enum " << cost << endl;
+  cerr << "Cost per enum " << cost << '\n';
 
   status += (abs(1 - 3. / 2. * cost / 3.20e+10) >
              .02);  // check that the new cost is indeed 2/3 of the original cost
   print_status(status);
   proba = pru2.measure_metric(pr);
-  cerr << "success proba " << proba << endl;
+  cerr << "success proba " << proba << '\n';
   status += (abs(1 - proba) > .02);
   print_status(status);
   return status;
@@ -328,17 +328,17 @@ template <class FT> int test_auto_prune(size_t n)
   }
 
   PruningParams pruning;
-  cerr << "Testing auto_prune " << endl;
+  cerr << "Testing auto_prune " << '\n';
   double overhead = 1.0e6 * n * n;
-  cerr << "Overhead " << overhead << endl;
+  cerr << "Overhead " << overhead << '\n';
 
   double radius_d = r[0] * .3;
 
-  cerr << endl << "Greedy " << endl;
+  cerr << '\n' << "Greedy " << '\n';
   prune<FT>(pruning, radius_d, overhead, r, 20, PRUNER_METRIC_EXPECTED_SOLUTIONS, 0);
-  cerr << "Expected Solutions " << pruning.expectation << endl;
-  cerr << "Radius " << radius_d << endl;
-  cerr << "gh_factor " << pruning.gh_factor << endl;
+  cerr << "Expected Solutions " << pruning.expectation << '\n';
+  cerr << "Radius " << radius_d << '\n';
+  cerr << "gh_factor " << pruning.gh_factor << '\n';
 
   status += !(pruning.expectation > 0.0);
   print_status(status);
@@ -350,29 +350,29 @@ template <class FT> int test_auto_prune(size_t n)
   status += !(pruning.coefficients[0] == 1.0);
   print_status(status);
   cost = 0.;
-  cerr << "Predicted cost per Level" << endl;
+  cerr << "Predicted cost per Level" << '\n';
   for (size_t i = 0; i < 2 * n; ++i)
   {
     cerr << pruning.detailed_cost[i] << "\t";
     cost += pruning.detailed_cost[i];
   }
-  cerr << endl << "Predicted Total Cost " << cost << endl;
+  cerr << '\n' << "Predicted Total Cost " << cost << '\n';
 
-  cerr << endl << "Gradient " << endl;
-  cerr << "Radius " << radius_d << endl;
+  cerr << '\n' << "Gradient " << '\n';
+  cerr << "Radius " << radius_d << '\n';
   prune<FT>(pruning, radius_d, overhead, r, 0.3, PRUNER_METRIC_PROBABILITY_OF_SHORTEST,
             PRUNER_GRADIENT);
   status += !(pruning.expectation <= 1.001);
   print_status(status);
-  cerr << "Probability " << pruning.expectation << endl;
+  cerr << "Probability " << pruning.expectation << '\n';
   cost = 0.;
-  cerr << "Predicted cost per Level" << endl;
+  cerr << "Predicted cost per Level" << '\n';
   for (size_t i = 0; i < 2 * n; ++i)
   {
     cerr << pruning.detailed_cost[i] << "\t";
     cost += pruning.detailed_cost[i];
   }
-  cerr << endl << "Predicted Total Cost " << cost << endl;
+  cerr << '\n' << "Predicted Total Cost " << cost << '\n';
 
   status += !(pruning.expectation > 0.0);
   print_status(status);
@@ -383,21 +383,21 @@ template <class FT> int test_auto_prune(size_t n)
   status += !(pruning.coefficients[0] == 1.0);
   print_status(status);
 
-  cerr << endl << "Reprune Gradient " << endl;
-  cerr << "radius " << radius_d << endl;
+  cerr << '\n' << "Reprune Gradient " << '\n';
+  cerr << "radius " << radius_d << '\n';
   prune<FT>(pruning, radius_d, overhead, r, 0.01, PRUNER_METRIC_PROBABILITY_OF_SHORTEST,
             PRUNER_GRADIENT | PRUNER_START_FROM_INPUT);
   status += !(pruning.expectation <= 1.001);
   print_status(status);
-  cerr << "Probability " << pruning.expectation << endl;
+  cerr << "Probability " << pruning.expectation << '\n';
   cost = 0.;
-  cerr << "Predicted cost per Level" << endl;
+  cerr << "Predicted cost per Level" << '\n';
   for (size_t i = 0; i < 2 * n; ++i)
   {
     cerr << pruning.detailed_cost[i] << "\t";
     cost += pruning.detailed_cost[i];
   }
-  cerr << endl << "Predicted Total Cost " << cost << endl;
+  cerr << '\n' << "Predicted Total Cost " << cost << '\n';
   status += !(pruning.expectation > 0.0);
   print_status(status);
   status += !(pruning.gh_factor >= .05);
@@ -407,21 +407,21 @@ template <class FT> int test_auto_prune(size_t n)
   status += !(pruning.coefficients[0] == 1.0);
   print_status(status);
 
-  cerr << endl << "NelderMead " << endl;
-  cerr << "radius " << radius_d << endl;
+  cerr << '\n' << "NelderMead " << '\n';
+  cerr << "radius " << radius_d << '\n';
   prune<FT>(pruning, radius_d, overhead, r, 0.3, PRUNER_METRIC_PROBABILITY_OF_SHORTEST,
             PRUNER_NELDER_MEAD);
   status += !(pruning.expectation <= 1.001);
   print_status(status);
-  cerr << "Probability " << pruning.expectation << endl;
+  cerr << "Probability " << pruning.expectation << '\n';
   cost = 0.;
-  cerr << "Predicted cost per Level" << endl;
+  cerr << "Predicted cost per Level" << '\n';
   for (size_t i = 0; i < 2 * n; ++i)
   {
     cerr << pruning.detailed_cost[i] << "\t";
     cost += pruning.detailed_cost[i];
   }
-  cerr << endl << "Predicted Total Cost " << cost << endl;
+  cerr << '\n' << "Predicted Total Cost " << cost << '\n';
   status += !(pruning.expectation > 0.0);
   print_status(status);
   status += !(pruning.gh_factor >= .05);
@@ -431,21 +431,21 @@ template <class FT> int test_auto_prune(size_t n)
   status += !(pruning.coefficients[0] == 1.0);
   print_status(status);
 
-  cerr << endl << "Reprune NelderMead " << endl;
-  cerr << "radius " << radius_d << endl;
+  cerr << '\n' << "Reprune NelderMead " << '\n';
+  cerr << "radius " << radius_d << '\n';
   prune<FT>(pruning, radius_d, overhead, r, 0.3, PRUNER_METRIC_PROBABILITY_OF_SHORTEST,
             PRUNER_NELDER_MEAD | PRUNER_START_FROM_INPUT);
   status += !(pruning.expectation <= 1.001);
   print_status(status);
-  cerr << "Probability " << pruning.expectation << endl;
+  cerr << "Probability " << pruning.expectation << '\n';
   cost = 0.;
-  cerr << "Predicted cost per Level" << endl;
+  cerr << "Predicted cost per Level" << '\n';
   for (size_t i = 0; i < 2 * n; ++i)
   {
     cerr << pruning.detailed_cost[i] << "\t";
     cost += pruning.detailed_cost[i];
   }
-  cerr << endl << "Predicted Total Cost " << cost << endl;
+  cerr << '\n' << "Predicted Total Cost " << cost << '\n';
   status += !(pruning.expectation > 0.0);
   print_status(status);
   status += !(pruning.gh_factor >= .05);
@@ -456,21 +456,21 @@ template <class FT> int test_auto_prune(size_t n)
   status += !(pruning.coefficients[0] == 1.0);
   print_status(status);
 
-  cerr << endl << "Zealous (Gradient then NelderMead) " << endl;
-  cerr << "radius " << radius_d << endl;
+  cerr << '\n' << "Zealous (Gradient then NelderMead) " << '\n';
+  cerr << "radius " << radius_d << '\n';
   prune<FT>(pruning, radius_d, overhead, r, 0.3, PRUNER_METRIC_PROBABILITY_OF_SHORTEST,
             PRUNER_ZEALOUS);
   status += !(pruning.expectation <= 1.001);
   print_status(status);
-  cerr << "Probability " << pruning.expectation << endl;
+  cerr << "Probability " << pruning.expectation << '\n';
   cost = 0.;
-  cerr << "Predicted cost per Level" << endl;
+  cerr << "Predicted cost per Level" << '\n';
   for (size_t i = 0; i < 2 * n; ++i)
   {
     cerr << pruning.detailed_cost[i] << "\t";
     cost += pruning.detailed_cost[i];
   }
-  cerr << endl << "Predicted Total Cost " << cost << endl;
+  cerr << '\n' << "Predicted Total Cost " << cost << '\n';
   status += !(pruning.expectation > 0.0);
   print_status(status);
   status += !(pruning.gh_factor >= .05);
@@ -481,21 +481,21 @@ template <class FT> int test_auto_prune(size_t n)
   status += !(pruning.coefficients[0] == 1.0);
   print_status(status);
 
-  cerr << endl << "Reprune Zealous " << endl;
-  cerr << "radius " << radius_d << endl;
+  cerr << '\n' << "Reprune Zealous " << '\n';
+  cerr << "radius " << radius_d << '\n';
   prune<FT>(pruning, radius_d, overhead, r, 0.3, PRUNER_METRIC_PROBABILITY_OF_SHORTEST,
             PRUNER_ZEALOUS | PRUNER_START_FROM_INPUT);
   status += !(pruning.expectation <= 1.001);
   print_status(status);
-  cerr << "Probability " << pruning.expectation << endl;
+  cerr << "Probability " << pruning.expectation << '\n';
   cost = 0.;
-  cerr << "Predicted cost per Level" << endl;
+  cerr << "Predicted cost per Level" << '\n';
   for (size_t i = 0; i < 2 * n; ++i)
   {
     cerr << pruning.detailed_cost[i] << "\t";
     cost += pruning.detailed_cost[i];
   }
-  cerr << endl << "Predicted Total Cost " << cost << endl;
+  cerr << '\n' << "Predicted Total Cost " << cost << '\n';
   status += !(pruning.expectation > 0.0);
   print_status(status);
   status += !(pruning.gh_factor >= .05);
@@ -513,21 +513,21 @@ int main()
 {
   int status = 0;
 #ifdef FPLLL_WITH_QD
-  cerr << endl << "DD" << endl;
+  cerr << '\n' << "DD" << '\n';
   status += test_unpruned<FP_NR<dd_real>>();
   print_status(status);
 
 #endif
 
-  cerr << endl << "d" << endl;
+  cerr << '\n' << "d" << '\n';
   status += test_unpruned<FP_NR<double>>();
   print_status(status);
 #ifdef FPLLL_WITH_LONG_DOUBLE
-  cerr << endl << "ld" << endl;
+  cerr << '\n' << "ld" << '\n';
   status += test_unpruned<FP_NR<long double>>();
   print_status(status);
 #endif
-  cerr << endl << "MPRF" << endl;
+  cerr << '\n' << "MPRF" << '\n';
   status += test_unpruned<FP_NR<mpfr_t>>();
   print_status(status);
 
@@ -576,7 +576,7 @@ int main()
 
   if (status == 0)
   {
-    cerr << "All tests passed." << endl;
+    cerr << "All tests passed." << '\n';
     return 0;
   }
   else

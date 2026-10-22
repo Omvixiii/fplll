@@ -68,7 +68,7 @@ template <class ZT, class FT> int test_svp(ZZ_mat<ZT> &G, vector<Z_NR<mpz_t>> &b
   int is_greduced = is_lll_reduced<Z_NR<ZT>, FP_NR<FT>>(Mgram, LLL_DEF_DELTA, LLL_DEF_ETA);
   if (!is_greduced)
   {
-    cerr << "LLL reduction failed: " << get_red_status_str(is_greduced) << endl;
+    cerr << "LLL reduction failed: " << get_red_status_str(is_greduced) << '\n';
     return 1;
   }
 
@@ -80,7 +80,7 @@ template <class ZT, class FT> int test_svp(ZZ_mat<ZT> &G, vector<Z_NR<mpz_t>> &b
 
   if (status != RED_SUCCESS)
   {
-    cerr << "Failure: " << get_red_status_str(status) << endl;
+    cerr << "Failure: " << get_red_status_str(status) << '\n';
     return status;
   }
 
@@ -99,7 +99,7 @@ template <class ZT, class FT> int test_svp(ZZ_mat<ZT> &G, vector<Z_NR<mpz_t>> &b
   status = shortest_vectors(Mgram, sols_coord, sols_dist, 500, SVPM_PROVED, SVP_DEFAULT);
   if (status != RED_SUCCESS)
   {
-    cerr << "Failure: " << get_red_status_str(status) << endl;
+    cerr << "Failure: " << get_red_status_str(status) << '\n';
     return status;
   }
 
@@ -121,7 +121,7 @@ int dual_length(FP_NR<mpfr_t> &norm, ZZ_mat<ZT> &G, const vector<Z_NR<mpz_t>> &c
   if (G.get_rows() != d)
   {
     cerr << "DSVP length error: Coefficient vector has wrong dimension: ";
-    cerr << G.get_rows() << " vs " << d << endl;
+    cerr << G.get_rows() << " vs " << d << '\n';
     return 1;
   }
   vector<FP_NR<mpfr_t>> coords_d(d);
@@ -134,7 +134,7 @@ int dual_length(FP_NR<mpfr_t> &norm, ZZ_mat<ZT> &G, const vector<Z_NR<mpz_t>> &c
   MatGSOGram<Z_NR<ZT>, FP_NR<mpfr_t>> gso(G, empty_mat, empty_mat, 1);
   if (!gso.update_gso())
   {
-    cerr << "GSO Failure." << endl;
+    cerr << "GSO Failure." << '\n';
     return 1;
   }
   FP_NR<mpfr_t> tmp;
@@ -194,7 +194,7 @@ template <class ZT> int test_dual_svp(ZZ_mat<ZT> &G, vector<Z_NR<mpz_t>> &b)
   int is_greduced = is_lll_reduced<Z_NR<ZT>, FP_NR<mpfr_t>>(Mgram, LLL_DEF_DELTA, LLL_DEF_ETA);
   if (!is_greduced)
   {
-    cerr << "LLL reduction failed: " << get_red_status_str(is_greduced) << endl;
+    cerr << "LLL reduction failed: " << get_red_status_str(is_greduced) << '\n';
     return 1;
   }
 
@@ -205,7 +205,7 @@ template <class ZT> int test_dual_svp(ZZ_mat<ZT> &G, vector<Z_NR<mpz_t>> &b)
 
   if (status != RED_SUCCESS)
   {
-    cerr << "Failure: " << get_red_status_str(status) << endl;
+    cerr << "Failure: " << get_red_status_str(status) << '\n';
     return status;
   }
 
@@ -221,7 +221,7 @@ template <class ZT> int test_dual_svp(ZZ_mat<ZT> &G, vector<Z_NR<mpz_t>> &b)
   normb += error;
   if (norm_sol > normb)
   {
-    cerr << "Returned dual vector too long by more than " << error << endl;
+    cerr << "Returned dual vector too long by more than " << error << '\n';
     return 1;
   }
 
@@ -259,7 +259,7 @@ template <class ZT> int test_dsvp_reduce(ZZ_mat<ZT> &G, vector<Z_NR<mpz_t>> &b)
   int is_greduced = is_lll_reduced<Z_NR<ZT>, FP_NR<mpfr_t>>(Mgram, LLL_DEF_DELTA, LLL_DEF_ETA);
   if (!is_greduced)
   {
-    cerr << "LLL reduction failed: " << get_red_status_str(is_greduced) << endl;
+    cerr << "LLL reduction failed: " << get_red_status_str(is_greduced) << '\n';
     return 1;
   }
 
@@ -288,7 +288,7 @@ template <class ZT> int test_dsvp_reduce(ZZ_mat<ZT> &G, vector<Z_NR<mpz_t>> &b)
   normb += error;
   if (norm_sol > normb)
   {
-    cerr << "Last dual vector too long by more than " << error << endl;
+    cerr << "Last dual vector too long by more than " << error << '\n';
     return 1;
   }
 
@@ -328,7 +328,7 @@ int test_filename(const char *input_filename, const char *output_filename,
     return status;
   }
 
-  cerr << "Unknown test." << endl;
+  cerr << "Unknown test." << '\n';
   return 1;
 }
 
@@ -361,7 +361,7 @@ int main()
 
   if (status == 0)
   {
-    cerr << "All tests passed." << endl;
+    cerr << "All tests passed." << '\n';
     return 0;
   }
   else

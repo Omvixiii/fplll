@@ -43,7 +43,7 @@ template <class ZT, class FT> bool HLLLReduction<ZT, FT>::hlll()
     print_params();
     // Discover b[0]
     log_stream() << "Discovering vector 1/" << m.get_d() << " cputime=" << cputime() - start_time
-                 << endl;
+                 << '\n';
   }
 
   // Set R[0] and bf[0] to b[0], precompute ||b[0]||^2
@@ -70,7 +70,7 @@ template <class ZT, class FT> bool HLLLReduction<ZT, FT>::hlll()
   {
     // Discover b[1]
     log_stream() << "Discovering vector 2/" << m.get_d() << " cputime=" << cputime() - start_time
-                 << endl;
+                 << '\n';
   }
 
   // Set R[1] and bf[1] to b[1], precompute ||b[1]||^2
@@ -104,7 +104,7 @@ template <class ZT, class FT> bool HLLLReduction<ZT, FT>::hlll()
 
         if (ftmp0.cmp(ftmp1) > 0)
         {
-          // log_stream() << "Anomaly: the norm increases for kappa = " << k << endl;
+          // log_stream() << "Anomaly: the norm increases for kappa = " << k << '\n';
           return set_status(RED_HLLL_NORM_FAILURE);
         }
       }
@@ -124,7 +124,7 @@ template <class ZT, class FT> bool HLLLReduction<ZT, FT>::hlll()
           if (verbose)
           {
             log_stream() << "Discovering vector " << k + 1 << "/" << m.get_d()
-                         << " cputime=" << cputime() - start_time << endl;
+                         << " cputime=" << cputime() - start_time << '\n';
           }
           k_max = k;
           // Set R[k] and bf[k] to b[k], precompute ||b[k]||^2
@@ -373,7 +373,7 @@ template <class ZT, class FT> bool HLLLReduction<ZT, FT>::verify_size_reduction(
     {
 
       log_stream() << "Anomaly: weak size reduction is not complete kappa = " << kappa
-                   << " and i = " << i << endl;
+                   << " and i = " << i << '\n';
 
       return false;
     }

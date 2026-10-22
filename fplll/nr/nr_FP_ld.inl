@@ -110,7 +110,7 @@ template <> inline FP_NR<long double> &FP_NR<long double>::operator=(double d)
 
 template <> inline FP_NR<long double> &FP_NR<long double>::operator=(const char *s)
 {
-  data = strtold(s, NULL);
+  data = strtold(s, nullptr);
   return *this;
 }
 

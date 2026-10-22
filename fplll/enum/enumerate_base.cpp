@@ -137,7 +137,7 @@ inline void EnumerationBase::enumerate_recursive(
 template <bool dualenum, bool findsubsols, bool enable_reset>
 inline void EnumerationBase::enumerate_recursive_dispatch(int kk)
 {
-  typedef void (EnumerationBase::*enum_recur_type)();
+  using enum_recur_type                 = void (EnumerationBase::*)();
   static const enum_recur_type lookup[] = {
       ENUM_TABLE_FILL256(0),    ENUM_TABLE_FILL256(256),  ENUM_TABLE_FILL256(512),
       ENUM_TABLE_FILL256(768),  ENUM_TABLE_FILL256(1024), ENUM_TABLE_FILL256(1280),

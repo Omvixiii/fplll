@@ -70,9 +70,9 @@ int test_intrel(long n, long bits, bool shouldfail = false, int seed = 0)
   }
   else
   {
-    std::cerr << "n:" << n << ", bits: " << bits << ", shouldfail:" << shouldfail << std::endl;
-    std::cerr << "t:" << t << std::endl;
-    std::cerr << "w:" << w << std::endl;
+    std::cerr << "n:" << n << ", bits: " << bits << ", shouldfail:" << shouldfail << '\n';
+    std::cerr << "t:" << t << '\n';
+    std::cerr << "w:" << w << '\n';
     return 1;
   }
 }
@@ -127,7 +127,7 @@ int main(int argc, char *argv[])
 
   if (status == 0)
   {
-    std::cerr << "All tests passed." << std::endl;
+    std::cerr << "All tests passed." << '\n';
     return 0;
   }
   else

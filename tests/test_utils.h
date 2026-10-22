@@ -26,7 +26,7 @@ template <class T> int read_file(T &X, const char *input_filename)
   catch (const ifstream::failure &)
   {
     status = 1;
-    cerr << "Error by reading " << input_filename << "." << endl;
+    cerr << "Error by reading " << input_filename << "." << '\n';
   }
 
   return status;

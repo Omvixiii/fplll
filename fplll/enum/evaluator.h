@@ -82,7 +82,7 @@ public:
   /** Solutions found in the lattice */
   // multimap storing solutions mapped by their length
   // the longest solution is the first, the shortest solution last
-  typedef std::multimap<FT, std::vector<FT>, std::greater<FT>> container_t;
+  using container_t = std::multimap<FT, std::vector<FT>, std::greater<FT>>;
   container_t solutions;
   size_t sol_count;
 
@@ -208,7 +208,7 @@ public:
 
  */
 
-typedef bool(callback_evaluator_callback)(size_t n, enumf *new_sol_coord, void *ctx);
+using callback_evaluator_callback = bool(size_t n, enumf *new_sol_coord, void *ctx);
 
 /**
    @brief A FastEvaluator which additionally checks whether the predicate ``callbackf(solution,
@@ -231,7 +231,7 @@ public:
   using FastEvaluator<FT>::normExp;
   using FastEvaluator<FT>::sub_solutions;
 
-  CallbackEvaluator(std::function<callback_evaluator_callback> callbackf, void *ctx = NULL,
+  CallbackEvaluator(std::function<callback_evaluator_callback> callbackf, void *ctx = nullptr,
                     size_t nr_solutions               = 1,
                     EvaluatorStrategy update_strategy = EVALSTRATEGY_BEST_N_SOLUTIONS,
                     bool find_subsolutions            = false

@@ -34,7 +34,7 @@ template <class FT> int test_enum(size_t d)
   {
     std::cerr << "test_counter failed: backend=" << num_type_str<FT>()
               << ", case=node-total, dimension=" << d << ", seed=0x1337, expected=" << total
-              << ", actual=" << enum_obj.get_nodes() << std::endl;
+              << ", actual=" << enum_obj.get_nodes() << '\n';
     status |= 1;
   }
 
@@ -45,7 +45,7 @@ template <class FT> int test_enum(size_t d)
     {
       std::cerr << "test_counter failed: backend=" << num_type_str<FT>()
                 << ", case=unused-level, dimension=" << d << ", seed=0x1337, level=" << i
-                << ", expected=0, actual=" << enum_obj.get_nodes(i) << std::endl;
+                << ", expected=0, actual=" << enum_obj.get_nodes(i) << '\n';
       status |= 1;
     }
   }

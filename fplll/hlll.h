@@ -115,21 +115,21 @@ private:
 
 template <class ZT, class FT> inline void HLLLReduction<ZT, FT>::print_params()
 {
-  log_stream() << "Entering HLLL" << endl
-               << "delta = " << delta << endl
-               << "eta = " << eta << endl
-               << "theta = " << theta << endl
-               << "c = " << c << endl
-               << "precision = " << FT::get_prec() << endl
-               << "row_expo = " << static_cast<int>(m.is_enable_row_expo()) << endl
-               << "long_in_size_reduction = " << static_cast<int>(m.is_row_op_force_long()) << endl;
+  log_stream() << "Entering HLLL" << '\n'
+               << "delta = " << delta << '\n'
+               << "eta = " << eta << '\n'
+               << "theta = " << theta << '\n'
+               << "c = " << c << '\n'
+               << "precision = " << FT::get_prec() << '\n'
+               << "row_expo = " << static_cast<int>(m.is_enable_row_expo()) << '\n'
+               << "long_in_size_reduction = " << static_cast<int>(m.is_row_op_force_long()) << '\n';
 
-  log_stream() << "householder_precompute_inverse = 0" << endl;
+  log_stream() << "householder_precompute_inverse = 0" << '\n';
 
   // Condition to break incomplete size reduction: ||b[k]||^2 > 0.1 * t
-  log_stream() << "householder_use_size_reduction_test = 0" << endl;
+  log_stream() << "householder_use_size_reduction_test = 0" << '\n';
 
-  log_stream() << "householder_verify_size_reduction_hplll = 0" << endl;
+  log_stream() << "householder_verify_size_reduction_hplll = 0" << '\n';
 }
 
 template <class ZT, class FT> inline void HLLLReduction<ZT, FT>::compute_dR(int k)
@@ -152,12 +152,12 @@ template <class ZT, class FT> inline bool HLLLReduction<ZT, FT>::set_status(int 
   {
     if (status == RED_SUCCESS)
     {
-      log_stream() << "End of HLLL: success" << endl;
+      log_stream() << "End of HLLL: success" << '\n';
     }
     else
     {
-      log_stream() << "End of HLLL: failure: " << RED_STATUS_STR[status] << endl;
-      log_stream() << RED_STATUS_STR[RedStatus::RED_URL_ERR] << endl;
+      log_stream() << "End of HLLL: failure: " << RED_STATUS_STR[status] << '\n';
+      log_stream() << RED_STATUS_STR[RedStatus::RED_URL_ERR] << '\n';
     }
   }
   return status == RED_SUCCESS;

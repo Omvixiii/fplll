@@ -91,25 +91,25 @@ int run_pruner_f(ZZ_mat<mpz_t> &b, int sel_ft, int prune_start, int prune_end,
   adjust_radius_to_gh_bound(max_dist, max_dist_expo, block_size, root_det, gh_factor);
   double radius_d = max_dist.get_d() * pow(2, max_dist_expo);
 
-  log_stream() << "# Start Pruning" << endl;
-  log_stream() << "# enumeration Radius: " << radius_d << endl;
-  log_stream() << "# preprocessing (num. nodes): " << prune_pre_nodes << endl;
-  log_stream() << "# targeted min. prob: " << prune_min_prob << endl;
-  log_stream() << "# input GSO: " << r << endl;
+  log_stream() << "# Start Pruning" << '\n';
+  log_stream() << "# enumeration Radius: " << radius_d << '\n';
+  log_stream() << "# preprocessing (num. nodes): " << prune_pre_nodes << '\n';
+  log_stream() << "# targeted min. prob: " << prune_min_prob << '\n';
+  log_stream() << "# input GSO: " << r << '\n';
   // example: use flags PRUNER_ZEALOUS  and PRUNER_SINGLE
   prune<FT>(pruning, radius_d, prune_pre_nodes, r, prune_min_prob, PRUNER_METRIC_EXPECTED_SOLUTIONS,
             PRUNER_ZEALOUS | PRUNER_SINGLE);
-  log_stream() << "# optimized pruning coeff: " << endl << pruning.coefficients << endl;
+  log_stream() << "# optimized pruning coeff: " << '\n' << pruning.coefficients << '\n';
   double cost = 0.;
-  //  log_stream() << "# cost per level" << endl;
+  //  log_stream() << "# cost per level" << '\n';
   for (int i = 0; i < block_size; ++i)
   {
     // log_stream() << pruning.detailed_cost[i] << " ";
     cost += pruning.detailed_cost[i];
   }
-  log_stream() << "# single_enum_cost   = " << cost << endl;
-  log_stream() << "#       succ. prob   = " << pruning.expectation << endl;
-  log_stream() << "# repeated_enum_cost = " << cost / pruning.expectation << endl;
+  log_stream() << "# single_enum_cost   = " << cost << '\n';
+  log_stream() << "#       succ. prob   = " << pruning.expectation << '\n';
+  log_stream() << "# repeated_enum_cost = " << cost / pruning.expectation << '\n';
   return 0;
 }
 
@@ -117,7 +117,7 @@ int run_pruner_f(ZZ_mat<mpz_t> &b, int sel_ft, int prune_start, int prune_end,
 int run_pruner(ZZ_mat<mpz_t> &B, FloatType float_type, int precision, int prune_start,
                int prune_end, double prune_pre_nodes, double prune_min_prob, double gh_factor)
 {
-  // FPLLL_CHECK(B, "B == NULL in run_pruner()");
+  // FPLLL_CHECK(B, "B == nullptr in run_pruner()");
   FloatType sel_ft = (float_type != FT_DEFAULT) ? float_type : FT_DOUBLE;
   FPLLL_CHECK(!(sel_ft == FT_MPFR && precision == 0),
               "Missing precision for run_pruner() with floating point type mpfr");

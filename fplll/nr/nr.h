@@ -37,8 +37,8 @@ FPLLL_BEGIN_NAMESPACE
  */
 
 /* Floating-point type inside the SVP/CVP solver */
-typedef double enumf;
-typedef double enumxt;
+using enumf  = double;
+using enumxt = double;
 // typedef int enumxt;
 
 /**

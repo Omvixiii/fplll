@@ -133,7 +133,7 @@ static int shortest_vector_ex(ZZ_mat<mpz_t> &b, vector<Z_NR<mpz_t>> &sol_coord, 
     max_dist = 1.0 / gso.get_r_exp(d - 1, d - 1);
     if (flags & SVP_VERBOSE)
     {
-      cout << "max_dist = " << max_dist << endl;
+      cout << "max_dist = " << max_dist << '\n';
     }
   }
   else
@@ -326,7 +326,7 @@ static int shortest_vector_ex(
     max_dist = 1.0 / gso.get_r_exp(d - 1, d - 1);
     if (flags & SVP_VERBOSE)
     {
-      cout << "max_dist = " << max_dist << endl;
+      cout << "max_dist = " << max_dist << '\n';
     }
   }
   else

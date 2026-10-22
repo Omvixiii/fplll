@@ -159,7 +159,7 @@ int test_bkz(ZZ_mat<ZT> &A, const int block_size, FloatType float_type, int flag
   }
   else
   {
-    cerr << "Type not supported for test" << endl;
+    cerr << "Type not supported for test" << '\n';
     return 0;
   }
 
@@ -208,7 +208,7 @@ template <class ZT>
 int test_int_rel(int d, int b, const int block_size, FloatType float_type = FT_DEFAULT,
                  int flags = BKZ_DEFAULT, int prec = 0)
 {
-  cerr << "test_int_rel " << d << "  " << b << " " << block_size << endl;
+  cerr << "test_int_rel " << d << "  " << b << " " << block_size << '\n';
   ZZ_mat<ZT> A, B;
   A.resize(d, d + 1);
   A.gen_intrel(b);
@@ -276,7 +276,7 @@ int main(int /*argc*/, char ** /*argv*/)
 
   if (status == 0)
   {
-    cerr << "All tests passed." << endl;
+    cerr << "All tests passed." << '\n';
     return 0;
   }
   else

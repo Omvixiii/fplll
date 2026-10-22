@@ -110,7 +110,7 @@ typedef struct
   DPE_EXP_T exp; /* exponent */
 } dpe_struct;
 
-typedef dpe_struct dpe_t[1];
+using dpe_t = dpe_struct[1];
 
 #define DPE_MANT(x) ((x)->d)
 #define DPE_EXP(x) ((x)->exp)

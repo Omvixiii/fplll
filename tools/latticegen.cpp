@@ -23,33 +23,33 @@ using namespace fplll;
 void print_help()
 {
   cout << "Usage: latticegen [-randseed [<int> | 'time']] options\n"
-       << "Options : " << endl
-       << " r <d> <b> : gen_intrel" << endl
-       << " s <d> <b> <b2> : gen_simdioph" << endl
-       << " u <d> <b> : gen_uniform" << endl
-       << " n <d> <b> <c> : gen_ntrulike" << endl
-       << " N <d> <b> <c> : gen_ntrulike2" << endl
-       << " q <d> <k> <b> <c>: gen_qary" << endl
-       << " t <d> <f> : gen_trg" << endl
-       << " T <d> : gen_trg2" << endl
-       << "See README.md for option descriptions:" << endl
-       << "https://github.com/fplll/fplll/blob/master/README.md#latticegen" << endl;
+       << "Options : " << '\n'
+       << " r <d> <b> : gen_intrel" << '\n'
+       << " s <d> <b> <b2> : gen_simdioph" << '\n'
+       << " u <d> <b> : gen_uniform" << '\n'
+       << " n <d> <b> <c> : gen_ntrulike" << '\n'
+       << " N <d> <b> <c> : gen_ntrulike2" << '\n'
+       << " q <d> <k> <b> <c>: gen_qary" << '\n'
+       << " t <d> <f> : gen_trg" << '\n'
+       << " T <d> : gen_trg2" << '\n'
+       << "See README.md for option descriptions:" << '\n'
+       << "https://github.com/fplll/fplll/blob/master/README.md#latticegen" << '\n';
 }
 
 void print_version()
 {
-  cout << "latticegen (fplll) " << FPLLL_VERSION << endl
-       << "Copyright 2005-2011 Damien Stehle, David Cade, Xavier Pujol." << endl
-       << "fplll is free software. You can redistribute it and/or modify" << endl
-       << "it under the terms of the GNU Lesser General Public License as published by" << endl
-       << "the Free Software Foundation, either version 2.1 of the License, or" << endl
-       << "(at your option) any later version." << endl;
+  cout << "latticegen (fplll) " << FPLLL_VERSION << '\n'
+       << "Copyright 2005-2011 Damien Stehle, David Cade, Xavier Pujol." << '\n'
+       << "fplll is free software. You can redistribute it and/or modify" << '\n'
+       << "it under the terms of the GNU Lesser General Public License as published by" << '\n'
+       << "the Free Software Foundation, either version 2.1 of the License, or" << '\n'
+       << "(at your option) any later version." << '\n';
 }
 
 void fatal_error(const char *message)
 {
-  cerr << "latticegen: " << message << endl
-       << "Try 'latticegen --help' for more information" << endl;
+  cerr << "latticegen: " << message << '\n'
+       << "Try 'latticegen --help' for more information" << '\n';
   exit(1);
 }
 
@@ -261,6 +261,6 @@ int main(int argc, char *argv[])
     break;
   }
   }
-  cout << m << endl;
+  cout << m << '\n';
   return 0;
 }

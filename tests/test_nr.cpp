@@ -29,7 +29,7 @@ template <class FT> int check_close(const FT &actual, double expected, const cha
   if (status)
   {
     cerr << "test_nr failed: backend=" << test_backend(actual) << ", case=" << test_case
-         << ", expected=" << expected << " (absolute tolerance=0.001), actual=" << actual << endl;
+         << ", expected=" << expected << " (absolute tolerance=0.001), actual=" << actual << '\n';
   }
   return status;
 }
@@ -51,14 +51,14 @@ template <class FT> int test_arithmetic()
   if (d.cmp(9))
   {
     cerr << "test_nr failed: backend=" << test_backend(d)
-         << ", case=arithmetic, expected=9, actual=" << d << endl;
+         << ", case=arithmetic, expected=9, actual=" << d << '\n';
   }
   d += 1.0;
   status |= d.cmp(10);
   if (d.cmp(10))
   {
     cerr << "test_nr failed: backend=" << test_backend(d)
-         << ", case=increment, expected=10, actual=" << d << endl;
+         << ", case=increment, expected=10, actual=" << d << '\n';
   }
   return status;
 }
@@ -79,7 +79,7 @@ template <class FT> bool test_hypot()
   {
     cerr << "test_nr failed: backend=" << test_backend(c)
          << ", case=hypot(3,4)/hypot(4,3), expected=5 (absolute tolerance=0.001), actual=" << c
-         << "/" << d << endl;
+         << "/" << d << '\n';
   }
   return status;
 }
@@ -137,7 +137,7 @@ int test_dpe_zero_arithmetic()
   status |= (dpe_get_si_exp(&integer, zero) != 0 || integer != 0);
 
   if (status)
-    cerr << "test_nr failed: backend=dpe_t, case=zero-arithmetic" << endl;
+    cerr << "test_nr failed: backend=dpe_t, case=zero-arithmetic" << '\n';
   return status;
 }
 #endif
@@ -149,13 +149,13 @@ int test_scoped_precision()
     ScopedPrecision guard(128);
     if (FP_NR<mpfr_t>::get_prec() != 128)
     {
-      cerr << "ScopedPrecision did not apply the requested precision" << endl;
+      cerr << "ScopedPrecision did not apply the requested precision" << '\n';
       return 1;
     }
   }
   if (FP_NR<mpfr_t>::get_prec() != initial)
   {
-    cerr << "ScopedPrecision did not restore the original precision" << endl;
+    cerr << "ScopedPrecision did not restore the original precision" << '\n';
     return 1;
   }
 
@@ -170,7 +170,7 @@ int test_scoped_precision()
 
   if (FP_NR<mpfr_t>::get_prec() != initial)
   {
-    cerr << "ScopedPrecision did not restore precision during unwinding" << endl;
+    cerr << "ScopedPrecision did not restore precision during unwinding" << '\n';
     return 1;
   }
   return 0;
@@ -248,7 +248,7 @@ int main()
 
   if (status == 0)
   {
-    cerr << "All tests passed." << endl;
+    cerr << "All tests passed." << '\n';
     return 0;
   }
   else

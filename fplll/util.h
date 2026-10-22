@@ -31,7 +31,7 @@ static inline int cputime()
   getrusage(RUSAGE_SELF, &rus);
   return rus.ru_utime.tv_sec * 1000 + rus.ru_utime.tv_usec / 1000;
 #else
-  return time(NULL) * 1000;
+  return time(nullptr) * 1000;
 #endif
 }
 

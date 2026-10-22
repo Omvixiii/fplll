@@ -7,7 +7,7 @@ template <class FT> void Pruner<FT>::print_coefficients(const vector<double> &b)
   cout << "# b = ";
   for (auto i = b.begin(); i != b.end(); ++i)
     std::cout << *i << ' ';
-  cout << endl;
+  cout << '\n';
 }
 
 template <class FT> void Pruner<FT>::print_coefficients(const vec &b)
@@ -15,7 +15,7 @@ template <class FT> void Pruner<FT>::print_coefficients(const vec &b)
   cout << "# b = ";
   for (auto i = b.begin(); i != b.end(); ++i)
     std::cout << *i << ' ';
-  cout << endl;
+  cout << '\n';
 }
 
 /**

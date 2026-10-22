@@ -22,9 +22,9 @@
 FPLLL_BEGIN_NAMESPACE
 
 /* import C++11 standard mutex, lock_guard<mutex>, unique_lock<mutex> for convenience */
-typedef std::mutex mutex;
-typedef std::lock_guard<std::mutex> lock_guard;
-typedef std::unique_lock<std::mutex> unique_lock;
+using mutex       = std::mutex;
+using lock_guard  = std::lock_guard<std::mutex>;
+using unique_lock = std::unique_lock<std::mutex>;
 
 /* import thread_pool::barrier
         class barrier {
@@ -33,7 +33,7 @@ typedef std::unique_lock<std::mutex> unique_lock;
                 void wait(); // wait until N threads have called wait()
         }
 */
-typedef thread_pool::barrier barrier;
+using barrier = thread_pool::barrier;
 
 /* fplll's threadpool
 

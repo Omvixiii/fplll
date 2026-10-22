@@ -552,7 +552,7 @@ public:
   */
   double single_enum_cost(/*i*/ const vector<double> &pr, vector<double> *detailed_cost = nullptr)
   {
-    // cout << "# pr is --> " << pr[0] << endl;
+    // cout << "# pr is --> " << pr[0] << '\n';
     evec b(d);
     load_coefficients(b, pr);
 

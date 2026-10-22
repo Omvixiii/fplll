@@ -33,7 +33,7 @@ FPLLL_BEGIN_NAMESPACE
 namespace enumlib
 {
 
-typedef ::fplll::enumf fplll_float;
+using fplll_float = ::fplll::enumf;
 using ::fplll::extenum_cb_process_sol;
 using ::fplll::extenum_cb_process_subsol;
 using ::fplll::extenum_cb_set_config;

@@ -40,9 +40,9 @@ template <class ZT, class FT> int is_already_reduced(ZZ_mat<ZT> &A, Matrix<Z_NR<
   int is_reduced  = is_lll_reduced<Z_NR<ZT>, FP_NR<FT>>(M, LLL_DEF_DELTA, LLL_DEF_ETA);
   int is_greduced = is_lll_reduced<Z_NR<ZT>, FP_NR<FT>>(M2, LLL_DEF_DELTA, LLL_DEF_ETA);
   if (is_reduced)
-    cerr << "is_lll_reduced reports success when it should not" << endl;
+    cerr << "is_lll_reduced reports success when it should not" << '\n';
   if (is_greduced)
-    cerr << "is_lll_greduced reports success when it should not" << endl;
+    cerr << "is_lll_greduced reports success when it should not" << '\n';
   return (is_reduced || is_greduced);
 }
 
@@ -278,7 +278,7 @@ int main(int /*argc*/, char ** /*argv*/)
 
   if (status == 0)
   {
-    cerr << "All tests passed." << endl;
+    cerr << "All tests passed." << '\n';
     return 0;
   }
   else

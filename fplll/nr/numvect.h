@@ -129,7 +129,7 @@ template <class T> istream &operator>>(istream &is, NumVect<T> &v);
 template <class T> class NumVect
 {
 public:
-  typedef typename vector<T>::iterator iterator;
+  using iterator = typename vector<T>::iterator;
   /** Creates an empty NumVect (0). */
   NumVect() {}
   /** Initializes NumVect with the elements of the given NumVect. */

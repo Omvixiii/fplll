@@ -86,7 +86,7 @@ bool LLLReduction<ZT, FT>::lll(int kappa_min, int kappa_start, int kappa_end,
       if (verbose)
       {
         log_stream() << "Discovering vector " << kappa - kappa_min + 1 + zeros << "/" << d
-                     << " cputime=" << cputime() - start_time << endl;
+                     << " cputime=" << cputime() - start_time << '\n';
       }
       kappa_max = kappa;
       if (enable_early_red && is_power_of_2(kappa) && kappa > last_early_red)

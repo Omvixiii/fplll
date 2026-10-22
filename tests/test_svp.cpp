@@ -62,7 +62,7 @@ template <class ZT> int test_svp(ZZ_mat<ZT> &A, vector<Z_NR<mpz_t>> &b)
       lll_reduction(A, u, LLL_DEF_DELTA, LLL_DEF_ETA, LM_WRAPPER, FT_DEFAULT, 0, LLL_DEFAULT);
   if (status != RED_SUCCESS)
   {
-    cerr << "LLL reduction failed: " << get_red_status_str(status) << endl;
+    cerr << "LLL reduction failed: " << get_red_status_str(status) << '\n';
     return status;
   }
 
@@ -70,7 +70,7 @@ template <class ZT> int test_svp(ZZ_mat<ZT> &A, vector<Z_NR<mpz_t>> &b)
 
   if (status != RED_SUCCESS)
   {
-    cerr << "Failure: " << get_red_status_str(status) << endl;
+    cerr << "Failure: " << get_red_status_str(status) << '\n';
     return status;
   }
 
@@ -109,7 +109,7 @@ int dual_length(FP_NR<mpfr_t> &norm, ZZ_mat<ZT> &A, const vector<Z_NR<mpz_t>> &c
   if (A.get_rows() != d)
   {
     cerr << "DSVP length error: Coefficient vector has wrong dimension: ";
-    cerr << A.get_rows() << " vs " << d << endl;
+    cerr << A.get_rows() << " vs " << d << '\n';
     return 1;
   }
   vector<FP_NR<mpfr_t>> coords_d(d);
@@ -122,7 +122,7 @@ int dual_length(FP_NR<mpfr_t> &norm, ZZ_mat<ZT> &A, const vector<Z_NR<mpz_t>> &c
   MatGSO<Z_NR<mpz_t>, FP_NR<mpfr_t>> gso(A, empty_mat, empty_mat, GSO_INT_GRAM);
   if (!gso.update_gso())
   {
-    cerr << "GSO Failure." << endl;
+    cerr << "GSO Failure." << '\n';
     return 1;
   }
   FP_NR<mpfr_t> tmp;
@@ -173,7 +173,7 @@ template <class ZT> int test_dual_svp(ZZ_mat<ZT> &A, vector<Z_NR<mpz_t>> &b)
       lll_reduction(A, u, LLL_DEF_DELTA, LLL_DEF_ETA, LM_WRAPPER, FT_DEFAULT, 0, LLL_DEFAULT);
   if (status != RED_SUCCESS)
   {
-    cerr << "LLL reduction failed: " << get_red_status_str(status) << endl;
+    cerr << "LLL reduction failed: " << get_red_status_str(status) << '\n';
     return status;
   }
 
@@ -181,7 +181,7 @@ template <class ZT> int test_dual_svp(ZZ_mat<ZT> &A, vector<Z_NR<mpz_t>> &b)
 
   if (status != RED_SUCCESS)
   {
-    cerr << "Failure: " << get_red_status_str(status) << endl;
+    cerr << "Failure: " << get_red_status_str(status) << '\n';
     return status;
   }
 
@@ -197,7 +197,7 @@ template <class ZT> int test_dual_svp(ZZ_mat<ZT> &A, vector<Z_NR<mpz_t>> &b)
   normb += error;
   if (norm_sol > normb)
   {
-    cerr << "Returned dual vector too long by more than " << error << endl;
+    cerr << "Returned dual vector too long by more than " << error << '\n';
     return 1;
   }
 
@@ -226,7 +226,7 @@ template <class ZT> int test_dsvp_reduce(ZZ_mat<ZT> &A, vector<Z_NR<mpz_t>> &b)
       lll_reduction(A, u, LLL_DEF_DELTA, LLL_DEF_ETA, LM_WRAPPER, FT_DEFAULT, 0, LLL_DEFAULT);
   if (status != RED_SUCCESS)
   {
-    cerr << "LLL reduction failed: " << get_red_status_str(status) << endl;
+    cerr << "LLL reduction failed: " << get_red_status_str(status) << '\n';
     return status;
   }
 
@@ -256,7 +256,7 @@ template <class ZT> int test_dsvp_reduce(ZZ_mat<ZT> &A, vector<Z_NR<mpz_t>> &b)
   normb += error;
   if (norm_sol > normb)
   {
-    cerr << "Last dual vector too long by more than " << error << endl;
+    cerr << "Last dual vector too long by more than " << error << '\n';
     return 1;
   }
 
@@ -354,7 +354,7 @@ int test_filename(const char *input_filename, const char *output_filename,
     return status;
   }
 
-  cerr << "Unknown test." << endl;
+  cerr << "Unknown test." << '\n';
   return 1;
 }
 
@@ -382,7 +382,7 @@ int main()
 
   if (status == 0)
   {
-    cerr << "All tests passed." << endl;
+    cerr << "All tests passed." << '\n';
     return 0;
   }
   else
