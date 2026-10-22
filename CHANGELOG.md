@@ -44,7 +44,8 @@ API, and replaces the generated pruner tables with runtime computation.  See
 - CPU timings use `clock_gettime`/`std::clock` through an internal helper; the
   POSIX headers are gone from the public headers.
 - Numeric command-line arguments and `Z_NR<long>`/`FP_NR<double>` string
-  parsing use `std::from_chars` and reject malformed input.
+  parsing use `std::from_chars` and reject malformed input; long-double string
+  parsing uses MPFR and is locale-independent.
 - The 4,100-line generated factorial and unit-ball-volume tables were replaced
   by runtime GMP/MPFR computation in the pruner; numeric output is unchanged.
 

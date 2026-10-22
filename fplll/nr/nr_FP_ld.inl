@@ -110,7 +110,15 @@ template <> inline FP_NR<long double> &FP_NR<long double>::operator=(double d)
 
 template <> inline FP_NR<long double> &FP_NR<long double>::operator=(const char *s)
 {
-  data = strtold(s, nullptr);
+  // MPFR parsing is locale-independent and keeps the full long-double
+  // significand; std::from_chars has no long-double overload in libc++.
+  mpfr_t parsed;
+  mpfr_init2(parsed, static_cast<mpfr_prec_t>(numeric_limits<long double>::digits));
+  if (mpfr_set_str(parsed, s, 10, MPFR_RNDN) != 0)
+    data = 0.0L;
+  else
+    data = mpfr_get_ld(parsed, MPFR_RNDN);
+  mpfr_clear(parsed);
   return *this;
 }
 

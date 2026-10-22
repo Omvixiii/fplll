@@ -56,7 +56,22 @@ namespace enumlib
 // #define NOCOUNTS
 #define NOLOCALUPDATE
 
-using namespace std;
+using std::array;
+using std::atomic;
+using std::atomic_int_fast8_t;
+using std::ceil;
+using std::cout;
+using std::floor;
+using std::function;
+using std::max;
+using std::min;
+using std::pair;
+using std::round;
+using std::size_t;
+using std::sqrt;
+using std::string;
+using std::thread;
+using std::vector;
 
 using float_type = fplll_float;
 using mutex_type = std::mutex;

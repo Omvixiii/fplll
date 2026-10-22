@@ -14,7 +14,7 @@ public:
   {
   }
 
-  ~ScopedPrecision() { FP_NR<mpfr_t>::set_prec(old_precision_); }
+  ~ScopedPrecision() noexcept { FP_NR<mpfr_t>::set_prec(old_precision_); }
 
   ScopedPrecision(const ScopedPrecision &)            = delete;
   ScopedPrecision &operator=(const ScopedPrecision &) = delete;

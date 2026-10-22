@@ -35,7 +35,14 @@ FPLLL_BEGIN_NAMESPACE
 namespace enumlib
 {
 
-using namespace std;
+using std::array;
+using std::ceil;
+using std::cout;
+using std::function;
+using std::round;
+using std::size_t;
+using std::sqrt;
+using std::vector;
 
 template <int dimension> struct enumerate_traits
 {

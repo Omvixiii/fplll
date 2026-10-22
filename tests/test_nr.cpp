@@ -39,6 +39,10 @@ template <class FT> int test_str()
   int status = 0;
   FT a       = "1.01";
   status |= check_close(a, 1.01, "string-conversion");
+  FT b = "-1.25e2";
+  status |= check_close(b, -125.0, "negative-scientific-string-conversion");
+  FT c = "0.125";
+  status |= check_close(c, 0.125, "fraction-string-conversion");
   return status;
 }
 

@@ -246,7 +246,7 @@ class LDConvTemp
 {
 public:
   LDConvTemp() : initialized(false) {}
-  ~LDConvTemp()
+  ~LDConvTemp() noexcept
   {
     if (initialized)
       mpfr_clear(value);
