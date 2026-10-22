@@ -32,7 +32,8 @@ using namespace fplll;
 */
 
 template <class ZT>
-int test_cvp(ZZ_mat<ZT> &A, vector<Z_NR<mpz_t>> &target, vector<Z_NR<mpz_t>> &b, const int method)
+int test_cvp(ZZ_mat<ZT> &A, vector<Z_NR<mpz_t>> &target, vector<Z_NR<mpz_t>> &b,
+             const CVPMethod method)
 {
   vector<Z_NR<mpz_t>> sol_coord;  // In the LLL-reduced basis
   vector<Z_NR<mpz_t>> solution;
@@ -85,7 +86,7 @@ int test_cvp(ZZ_mat<ZT> &A, vector<Z_NR<mpz_t>> &target, vector<Z_NR<mpz_t>> &b,
 
 template <class ZT>
 int test_filename(const char *input_filename_lattice, const char *input_filename_target,
-                  const char *output_filename, const int method = CVPM_FAST)
+                  const char *output_filename, const CVPMethod method = CVPM_FAST)
 {
   ZZ_mat<ZT> A;
   int status = 0;

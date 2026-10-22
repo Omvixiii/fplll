@@ -51,7 +51,7 @@ int test_bkz(ZZ_mat<ZT> &A, const int block_size, FloatType float_type, int flag
   if (status != RED_SUCCESS)
   {
     cerr << "BKZ reduction failed with error '" << get_red_status_str(status);
-    cerr << " for float type " << FLOAT_TYPE_STR[float_type] << '\n';
+    cerr << " for float type " << FLOAT_TYPE_STR[enum_index(float_type)] << '\n';
   }
   return status;
 }

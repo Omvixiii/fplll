@@ -76,7 +76,7 @@ FPLLL_BEGIN_NAMESPACE
  * The result is guaranteed if method = CVPM_PROVED.
  */
 [[nodiscard]] int closest_vector(ZZ_mat<mpz_t> &b, const vector<Z_NR<mpz_t>> &int_target,
-                                 vector<Z_NR<mpz_t>> &sol_coord, int method = CVPM_FAST,
+                                 vector<Z_NR<mpz_t>> &sol_coord, CVPMethod method = CVPM_FAST,
                                  int flags = CVP_DEFAULT);
 
 FPLLL_END_NAMESPACE

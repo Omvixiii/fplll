@@ -530,7 +530,7 @@ static void babai(const FP_mat<mpfr_t> &matrix, const Matrix<FP_NR<mpfr_t>> &mu,
 }
 
 int closest_vector(ZZ_mat<mpz_t> &b, const vector<Z_NR<mpz_t>> &int_target,
-                   vector<Z_NR<mpz_t>> &sol_coord, int method, int flags)
+                   vector<Z_NR<mpz_t>> &sol_coord, CVPMethod method, int flags)
 {
   // d = lattice dimension (note that it might decrease during preprocessing)
   int d = b.get_rows();
@@ -606,7 +606,7 @@ int closest_vector(ZZ_mat<mpz_t> &b, const vector<Z_NR<mpz_t>> &int_target,
   }
 
   vector<int> max_indices;
-  if (method & CVPM_PROVED)
+  if (method == CVPM_PROVED)
   {
     // For Exact CVP, we need to reset enum below depth with maximal r_i
     max_indices = vector<int>(d);

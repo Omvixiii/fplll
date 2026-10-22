@@ -238,13 +238,14 @@ inline constexpr std::array<std::string_view, RED_STATUS_MAX> RED_STATUS_STR = {
     "error in weak size reduction",
     "Please see https://github.com/fplll/fplll/wiki/fplll-errors-FAQ for more information."};
 
-enum LLLMethod
+enum class LLLMethod
 {
   LM_WRAPPER   = 0,
   LM_PROVED    = 1,
   LM_HEURISTIC = 2,
   LM_FAST      = 3
 };
+using enum LLLMethod;
 
 inline constexpr std::array<std::string_view, 4> LLL_METHOD_STR = {"wrapper", "proved", "heuristic",
                                                                    "fast"};
@@ -254,15 +255,16 @@ inline constexpr std::array<std::string_view, 4> LLL_METHOD_STR = {"wrapper", "p
 inline constexpr std::array<std::string_view, 4> HLLL_METHOD_STR = {"wrapper", "proved", "",
                                                                     "fast"};
 
-enum IntType
+enum class IntType
 {
   ZT_MPZ  = 0,
   ZT_LONG = 1
 };
+using enum IntType;
 
 inline constexpr std::array<std::string_view, 2> INT_TYPE_STR = {"mpz", "long"};
 
-enum FloatType
+enum class FloatType
 {
   FT_DEFAULT     = 0,
   FT_DOUBLE      = 1,
@@ -271,9 +273,16 @@ enum FloatType
   FT_QD          = 4,
   FT_MPFR        = 5
 };
+using enum FloatType;
 
 inline constexpr std::array<std::string_view, 6> FLOAT_TYPE_STR = {"",   "double", "long double",
                                                                    "dd", "qd",     "mpfr"};
+
+/** Index an array with a scoped enum without implicit conversions. */
+template <class Enum> constexpr std::size_t enum_index(Enum value)
+{
+  return static_cast<std::size_t>(value);
+}
 
 enum LLLFlags
 {
@@ -283,17 +292,19 @@ enum LLLFlags
   LLL_DEFAULT   = 0
 };
 
-enum SVPMethod
+enum class SVPMethod
 {
   SVPM_FAST   = 0,
   SVPM_PROVED = 2
 };
+using enum SVPMethod;
 
-enum CVPMethod
+enum class CVPMethod
 {
   CVPM_FAST   = 0,
   CVPM_PROVED = 2
 };
+using enum CVPMethod;
 
 enum SVPFlags
 {
@@ -344,11 +355,12 @@ enum HKZFlags
 #define FPLLL_DEFAULT_STRATEGY ""
 #endif
 
-enum PrunerMetric
+enum class PrunerMetric
 {
   PRUNER_METRIC_PROBABILITY_OF_SHORTEST = 0,
   PRUNER_METRIC_EXPECTED_SOLUTIONS      = 1
 };
+using enum PrunerMetric;
 
 enum PrunerFlags
 {

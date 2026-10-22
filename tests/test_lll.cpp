@@ -79,8 +79,8 @@ int test_lll(ZZ_mat<ZT> &A, LLLMethod method, FloatType float_type, int flags = 
   if (status != RED_SUCCESS)
   {
     cerr << "LLL reduction failed with error '" << get_red_status_str(status);
-    cerr << "' for method " << LLL_METHOD_STR[method];
-    cerr << " and float type " << FLOAT_TYPE_STR[float_type] << '\n';
+    cerr << "' for method " << LLL_METHOD_STR[enum_index(method)];
+    cerr << " and float type " << FLOAT_TYPE_STR[enum_index(float_type)] << '\n';
     return status;
   }
 
@@ -95,8 +95,8 @@ int test_lll(ZZ_mat<ZT> &A, LLLMethod method, FloatType float_type, int flags = 
     FP_NR<mpfr_t>::set_prec(old_prec);
 
   if (status == 0)
-    cerr << "Output of LLL reduction is not LLL reduced with method " << LLL_METHOD_STR[method]
-         << '\n';
+    cerr << "Output of LLL reduction is not LLL reduced with method "
+         << LLL_METHOD_STR[enum_index(method)] << '\n';
 
   return (status == 0);
 }

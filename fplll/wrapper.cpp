@@ -108,8 +108,8 @@ int Wrapper::call_lll(ZZ_mat<Z> &bz, ZZ_mat<Z> &uz, ZZ_mat<Z> &u_invZ, LLLMethod
 
   if (flags & LLL_VERBOSE)
   {
-    log_stream() << "====== Wrapper: calling " << LLL_METHOD_STR[method] << "<" << num_type_str<Z>()
-                 << "," << num_type_str<F>() << "> method";
+    log_stream() << "====== Wrapper: calling " << LLL_METHOD_STR[enum_index(method)] << "<"
+                 << num_type_str<Z>() << "," << num_type_str<F>() << "> method";
     if (precision > 0)
     {
       log_stream() << " (precision=" << precision << ")";
@@ -138,7 +138,8 @@ int Wrapper::call_lll(ZZ_mat<Z> &bz, ZZ_mat<Z> &uz, ZZ_mat<Z> &u_invZ, LLLMethod
 
   if (flags & LLL_VERBOSE)
   {
-    log_stream() << "====== Wrapper: end of " << LLL_METHOD_STR[method] << " method ======\n"
+    log_stream() << "====== Wrapper: end of " << LLL_METHOD_STR[enum_index(method)]
+                 << " method ======\n"
                  << '\n';
   }
 
@@ -385,7 +386,7 @@ template <class F> bool Wrapper::call_hlll(LLLMethod method, int precision)
 
   if (flags & LLL_VERBOSE)
   {
-    log_stream() << "====== Wrapper: calling " << HLLL_METHOD_STR[method] << "<mpz_t,"
+    log_stream() << "====== Wrapper: calling " << HLLL_METHOD_STR[enum_index(method)] << "<mpz_t,"
                  << num_type_str<F>() << "> method";
     if (precision > 0)
     {
@@ -410,7 +411,8 @@ template <class F> bool Wrapper::call_hlll(LLLMethod method, int precision)
 
   if (flags & LLL_VERBOSE)
   {
-    log_stream() << "====== Wrapper: end of " << HLLL_METHOD_STR[method] << " method ======\n"
+    log_stream() << "====== Wrapper: end of " << HLLL_METHOD_STR[enum_index(method)]
+                 << " method ======\n"
                  << '\n';
   }
 
@@ -598,7 +600,7 @@ int lll_reduction_z(ZZ_mat<ZT> &b, ZZ_mat<ZT> &u, ZZ_mat<ZT> &u_inv, double delt
            (sel_ft != FT_DOUBLE && sel_ft != FT_LONG_DOUBLE && sel_ft != FT_DD && sel_ft != FT_QD))
   {
     FPLLL_ABORT("'double' or 'long double' or 'dd' or 'qd' required for "
-                << LLL_METHOD_STR[method]);
+                << LLL_METHOD_STR[enum_index(method)]);
   }
 
   if (sel_ft == FT_DOUBLE)
@@ -616,9 +618,9 @@ int lll_reduction_z(ZZ_mat<ZT> &b, ZZ_mat<ZT> &u, ZZ_mat<ZT> &u_inv, double delt
 
   if (flags & LLL_VERBOSE)
   {
-    log_stream() << "Starting LLL method '" << LLL_METHOD_STR[method] << "'" << '\n'
-                 << "  integer type '" << INT_TYPE_STR[int_type] << "'" << '\n'
-                 << "  floating point type '" << FLOAT_TYPE_STR[sel_ft] << "'" << '\n';
+    log_stream() << "Starting LLL method '" << LLL_METHOD_STR[enum_index(method)] << "'" << '\n'
+                 << "  integer type '" << INT_TYPE_STR[enum_index(int_type)] << "'" << '\n'
+                 << "  floating point type '" << FLOAT_TYPE_STR[enum_index(sel_ft)] << "'" << '\n';
     if (method != LM_PROVED || int_type != ZT_MPZ || sel_ft == FT_DOUBLE)
     {
       log_stream() << "  The reduction is not guaranteed";
@@ -669,14 +671,15 @@ int lll_reduction_z(ZZ_mat<ZT> &b, ZZ_mat<ZT> &u, ZZ_mat<ZT> &u_inv, double delt
   }
   else
   {
-    if (0 <= sel_ft && sel_ft <= FT_MPFR)
+    if (sel_ft <= FT_MPFR)
     {
       // it's a valid choice but we don't have support for it
-      FPLLL_ABORT("Compiled without support for LLL reduction with " << FLOAT_TYPE_STR[sel_ft]);
+      FPLLL_ABORT("Compiled without support for LLL reduction with "
+                  << FLOAT_TYPE_STR[enum_index(sel_ft)]);
     }
     else
     {
-      FPLLL_ABORT("Floating point type " << sel_ft << "not supported in LLL");
+      FPLLL_ABORT("Floating point type " << static_cast<int>(sel_ft) << " not supported in LLL");
     }
   }
   zeros_first(b, u, u_inv);
@@ -768,7 +771,7 @@ int hlll_reduction_z(ZZ_mat<ZT> &b, ZZ_mat<ZT> &u, ZZ_mat<ZT> &u_inv, double del
     if (flags & LLL_VERBOSE)
     {
       log_stream() << "Starting HLLL method 'verification'" << '\n'
-                   << "  integer type '" << INT_TYPE_STR[int_type] << "'" << '\n'
+                   << "  integer type '" << INT_TYPE_STR[enum_index(int_type)] << "'" << '\n'
                    << "  floating point type 'mpfr_t'" << '\n';
 
       if (sel_prec < good_prec)
@@ -841,7 +844,7 @@ int hlll_reduction_z(ZZ_mat<ZT> &b, ZZ_mat<ZT> &u, ZZ_mat<ZT> &u_inv, double del
            (sel_ft != FT_DOUBLE && sel_ft != FT_LONG_DOUBLE && sel_ft != FT_DD && sel_ft != FT_QD))
   {
     FPLLL_ABORT("'double' or 'long double' or 'dd' or 'qd' required for "
-                << LLL_METHOD_STR[method]);
+                << LLL_METHOD_STR[enum_index(method)]);
   }
 
   if (sel_ft == FT_DOUBLE)
@@ -859,9 +862,9 @@ int hlll_reduction_z(ZZ_mat<ZT> &b, ZZ_mat<ZT> &u, ZZ_mat<ZT> &u_inv, double del
 
   if (flags & LLL_VERBOSE)
   {
-    log_stream() << "Starting HLLL method '" << LLL_METHOD_STR[method] << "'" << '\n'
-                 << "  integer type '" << INT_TYPE_STR[int_type] << "'" << '\n'
-                 << "  floating point type '" << FLOAT_TYPE_STR[sel_ft] << "'" << '\n';
+    log_stream() << "Starting HLLL method '" << LLL_METHOD_STR[enum_index(method)] << "'" << '\n'
+                 << "  integer type '" << INT_TYPE_STR[enum_index(int_type)] << "'" << '\n'
+                 << "  floating point type '" << FLOAT_TYPE_STR[enum_index(sel_ft)] << "'" << '\n';
     if (method != LM_PROVED || int_type != ZT_MPZ || sel_ft == FT_DOUBLE)
     {
       log_stream() << "  The reduction is not guaranteed";
@@ -907,14 +910,15 @@ int hlll_reduction_z(ZZ_mat<ZT> &b, ZZ_mat<ZT> &u, ZZ_mat<ZT> &u_inv, double del
   }
   else
   {
-    if (0 <= sel_ft && sel_ft <= FT_MPFR)
+    if (sel_ft <= FT_MPFR)
     {
       // it's a valid choice but we don't have support for it
-      FPLLL_ABORT("Compiled without support for LLL reduction with " << FLOAT_TYPE_STR[sel_ft]);
+      FPLLL_ABORT("Compiled without support for LLL reduction with "
+                  << FLOAT_TYPE_STR[enum_index(sel_ft)]);
     }
     else
     {
-      FPLLL_ABORT("Floating point type " << sel_ft << "not supported in LLL");
+      FPLLL_ABORT("Floating point type " << static_cast<int>(sel_ft) << " not supported in LLL");
     }
   }
   zeros_first(b, u, u_inv);

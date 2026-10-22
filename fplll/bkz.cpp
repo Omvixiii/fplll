@@ -814,7 +814,7 @@ template <class ZT, class FT> bool BKZAutoAbort<ZT, FT>::test_abort(double scale
 
 // call LLLReduction() and then BKZReduction.
 template <class FT>
-int bkz_reduction_f(ZZ_mat<mpz_t> &b, const BKZParam &param, int sel_ft, double lll_delta,
+int bkz_reduction_f(ZZ_mat<mpz_t> &b, const BKZParam &param, FloatType sel_ft, double lll_delta,
                     ZZ_mat<mpz_t> &u, ZZ_mat<mpz_t> &u_inv)
 {
   int gso_flags = 0;
@@ -908,15 +908,16 @@ int bkz_reduction(ZZ_mat<mpz_t> *B, ZZ_mat<mpz_t> *U, const BKZParam &param, Flo
   }
   else
   {
-    if (0 <= sel_ft && sel_ft <= FT_MPFR)
+    if (sel_ft <= FT_MPFR)
     {
       // it's a valid choice but we don't have support for it
-      FPLLL_ABORT("Compiled without support for BKZ reduction with " << FLOAT_TYPE_STR[sel_ft]);
+      FPLLL_ABORT("Compiled without support for BKZ reduction with "
+                  << FLOAT_TYPE_STR[enum_index(sel_ft)]);
     }
     else
     {
       // it's an invalid choice
-      FPLLL_ABORT("Floating point type " << sel_ft << "not supported in BKZ");
+      FPLLL_ABORT("Floating point type " << static_cast<int>(sel_ft) << " not supported in BKZ");
     }
   }
   zeros_first(*B, u, u_inv);

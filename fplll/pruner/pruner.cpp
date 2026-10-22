@@ -29,7 +29,7 @@ FPLLL_BEGIN_NAMESPACE
 
 // call pruner (note the float type is determined now)
 template <class FT>
-int run_pruner_f(ZZ_mat<mpz_t> &b, int sel_ft, int prune_start, int prune_end,
+int run_pruner_f(ZZ_mat<mpz_t> &b, FloatType sel_ft, int prune_start, int prune_end,
                  double prune_pre_nodes, double prune_min_prob, double gh_factor)
 {
   int gso_flags = 0;
@@ -154,13 +154,15 @@ int run_pruner(ZZ_mat<mpz_t> &B, FloatType float_type, int precision, int prune_
   }
   else
   {
-    if (0 <= sel_ft && sel_ft <= FT_MPFR)
+    if (sel_ft <= FT_MPFR)
     {
-      FPLLL_ABORT("Compiled without support for run_pruner() with " << FLOAT_TYPE_STR[sel_ft]);
+      FPLLL_ABORT("Compiled without support for run_pruner() with "
+                  << FLOAT_TYPE_STR[enum_index(sel_ft)]);
     }
     else
     {
-      FPLLL_ABORT("Floating point type " << sel_ft << "not supported in run_pruner()");
+      FPLLL_ABORT("Floating point type " << static_cast<int>(sel_ft)
+                                         << " not supported in run_pruner()");
     }
   }
   return status;
@@ -263,7 +265,7 @@ template void prune<FP_NR<double>>(PruningParams &,const double, const double, c
 template void prune<FP_NR<double>>(PruningParams &,const double, const double, const vector<vector<double>> &, const double, const PrunerMetric, const int);
 template FP_NR<double> svp_probability<FP_NR<double>>(const PruningParams &pruning);
 template FP_NR<double> svp_probability<FP_NR<double>>(const vector<double> &pr);
-template int run_pruner_f<FP_NR<double>> (ZZ_mat<mpz_t> &b, int sel_ft,  int prune_start, int prune_end, double prune_pre_nodes, double prune_min_prob, double gh_factor);
+template int run_pruner_f<FP_NR<double>> (ZZ_mat<mpz_t> &b, FloatType sel_ft,  int prune_start, int prune_end, double prune_pre_nodes, double prune_min_prob, double gh_factor);
 
 
 // MPFR
@@ -272,7 +274,7 @@ template void prune<FP_NR<mpfr_t>>(PruningParams &,const double, const double, c
 template void prune<FP_NR<mpfr_t>>(PruningParams &,const double, const double, const vector<vector<double>> &, const double, const PrunerMetric, const int);
 template FP_NR<mpfr_t> svp_probability<FP_NR<mpfr_t>>(const PruningParams &pruning);
 template FP_NR<mpfr_t> svp_probability<FP_NR<mpfr_t>>(const vector<double> &pr);
-template int run_pruner_f<FP_NR<mpfr_t>> (ZZ_mat<mpz_t> &b, int sel_ft, int prune_start, int prune_end, double prune_pre_nodes, double prune_min_prob, double gh_factor);
+template int run_pruner_f<FP_NR<mpfr_t>> (ZZ_mat<mpz_t> &b, FloatType sel_ft, int prune_start, int prune_end, double prune_pre_nodes, double prune_min_prob, double gh_factor);
 
 
 // LD
@@ -283,7 +285,7 @@ template void prune<FP_NR<long double>>(PruningParams &,const double, const doub
 template void prune<FP_NR<long double>>(PruningParams &,const double, const double, const vector<vector<double>> &, const double, const PrunerMetric, const int);
 template FP_NR<long double> svp_probability<FP_NR<long double>>(const PruningParams &pruning);
 template FP_NR<long double> svp_probability<FP_NR<long double>>(const vector<double> &pr);
-template int run_pruner_f<FP_NR<long double>> (ZZ_mat<mpz_t> &b, int sel_ft, int prune_start, int prune_end, double prune_pre_nodes, double prune_min_prob, double gh_factor);
+template int run_pruner_f<FP_NR<long double>> (ZZ_mat<mpz_t> &b, FloatType sel_ft, int prune_start, int prune_end, double prune_pre_nodes, double prune_min_prob, double gh_factor);
 
 #endif
 
@@ -296,7 +298,7 @@ template void prune<FP_NR<dd_real>>(PruningParams &,const double, const double, 
 template void prune<FP_NR<dd_real>>(PruningParams &,const double, const double, const vector<vector<double>> &, const double, const PrunerMetric, const int);
 template FP_NR<dd_real> svp_probability<FP_NR<dd_real>>(const PruningParams &pruning);
 template FP_NR<dd_real> svp_probability<FP_NR<dd_real>>(const vector<double> &pr);
-template int run_pruner_f<FP_NR<dd_real>> (ZZ_mat<mpz_t> &b, int sel_ft, int prune_start, int prune_end, double prune_pre_nodes, double prune_min_prob, double gh_factor);
+template int run_pruner_f<FP_NR<dd_real>> (ZZ_mat<mpz_t> &b, FloatType sel_ft, int prune_start, int prune_end, double prune_pre_nodes, double prune_min_prob, double gh_factor);
 
 
 // QD
@@ -305,7 +307,7 @@ template void prune<FP_NR<qd_real>>(PruningParams &,const double, const double, 
 template void prune<FP_NR<qd_real>>(PruningParams &,const double, const double, const vector<vector<double>> &, const double, const PrunerMetric, const int);
 template FP_NR<qd_real> svp_probability<FP_NR<qd_real>>(const PruningParams &pruning);
 template FP_NR<qd_real> svp_probability<FP_NR<qd_real>>(const vector<double> &pr);
-template int run_pruner_f<FP_NR<qd_real>> (ZZ_mat<mpz_t> &b, int sel_ft, int prune_start, int prune_end, double prune_pre_nodes, double prune_min_prob, double gh_factor);
+template int run_pruner_f<FP_NR<qd_real>> (ZZ_mat<mpz_t> &b, FloatType sel_ft, int prune_start, int prune_end, double prune_pre_nodes, double prune_min_prob, double gh_factor);
 
 #endif
 
