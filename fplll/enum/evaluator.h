@@ -17,11 +17,10 @@
 #define FPLLL_EVALUATOR_H
 
 #include "../gso_interface.h"
-#include "../util.h"
+#include "../nr/matrix.h"
 #include <cassert>
 #include <functional>
 #include <map>
-#include <queue>
 
 FPLLL_BEGIN_NAMESPACE
 

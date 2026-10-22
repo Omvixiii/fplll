@@ -19,7 +19,8 @@
 #ifndef FPLLL_SVPCVP_H
 #define FPLLL_SVPCVP_H
 
-#include "util.h"
+#include "gso_interface.h"
+#include "nr/matrix.h"
 
 FPLLL_BEGIN_NAMESPACE
 

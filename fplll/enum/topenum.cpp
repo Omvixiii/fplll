@@ -14,6 +14,7 @@
    along with fplll. If not, see <http://www.gnu.org/licenses/>. */
 
 #include "topenum.h"
+#include "../util.h"
 
 FPLLL_BEGIN_NAMESPACE
 

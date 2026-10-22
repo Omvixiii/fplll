@@ -17,7 +17,8 @@
 
 #include "svpcvp.h"
 #include "enum/enumerate.h"
-#include "enum/topenum.h"
+#include "gso.h"
+#include "util.h"
 
 FPLLL_BEGIN_NAMESPACE
 

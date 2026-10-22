@@ -26,14 +26,14 @@
 #error fplll needs at least a C++11 compliant compiler
 #endif
 
-#include "bkz.h"
-#include "bkz_param.h"
-#include "gso_gram.h"
-#include "hlll.h"
-#include "pruner/pruner.h"
-#include "svpcvp.h"
-#include "threadpool.h"
-#include "util.h"
-#include "wrapper.h"
+#include "bkz.h"            // IWYU pragma: export
+#include "bkz_param.h"      // IWYU pragma: export
+#include "gso_gram.h"       // IWYU pragma: export
+#include "hlll.h"           // IWYU pragma: export
+#include "pruner/pruner.h"  // IWYU pragma: export
+#include "svpcvp.h"         // IWYU pragma: export
+#include "threadpool.h"     // IWYU pragma: export
+#include "util.h"           // IWYU pragma: export
+#include "wrapper.h"        // IWYU pragma: export
 
 #endif
