@@ -181,6 +181,103 @@ source/build paths. Keep both files while this documentation target exists:
 deleting the base configuration would also discard the project's custom
 documentation settings. Doxygen is optional for normal builds.
 
+## Local code coverage
+
+Keep Codecov as the report service and collect gcov-format data locally. Run
+the following block from the repository root with Bash and the existing Apple
+Clang toolchain. With GCC, change `clang++` to the chosen GCC C++ compiler and
+`coverage_gcov=(llvm-cov gcov)` to its matching `coverage_gcov=(gcov)` command
+(use matching version suffixes when applicable).
+
+The dedicated `build/coverage` directory uses Debug, the default library
+features, parallel enumeration dimension 20, and all 15 numerical tests. Start
+with a fresh coverage directory when changing compiler or enabled source sets.
+Each measurement clears only its previous runtime counters and generated
+coverage reports; normal development builds are separate.
+
+```bash
+bash <<'SH'
+set -euo pipefail
+coverage_source=$PWD
+coverage_build="$coverage_source/build/coverage"
+coverage_reports="$coverage_build/gcov"
+coverage_gcov=(llvm-cov gcov)
+export CCACHE_DIR="$coverage_build/ccache"
+
+cmake --preset debug -B "$coverage_build" \
+  -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_CXX_FLAGS=--coverage \
+  -DCMAKE_EXE_LINKER_FLAGS=--coverage -DCMAKE_SHARED_LINKER_FLAGS=--coverage \
+  -DFPLLL_MAX_PARALLEL_ENUM_DIM=20 \
+  -DBUILD_TESTING=ON -DFPLLL_BUILD_ISOLATION_TESTS=OFF
+cmake --build "$coverage_build" --parallel 4
+find "$coverage_build" -type f \( -name '*.gcda' -o -name '*.gcov' \) -delete
+rm -f "$coverage_build/coverage-lines.tsv" "$coverage_build/coverage-summary.txt"
+ctest --test-dir "$coverage_build" --output-on-failure --no-tests=error
+
+mkdir -p "$coverage_reports"
+find "$coverage_build" -type f -name '*.gcno' | LC_ALL=C sort \
+  > "$coverage_build/coverage-notes.txt"
+test -s "$coverage_build/coverage-notes.txt"
+while IFS= read -r coverage_note; do
+  coverage_output="$coverage_reports/${coverage_note#"$coverage_build/"}"
+  mkdir -p "$coverage_output"
+  (cd "$coverage_output"
+   "${coverage_gcov[@]}" -p -r -s "$coverage_source" "$coverage_note" > gcov.log 2>&1)
+done < "$coverage_build/coverage-notes.txt"
+
+find "$coverage_reports" -type f -name '*.gcov' -exec cat {} + |
+  awk -F: -v root="$coverage_source/" '
+    $2 == 0 && $3 == "Source" {
+      source = substr($0, index($0, "Source:") + 7)
+      if (index(source, root) == 1) source = substr(source, length(root) + 1)
+    }
+    source ~ /^fplll\// && source != "fplll/io/json.hpp" && $2 > 0 {
+      count = $1
+      gsub(/[[:space:]*]/, "", count)
+      if (count != "-") {
+        key = source "\t" ($2 + 0)
+        covered[key] = covered[key] || (count ~ /^[0-9]+$/ && count + 0 > 0)
+      }
+    }
+    END { for (key in covered) print key "\t" (covered[key] ? 1 : 0) }
+  ' | LC_ALL=C sort > "$coverage_build/coverage-lines.tsv"
+
+awk -F '\t' '
+  { files[$1] = 1; lines++; hits += $3 }
+  END {
+    if (!lines) exit 1
+    for (file in files) total_files++
+    printf "Files: %d\nLines: %d\nHits: %d\nMisses: %d\nCoverage: %.2f%%\n", \
+      total_files, lines, hits, lines - hits, int(10000 * hits / lines) / 100
+  }
+' "$coverage_build/coverage-lines.tsv" | tee "$coverage_build/coverage-summary.txt"
+SH
+```
+
+Collect every `.gcno`, including objects in enumeration, pruning, and test
+subdirectories. An object without runtime counts produces zero-covered lines.
+Separate output directories preserve all copies of headers instantiated by
+different objects. The summary merges each source line across those copies:
+a line is covered if any object executed it. It includes the project's `fplll/`
+sources and excludes tests, external headers, and the vendored JSON header.
+Codecov's root `codecov.yml` retains the project and patch coverage policies
+and excludes tests and the JSON header during service-side processing.
+
+`build/coverage/gcov/` contains the raw `.gcov` reports and per-object logs.
+`coverage-lines.tsv` contains source path, line number, and covered status
+(`1` or `0`); `coverage-summary.txt` records the file count and line totals.
+All of these files stay under `build/coverage`. The collection block performs
+no upload. Use the corrected report as the baseline for subsequent comparisons
+with the same compiler, features, and test selection.
+
+Verified local baseline on 2026-10-22: Apple Clang 21.0.0 on arm64 macOS,
+C++11 Debug, GMP/MPFR, QD disabled, and parallel enumeration dimension 20.
+All 15 tests passed in two clean measurements, with identical covered-line sets.
+
+| Files | Executable lines | Covered | Uncovered | Coverage (rounded down) |
+| --- | --- | --- | --- | --- |
+| 63 | 8,090 | 5,179 | 2,911 | 64.01% |
+
 ## Continuous integration
 
 Pull requests run three checks on Ubuntu: C++ formatting and workflow syntax,
