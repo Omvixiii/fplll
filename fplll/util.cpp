@@ -16,11 +16,40 @@
 #include "util.h"
 #include "detail/precision.h"
 
+#include <atomic>
+#include <streambuf>
+
 #ifdef DEBUG
 int debug_depth = 0;
 #endif
 
 FPLLL_BEGIN_NAMESPACE
+
+namespace
+{
+
+class NullLogBuffer : public std::streambuf
+{
+protected:
+  int overflow(int c) override { return c; }
+};
+
+NullLogBuffer null_log_buffer;
+std::ostream null_log_stream(&null_log_buffer);
+std::atomic<std::ostream *> current_log_stream{nullptr};
+
+}  // namespace
+
+std::ostream &log_stream()
+{
+  std::ostream *stream = current_log_stream.load(std::memory_order_relaxed);
+  return stream != nullptr ? *stream : null_log_stream;
+}
+
+void set_log_stream(std::ostream *stream)
+{
+  current_log_stream.store(stream, std::memory_order_relaxed);
+}
 
 enum MinPrecAlgo
 {

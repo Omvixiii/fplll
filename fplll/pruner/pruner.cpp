@@ -91,25 +91,25 @@ int run_pruner_f(ZZ_mat<mpz_t> &b, int sel_ft, int prune_start, int prune_end,
   adjust_radius_to_gh_bound(max_dist, max_dist_expo, block_size, root_det, gh_factor);
   double radius_d = max_dist.get_d() * pow(2, max_dist_expo);
 
-  cerr << "# Start Pruning" << endl;
-  cerr << "# enumeration Radius: " << radius_d << endl;
-  cerr << "# preprocessing (num. nodes): " << prune_pre_nodes << endl;
-  cerr << "# targeted min. prob: " << prune_min_prob << endl;
-  cerr << "# input GSO: " << r << endl;
+  log_stream() << "# Start Pruning" << endl;
+  log_stream() << "# enumeration Radius: " << radius_d << endl;
+  log_stream() << "# preprocessing (num. nodes): " << prune_pre_nodes << endl;
+  log_stream() << "# targeted min. prob: " << prune_min_prob << endl;
+  log_stream() << "# input GSO: " << r << endl;
   // example: use flags PRUNER_ZEALOUS  and PRUNER_SINGLE
   prune<FT>(pruning, radius_d, prune_pre_nodes, r, prune_min_prob, PRUNER_METRIC_EXPECTED_SOLUTIONS,
             PRUNER_ZEALOUS | PRUNER_SINGLE);
-  cerr << "# optimized pruning coeff: " << endl << pruning.coefficients << endl;
+  log_stream() << "# optimized pruning coeff: " << endl << pruning.coefficients << endl;
   double cost = 0.;
-  //  cerr << "# cost per level" << endl;
+  //  log_stream() << "# cost per level" << endl;
   for (int i = 0; i < block_size; ++i)
   {
-    // cerr << pruning.detailed_cost[i] << " ";
+    // log_stream() << pruning.detailed_cost[i] << " ";
     cost += pruning.detailed_cost[i];
   }
-  cerr << "# single_enum_cost   = " << cost << endl;
-  cerr << "#       succ. prob   = " << pruning.expectation << endl;
-  cerr << "# repeated_enum_cost = " << cost / pruning.expectation << endl;
+  log_stream() << "# single_enum_cost   = " << cost << endl;
+  log_stream() << "#       succ. prob   = " << pruning.expectation << endl;
+  log_stream() << "# repeated_enum_cost = " << cost / pruning.expectation << endl;
   return 0;
 }
 

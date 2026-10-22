@@ -752,6 +752,7 @@ int main(int argc, char **argv)
   int result;
   Options o;
   read_options(argc, argv, o);
+  fplll::set_log_stream((o.verbose || o.action == ACTION_PRU) ? &std::cerr : nullptr);
   ZZ_mat<mpz_t>::set_print_mode(MAT_PRINT_REGULAR);
   switch (o.int_type)
   {

@@ -90,7 +90,7 @@ bool Wrapper::little(int kappa, int precision)
 
   p *= eta_dep[em]; /* eta dependance */
   p *= dim_double_max[dm];
-  // cerr << kappa << " compared to " << p << endl;
+  // log_stream() << kappa << " compared to " << p << endl;
   return kappa < p;
 }
 
@@ -106,13 +106,13 @@ int Wrapper::call_lll(ZZ_mat<Z> &bz, ZZ_mat<Z> &uz, ZZ_mat<Z> &u_invZ, LLLMethod
 
   if (flags & LLL_VERBOSE)
   {
-    cerr << "====== Wrapper: calling " << LLL_METHOD_STR[method] << "<" << num_type_str<Z>() << ","
-         << num_type_str<F>() << "> method";
+    log_stream() << "====== Wrapper: calling " << LLL_METHOD_STR[method] << "<" << num_type_str<Z>()
+                 << "," << num_type_str<F>() << "> method";
     if (precision > 0)
     {
-      cerr << " (precision=" << precision << ")";
+      log_stream() << " (precision=" << precision << ")";
     }
-    cerr << " ======" << endl;
+    log_stream() << " ======" << endl;
   }
 
   int gso_flags = 0;
@@ -134,7 +134,8 @@ int Wrapper::call_lll(ZZ_mat<Z> &bz, ZZ_mat<Z> &uz, ZZ_mat<Z> &u_invZ, LLLMethod
 
   if (flags & LLL_VERBOSE)
   {
-    cerr << "====== Wrapper: end of " << LLL_METHOD_STR[method] << " method ======\n" << endl;
+    log_stream() << "====== Wrapper: end of " << LLL_METHOD_STR[method] << " method ======\n"
+                 << endl;
   }
 
   if (lll_obj.status == RED_SUCCESS)
@@ -392,13 +393,13 @@ template <class F> bool Wrapper::call_hlll(LLLMethod method, int precision)
 
   if (flags & LLL_VERBOSE)
   {
-    cerr << "====== Wrapper: calling " << HLLL_METHOD_STR[method] << "<mpz_t," << num_type_str<F>()
-         << "> method";
+    log_stream() << "====== Wrapper: calling " << HLLL_METHOD_STR[method] << "<mpz_t,"
+                 << num_type_str<F>() << "> method";
     if (precision > 0)
     {
-      cerr << " (precision=" << precision << ")";
+      log_stream() << " (precision=" << precision << ")";
     }
-    cerr << " ======" << endl;
+    log_stream() << " ======" << endl;
   }
 
   int householder_flags = 0;
@@ -417,7 +418,8 @@ template <class F> bool Wrapper::call_hlll(LLLMethod method, int precision)
 
   if (flags & LLL_VERBOSE)
   {
-    cerr << "====== Wrapper: end of " << HLLL_METHOD_STR[method] << " method ======\n" << endl;
+    log_stream() << "====== Wrapper: end of " << HLLL_METHOD_STR[method] << " method ======\n"
+                 << endl;
   }
 
   if (status == RED_SUCCESS)
@@ -634,22 +636,22 @@ int lll_reduction_z(ZZ_mat<ZT> &b, ZZ_mat<ZT> &u, ZZ_mat<ZT> &u_inv, double delt
 
   if (flags & LLL_VERBOSE)
   {
-    cerr << "Starting LLL method '" << LLL_METHOD_STR[method] << "'" << endl
-         << "  integer type '" << INT_TYPE_STR[int_type] << "'" << endl
-         << "  floating point type '" << FLOAT_TYPE_STR[sel_ft] << "'" << endl;
+    log_stream() << "Starting LLL method '" << LLL_METHOD_STR[method] << "'" << endl
+                 << "  integer type '" << INT_TYPE_STR[int_type] << "'" << endl
+                 << "  floating point type '" << FLOAT_TYPE_STR[sel_ft] << "'" << endl;
     if (method != LM_PROVED || int_type != ZT_MPZ || sel_ft == FT_DOUBLE)
     {
-      cerr << "  The reduction is not guaranteed";
+      log_stream() << "  The reduction is not guaranteed";
     }
     else if (sel_prec < good_prec)
     {
-      cerr << "  prec < " << good_prec << ", the reduction is not guaranteed";
+      log_stream() << "  prec < " << good_prec << ", the reduction is not guaranteed";
     }
     else
     {
-      cerr << "  prec >= " << good_prec << ", the reduction is guaranteed";
+      log_stream() << "  prec >= " << good_prec << ", the reduction is guaranteed";
     }
-    cerr << endl;
+    log_stream() << endl;
   }
 
   // Applies the selected method
@@ -789,16 +791,16 @@ int hlll_reduction_z(ZZ_mat<ZT> &b, ZZ_mat<ZT> &u, ZZ_mat<ZT> &u_inv, double del
 
     if (flags & LLL_VERBOSE)
     {
-      cerr << "Starting HLLL method 'verification'" << endl
-           << "  integer type '" << INT_TYPE_STR[int_type] << "'" << endl
-           << "  floating point type 'mpfr_t'" << endl;
+      log_stream() << "Starting HLLL method 'verification'" << endl
+                   << "  integer type '" << INT_TYPE_STR[int_type] << "'" << endl
+                   << "  floating point type 'mpfr_t'" << endl;
 
       if (sel_prec < good_prec)
-        cerr << "  prec < " << good_prec << ", the verification is not guaranteed";
+        log_stream() << "  prec < " << good_prec << ", the verification is not guaranteed";
       else
-        cerr << "  prec >= " << good_prec << ", the verification is guaranteed";
+        log_stream() << "  prec >= " << good_prec << ", the verification is guaranteed";
 
-      cerr << endl;
+      log_stream() << endl;
     }
 
     ScopedPrecision precision_guard(static_cast<unsigned int>(sel_prec));
@@ -808,10 +810,10 @@ int hlll_reduction_z(ZZ_mat<ZT> &b, ZZ_mat<ZT> &u, ZZ_mat<ZT> &u_inv, double del
     if (flags & LLL_VERBOSE)
     {
       if (status == RED_SUCCESS)
-        cerr << "Basis is reduced";
+        log_stream() << "Basis is reduced";
       else
-        cerr << "Basis is not reduced";
-      cerr << endl;
+        log_stream() << "Basis is not reduced";
+      log_stream() << endl;
     }
 
     return status;
@@ -887,22 +889,22 @@ int hlll_reduction_z(ZZ_mat<ZT> &b, ZZ_mat<ZT> &u, ZZ_mat<ZT> &u_inv, double del
 
   if (flags & LLL_VERBOSE)
   {
-    cerr << "Starting HLLL method '" << LLL_METHOD_STR[method] << "'" << endl
-         << "  integer type '" << INT_TYPE_STR[int_type] << "'" << endl
-         << "  floating point type '" << FLOAT_TYPE_STR[sel_ft] << "'" << endl;
+    log_stream() << "Starting HLLL method '" << LLL_METHOD_STR[method] << "'" << endl
+                 << "  integer type '" << INT_TYPE_STR[int_type] << "'" << endl
+                 << "  floating point type '" << FLOAT_TYPE_STR[sel_ft] << "'" << endl;
     if (method != LM_PROVED || int_type != ZT_MPZ || sel_ft == FT_DOUBLE)
     {
-      cerr << "  The reduction is not guaranteed";
+      log_stream() << "  The reduction is not guaranteed";
     }
     else if (sel_prec < good_prec)
     {
-      cerr << "  prec < " << good_prec << ", the reduction is not guaranteed";
+      log_stream() << "  prec < " << good_prec << ", the reduction is not guaranteed";
     }
     else
     {
-      cerr << "  prec >= " << good_prec << ", the reduction is guaranteed";
+      log_stream() << "  prec >= " << good_prec << ", the reduction is guaranteed";
     }
-    cerr << endl;
+    log_stream() << endl;
   }
 
   // Applies the selected method

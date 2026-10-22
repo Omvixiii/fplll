@@ -112,7 +112,7 @@ template <class FT> void Pruner<FT>::optimize_coefficients_decr_prob(/*io*/ vect
     for (int i = 0; i < dn; i++)
     {
       weight[i] = weight[i] / normalized;
-      // cout << weight[i] << " ";
+      // log_stream() << weight[i] << " ";
     }
 
     for (int i = dn - 1; i >= 0; --i)

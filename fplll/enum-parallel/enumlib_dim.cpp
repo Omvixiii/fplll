@@ -134,7 +134,7 @@ array<uint64_t, FPLLL_EXTENUM_MAX_EXTENUM_DIM> DIMFUNC(ENUMDIMENSION)(
     GENENUM(d);
   }
 
-  cout << "[enumlib] " << ENUMDIMENSION << ":" << dim << " wrong dimension!" << endl;
+  log_stream() << "[enumlib] " << ENUMDIMENSION << ":" << dim << " wrong dimension!" << endl;
   std::array<uint64_t, FPLLL_EXTENUM_MAX_EXTENUM_DIM> arr{};
   arr[0] = ~uint64_t(0);
   return arr;

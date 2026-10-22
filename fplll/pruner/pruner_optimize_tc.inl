@@ -71,7 +71,7 @@ template <class FT> void Pruner<FT>::optimize_coefficients_evec_core(/*io*/ vect
   {
     if (verbosity)
     {
-      cerr << "\nGradient descent start (dim=" << n << ")" << endl;
+      log_stream() << "\nGradient descent start (dim=" << n << ")" << endl;
     }
     gradient_descent(b);
   };
@@ -81,7 +81,7 @@ template <class FT> void Pruner<FT>::optimize_coefficients_evec_core(/*io*/ vect
   {
     if (verbosity)
     {
-      cerr << "\nNelder-Mead start (dim=" << n << ")" << endl;
+      log_stream() << "\nNelder-Mead start (dim=" << n << ")" << endl;
     }
     while (nelder_mead_step(b))
     {
@@ -116,7 +116,7 @@ template <class FT> void Pruner<FT>::optimize_coefficients_full_core(/*io*/ vect
   {
     if (verbosity)
     {
-      cerr << "\nGradient descent start (dim=" << n << ")" << endl;
+      log_stream() << "\nGradient descent start (dim=" << n << ")" << endl;
     }
 
     gradient_descent(b);
@@ -127,7 +127,7 @@ template <class FT> void Pruner<FT>::optimize_coefficients_full_core(/*io*/ vect
   {
     if (verbosity)
     {
-      cerr << "\nNelder-Mead start (dim=" << n << ")" << endl;
+      log_stream() << "\nNelder-Mead start (dim=" << n << ")" << endl;
     }
     while (nelder_mead_step(b))
     {
@@ -213,7 +213,7 @@ void Pruner<FT>::optimize_coefficients_local_adjust_decr_single(/*io*/ vector<do
     }
     else
     {
-      // cerr << " improved from " << old_cf << " to  " << new_cf << endl;
+      // log_stream() << " improved from " << old_cf << " to  " << new_cf << endl;
       if (slices[ind] < 1024)
         slices[ind] = slices[ind] * 1.05;
       consecutive_fails = 0;
@@ -295,7 +295,7 @@ void Pruner<FT>::optimize_coefficients_local_adjust_incr_prob(/*io*/ vector<doub
         // new cost
         new_cf = target_function(b);
 
-        // cerr << " i = " << i << " old_cf = " << old_cf << " new_cf = " <<
+        // log_stream() << " i = " << i << " old_cf = " << old_cf << " new_cf = " <<
         // new_cf << endl;
 
         // if not improved -- recover
@@ -460,7 +460,7 @@ template <class FT> int Pruner<FT>::gradient_descent_step(/*io*/ vec &b)
 
   if (verbosity)
   {
-    cerr << "  Gradient descent step starts at cf=" << cf << endl;
+    log_stream() << "  Gradient descent step starts at cf=" << cf << endl;
   }
 
   norm /= (double)dn;
@@ -468,7 +468,7 @@ template <class FT> int Pruner<FT>::gradient_descent_step(/*io*/ vec &b)
 
   if (verbosity)
   {
-    cerr << "  Gradient norm " << norm << endl;
+    log_stream() << "  Gradient norm " << norm << endl;
   }
 
   if (norm <= 0.)
@@ -511,7 +511,8 @@ template <class FT> int Pruner<FT>::gradient_descent_step(/*io*/ vec &b)
 
   if (verbosity)
   {
-    cerr << "  Gradient descent step ends after " << j << " mini-steps at cf=" << cf << endl;
+    log_stream() << "  Gradient descent step ends after " << j << " mini-steps at cf=" << cf
+                 << endl;
   }
 
   if (cf > old_cf * min_cf_decrease)
@@ -559,7 +560,8 @@ template <class FT> int Pruner<FT>::nelder_mead_step(/*io*/ vec &b)
 
   if (verbosity)
   {
-    cerr << "  Starting nelder_mead cf = " << init_cf << " proba = " << measure_metric(b) << endl;
+    log_stream() << "  Starting nelder_mead cf = " << init_cf << " proba = " << measure_metric(b)
+                 << endl;
   }
   unsigned int counter = 0;
   int mini = 0, maxi = 0, maxi2 = 0;
@@ -601,14 +603,14 @@ template <class FT> int Pruner<FT>::nelder_mead_step(/*io*/ vec &b)
 
     if (verbosity)  // Not sure such verbosity is now of any use
     {
-      cerr << "  melder_mead step " << counter << "cf = " << fs[mini]
-           << " proba = " << measure_metric(bs[mini]) << " cost = " << single_enum_cost(bs[mini])
-           << endl;
+      log_stream() << "  melder_mead step " << counter << "cf = " << fs[mini]
+                   << " proba = " << measure_metric(bs[mini])
+                   << " cost = " << single_enum_cost(bs[mini]) << endl;
       for (int i = 0; i < dn; ++i)
       {
-        cerr << ceil(bs[mini][i].get_d() * 1000) << " ";
+        log_stream() << ceil(bs[mini][i].get_d() * 1000) << " ";
       }
-      cerr << endl;
+      log_stream() << endl;
     }
 
     ////////////////
@@ -634,8 +636,8 @@ template <class FT> int Pruner<FT>::nelder_mead_step(/*io*/ vec &b)
 
     if (verbosity)
     {
-      cerr << mini << " " << maxi2 << " " << maxi << endl;
-      cerr << fs[mini] << " < " << fs[maxi2] << " < " << fs[maxi] << " | " << endl;
+      log_stream() << mini << " " << maxi2 << " " << maxi << endl;
+      log_stream() << fs[mini] << " < " << fs[maxi2] << " < " << fs[maxi] << " | " << endl;
     }
 
     ////////////////
@@ -650,7 +652,7 @@ template <class FT> int Pruner<FT>::nelder_mead_step(/*io*/ vec &b)
     fr = target_function(br);
     if (verbosity)
     {
-      cerr << "fr " << fr << endl;
+      log_stream() << "fr " << fr << endl;
     }
 
     if ((fs[mini] <= fr) && (fr < fs[maxi2]))
@@ -659,7 +661,7 @@ template <class FT> int Pruner<FT>::nelder_mead_step(/*io*/ vec &b)
       fs[maxi] = fr;
       if (verbosity)
       {
-        cerr << "    Reflection " << endl;
+        log_stream() << "    Reflection " << endl;
       }
       continue;  // Go to step 1.
     }
@@ -678,7 +680,7 @@ template <class FT> int Pruner<FT>::nelder_mead_step(/*io*/ vec &b)
       fe = target_function(be);
       if (verbosity)
       {
-        cerr << "fe " << fe << endl;
+        log_stream() << "fe " << fe << endl;
       }
       if (fe < fr)
       {
@@ -686,7 +688,7 @@ template <class FT> int Pruner<FT>::nelder_mead_step(/*io*/ vec &b)
         fs[maxi] = fe;
         if (verbosity)
         {
-          cerr << "    Expansion A " << endl;
+          log_stream() << "    Expansion A " << endl;
         }
         continue;  // Go to step 1.
       }
@@ -696,7 +698,7 @@ template <class FT> int Pruner<FT>::nelder_mead_step(/*io*/ vec &b)
         fs[maxi] = fr;
         if (verbosity)
         {
-          cerr << "    Expansion B " << endl;
+          log_stream() << "    Expansion B " << endl;
         }
         continue;  // Go to step 1.
       }
@@ -719,7 +721,7 @@ template <class FT> int Pruner<FT>::nelder_mead_step(/*io*/ vec &b)
     fc = target_function(bc);
     if (verbosity)
     {
-      cerr << "fc " << fc << endl;
+      log_stream() << "fc " << fc << endl;
     }
     if (fc < fs[maxi])
     {
@@ -727,7 +729,7 @@ template <class FT> int Pruner<FT>::nelder_mead_step(/*io*/ vec &b)
       fs[maxi] = fc;
       if (verbosity)
       {
-        cerr << "    Contraction " << endl;
+        log_stream() << "    Contraction " << endl;
       }
       continue;  // Go to step 1.
     }
@@ -737,7 +739,7 @@ template <class FT> int Pruner<FT>::nelder_mead_step(/*io*/ vec &b)
     ////////////////
     if (verbosity)
     {
-      cerr << "    Shrink " << endl;
+      log_stream() << "    Shrink " << endl;
     }
     for (int j = 0; j < l; ++j)
     {
@@ -755,13 +757,13 @@ template <class FT> int Pruner<FT>::nelder_mead_step(/*io*/ vec &b)
 
   if (verbosity)
   {
-    cerr << "Done nelder_mead, after " << counter << " steps" << endl;
-    cerr << "Final cf = " << fs[mini] << " proba = " << measure_metric(b) << endl;
+    log_stream() << "Done nelder_mead, after " << counter << " steps" << endl;
+    log_stream() << "Final cf = " << fs[mini] << " proba = " << measure_metric(b) << endl;
     if (improved)
     {
-      cerr << "Progress has been made: init cf = " << init_cf << endl;
+      log_stream() << "Progress has been made: init cf = " << init_cf << endl;
     }
-    cerr << endl;
+    log_stream() << endl;
   }
 
   return improved;  // Has MN made any progress

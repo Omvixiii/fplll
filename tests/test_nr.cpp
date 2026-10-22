@@ -14,7 +14,9 @@
    along with fplll. If not, see <http://www.gnu.org/licenses/>. */
 
 #include <cstring>
+#include <fplll/detail/precision.h>
 #include <fplll/fplll.h>
+#include <stdexcept>
 
 using namespace std;
 using namespace fplll;
@@ -140,10 +142,45 @@ int test_dpe_zero_arithmetic()
 }
 #endif
 
+int test_scoped_precision()
+{
+  const unsigned int initial = FP_NR<mpfr_t>::get_prec();
+  {
+    ScopedPrecision guard(128);
+    if (FP_NR<mpfr_t>::get_prec() != 128)
+    {
+      cerr << "ScopedPrecision did not apply the requested precision" << endl;
+      return 1;
+    }
+  }
+  if (FP_NR<mpfr_t>::get_prec() != initial)
+  {
+    cerr << "ScopedPrecision did not restore the original precision" << endl;
+    return 1;
+  }
+
+  try
+  {
+    ScopedPrecision guard(64);
+    throw std::runtime_error("force unwind");
+  }
+  catch (const std::runtime_error &)
+  {
+  }
+
+  if (FP_NR<mpfr_t>::get_prec() != initial)
+  {
+    cerr << "ScopedPrecision did not restore precision during unwinding" << endl;
+    return 1;
+  }
+  return 0;
+}
+
 int main()
 {
 
   int status = 0;
+  status |= test_scoped_precision();
   status |= test_arithmetic<FP_NR<double>>();
 #ifdef FPLLL_WITH_LONG_DOUBLE
   status |= test_arithmetic<FP_NR<long double>>();

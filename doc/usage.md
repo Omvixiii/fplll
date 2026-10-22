@@ -283,3 +283,12 @@ Please add yourself here if you make a contribution.
 * `json.hpp` is taken from [nlohmann/json](https://github.com/nlohmann/json)
 
 * This project has been supported by ERC Starting Grant ERC-2013-StG-335086-LATTAC, by the European Union PROMETHEUS project (Horizon 2020 Research and Innovation Program, grant 780701), by EPSRC grant EP/P009417/1 and by EPSRC grant EP/S020330/1.
+
+### Library diagnostics
+
+The library discards diagnostic output by default.  `fplll::set_log_stream`
+redirects it to an `std::ostream` (for example `std::cerr`), and
+`fplll::set_log_stream(nullptr)` restores the discarding default.  The command
+line tools install `std::cerr` when verbose mode is enabled (and for the
+pruning-parameter action); verbose algorithm flags then write through the same
+sink.

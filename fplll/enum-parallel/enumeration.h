@@ -498,8 +498,8 @@ struct lattice_enum_t
           }
       };
       for (int i = 0; i < ::fplll::get_threads(); ++i)
-        threadpool.push(f);
-      threadpool.wait_work();
+        ::fplll::get_threadpool().push(f);
+      ::fplll::get_threadpool().wait_work();
 
       swirlys[1].erase(swirlys[1].begin(), swirlys[1].begin() + swirly1end);
     }

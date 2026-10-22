@@ -124,7 +124,7 @@ inline bool LLLReduction<ZT, FT>::early_reduction(int start, int size_reduction_
   m.lock_cols();
   if (verbose)
   {
-    cerr << "Early reduction start=" << start + 1 << endl;
+    log_stream() << "Early reduction start=" << start + 1 << endl;
   }
   for (int i = start; i < m.d; i++)
   {
@@ -138,13 +138,13 @@ inline bool LLLReduction<ZT, FT>::early_reduction(int start, int size_reduction_
 
 template <class ZT, class FT> inline void LLLReduction<ZT, FT>::print_params()
 {
-  cerr << "Entering LLL" << "\ndelta = " << delta << "\neta = " << eta
-       << "\nprecision = " << FT::get_prec()
-       << "\nexact_dot_product = " << static_cast<int>(m.enable_int_gram)
-       << "\nrow_expo = " << static_cast<int>(m.enable_row_expo)
-       << "\nearly_red = " << static_cast<int>(enable_early_red)
-       << "\nsiegel_cond = " << static_cast<int>(siegel)
-       << "\nlong_in_babai = " << static_cast<int>(m.row_op_force_long) << endl;
+  log_stream() << "Entering LLL" << "\ndelta = " << delta << "\neta = " << eta
+               << "\nprecision = " << FT::get_prec()
+               << "\nexact_dot_product = " << static_cast<int>(m.enable_int_gram)
+               << "\nrow_expo = " << static_cast<int>(m.enable_row_expo)
+               << "\nearly_red = " << static_cast<int>(enable_early_red)
+               << "\nsiegel_cond = " << static_cast<int>(siegel)
+               << "\nlong_in_babai = " << static_cast<int>(m.row_op_force_long) << endl;
 }
 
 template <class ZT, class FT> inline bool LLLReduction<ZT, FT>::set_status(int new_status)
@@ -154,12 +154,12 @@ template <class ZT, class FT> inline bool LLLReduction<ZT, FT>::set_status(int n
   {
     if (status == RED_SUCCESS)
     {
-      cerr << "End of LLL: success" << endl;
+      log_stream() << "End of LLL: success" << endl;
     }
     else
     {
-      cerr << "End of LLL: failure: " << RED_STATUS_STR[status] << endl;
-      cerr << RED_STATUS_STR[RedStatus::RED_URL_ERR] << endl;
+      log_stream() << "End of LLL: failure: " << RED_STATUS_STR[status] << endl;
+      log_stream() << RED_STATUS_STR[RedStatus::RED_URL_ERR] << endl;
     }
   }
   return status == RED_SUCCESS;

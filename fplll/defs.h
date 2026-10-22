@@ -63,9 +63,17 @@ extern "C" long double ldexpl(long double x, int exp);
 #endif
 #endif
 
+namespace fplll
+{
+/** Stream used for library diagnostics; discards by default. */
+std::ostream &log_stream();
+/** Redirects library diagnostics; nullptr restores the default discarding sink. */
+void set_log_stream(std::ostream *stream);
+}  // namespace fplll
+
 #define FPLLL_INFO(x)                                                                              \
   {                                                                                                \
-    cerr << x << endl;                                                                             \
+    ::fplll::log_stream() << x << std::endl;                                                       \
   }
 #define FPLLL_ABORT(x)                                                                             \
   {                                                                                                \

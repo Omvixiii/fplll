@@ -394,8 +394,8 @@ bool BKZReduction<ZT, FT>::trunc_tour(int &kappa_max, const BKZParam &par, int m
     clean &= svp_reduction(kappa, block_size, par);
     if ((par.flags & BKZ_VERBOSE) && kappa_max < kappa && clean)
     {
-      cerr << "Block [1-" << setw(4) << kappa + 1 << "] BKZ-" << setw(0) << par.block_size
-           << " reduced for the first time" << endl;
+      log_stream() << "Block [1-" << setw(4) << kappa + 1 << "] BKZ-" << setw(0) << par.block_size
+                   << " reduced for the first time" << endl;
       kappa_max = kappa;
     }
   }
@@ -427,8 +427,8 @@ bool BKZReduction<ZT, FT>::hkz(int &kappa_max, const BKZParam &param, int min_ro
     clean &= svp_reduction(kappa, block_size, param);
     if ((param.flags & BKZ_VERBOSE) && kappa_max < kappa && clean)
     {
-      cerr << "Block [1-" << setw(4) << kappa + 1 << "] BKZ-" << setw(0) << param.block_size
-           << " reduced for the first time" << endl;
+      log_stream() << "Block [1-" << setw(4) << kappa + 1 << "] BKZ-" << setw(0) << param.block_size
+                   << " reduced for the first time" << endl;
       kappa_max = kappa;
     }
   }
@@ -546,17 +546,18 @@ template <class ZT, class FT> bool BKZReduction<ZT, FT>::bkz()
 
   if (sd && !(flags & (BKZ_MAX_LOOPS | BKZ_MAX_TIME | BKZ_AUTO_ABORT)))
   {
-    cerr << "Warning: SD Variant of BKZ requires explicit termination condition. Turning auto "
-            "abort on!"
-         << endl;
+    log_stream()
+        << "Warning: SD Variant of BKZ requires explicit termination condition. Turning auto "
+           "abort on!"
+        << endl;
     flags |= BKZ_AUTO_ABORT;
   }
 
   if (flags & BKZ_VERBOSE)
   {
-    cerr << "Entering " << algorithm << ":" << endl;
-    print_params(param, cerr);
-    cerr << endl;
+    log_stream() << "Entering " << algorithm << ":" << endl;
+    print_params(param, log_stream());
+    log_stream() << endl;
   }
 
   cputime_start = ((flags & BKZ_DUMP_GSO) || (flags & BKZ_MAX_TIME)) ? cputime() : 0;
@@ -679,12 +680,13 @@ void BKZReduction<ZT, FT>::print_tour(const int loop, int min_row, int max_row)
   r0  = m.get_r_exp(min_row, min_row, expo);
   fr0 = r0.get_d();
   fr0.mul_2si(fr0, expo);
-  cerr << "End of " << algorithm << " loop " << std::setw(4) << loop << ", time = " << std::fixed
-       << std::setw(9) << std::setprecision(3) << (cputime() - cputime_start) * 0.001 << "s";
-  cerr << ", r_" << min_row << " = " << fr0;
-  cerr << ", slope = " << std::setw(9) << std::setprecision(6)
-       << m.get_current_slope(min_row, max_row);
-  cerr << ", log2(nodes) = " << std::setw(9) << std::setprecision(6) << log2(nodes) << endl;
+  log_stream() << "End of " << algorithm << " loop " << std::setw(4) << loop
+               << ", time = " << std::fixed << std::setw(9) << std::setprecision(3)
+               << (cputime() - cputime_start) * 0.001 << "s";
+  log_stream() << ", r_" << min_row << " = " << fr0;
+  log_stream() << ", slope = " << std::setw(9) << std::setprecision(6)
+               << m.get_current_slope(min_row, max_row);
+  log_stream() << ", log2(nodes) = " << std::setw(9) << std::setprecision(6) << log2(nodes) << endl;
 }
 
 template <class ZT, class FT>
@@ -715,9 +717,9 @@ template <class ZT, class FT> bool BKZReduction<ZT, FT>::set_status(int new_stat
   if (param.flags & BKZ_VERBOSE)
   {
     if (status == RED_SUCCESS)
-      cerr << "End of " << algorithm << ": success" << endl;
+      log_stream() << "End of " << algorithm << ": success" << endl;
     else
-      cerr << "End of " << algorithm << ": failure: " << RED_STATUS_STR[status] << endl;
+      log_stream() << "End of " << algorithm << ": failure: " << RED_STATUS_STR[status] << endl;
   }
   return status == RED_SUCCESS;
 }
@@ -746,7 +748,7 @@ void BKZReduction<ZT, FT>::dump_gso(const std::string &filename, bool append,
   }
   catch (const ios_base::failure &e)
   {
-    cerr << "Cannot open " << filename << endl;
+    log_stream() << "Cannot open " << filename << endl;
     throw;
   }
 
@@ -759,7 +761,7 @@ void BKZReduction<ZT, FT>::dump_gso(const std::string &filename, bool append,
   }
   catch (const ios_base::failure &e)
   {
-    cerr << "Cannot open " << filename << endl;
+    log_stream() << "Cannot open " << filename << endl;
     throw;
   }
 
@@ -789,7 +791,7 @@ void BKZReduction<ZT, FT>::dump_gso(const std::string &filename, bool append,
   }
   catch (const ios_base::failure &e)
   {
-    cerr << "Cannot open " << filename << endl;
+    log_stream() << "Cannot open " << filename << endl;
     throw;
   }
 

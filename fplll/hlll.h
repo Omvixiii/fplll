@@ -115,21 +115,21 @@ private:
 
 template <class ZT, class FT> inline void HLLLReduction<ZT, FT>::print_params()
 {
-  cerr << "Entering HLLL" << endl
-       << "delta = " << delta << endl
-       << "eta = " << eta << endl
-       << "theta = " << theta << endl
-       << "c = " << c << endl
-       << "precision = " << FT::get_prec() << endl
-       << "row_expo = " << static_cast<int>(m.is_enable_row_expo()) << endl
-       << "long_in_size_reduction = " << static_cast<int>(m.is_row_op_force_long()) << endl;
+  log_stream() << "Entering HLLL" << endl
+               << "delta = " << delta << endl
+               << "eta = " << eta << endl
+               << "theta = " << theta << endl
+               << "c = " << c << endl
+               << "precision = " << FT::get_prec() << endl
+               << "row_expo = " << static_cast<int>(m.is_enable_row_expo()) << endl
+               << "long_in_size_reduction = " << static_cast<int>(m.is_row_op_force_long()) << endl;
 
-  cerr << "householder_precompute_inverse = 0" << endl;
+  log_stream() << "householder_precompute_inverse = 0" << endl;
 
   // Condition to break incomplete size reduction: ||b[k]||^2 > 0.1 * t
-  cerr << "householder_use_size_reduction_test = 0" << endl;
+  log_stream() << "householder_use_size_reduction_test = 0" << endl;
 
-  cerr << "householder_verify_size_reduction_hplll = 0" << endl;
+  log_stream() << "householder_verify_size_reduction_hplll = 0" << endl;
 }
 
 template <class ZT, class FT> inline void HLLLReduction<ZT, FT>::compute_dR(int k)
@@ -152,12 +152,12 @@ template <class ZT, class FT> inline bool HLLLReduction<ZT, FT>::set_status(int 
   {
     if (status == RED_SUCCESS)
     {
-      cerr << "End of HLLL: success" << endl;
+      log_stream() << "End of HLLL: success" << endl;
     }
     else
     {
-      cerr << "End of HLLL: failure: " << RED_STATUS_STR[status] << endl;
-      cerr << RED_STATUS_STR[RedStatus::RED_URL_ERR] << endl;
+      log_stream() << "End of HLLL: failure: " << RED_STATUS_STR[status] << endl;
+      log_stream() << RED_STATUS_STR[RedStatus::RED_URL_ERR] << endl;
     }
   }
   return status == RED_SUCCESS;

@@ -15,21 +15,45 @@
 
 #include "threadpool.h"
 
+#include <mutex>
+
 FPLLL_BEGIN_NAMESPACE
 
-thread_pool::thread_pool threadpool;
+namespace
+{
+
+thread_pool::thread_pool &pool_instance()
+{
+  static thread_pool::thread_pool pool;
+  return pool;
+}
+
+std::mutex &threads_mutex()
+{
+  static std::mutex mutex;
+  return mutex;
+}
+
+}  // namespace
+
+thread_pool::thread_pool &get_threadpool() { return pool_instance(); }
 
 /* get and set number of threads in threadpool, both return the (new) number of threads */
-int get_threads() { return threadpool.size() + 1; }
+int get_threads()
+{
+  std::lock_guard<std::mutex> lock(threads_mutex());
+  return static_cast<int>(get_threadpool().size()) + 1;
+}
 
 int set_threads(int th)
 {
+  std::lock_guard<std::mutex> lock(threads_mutex());
   if (th > int(std::thread::hardware_concurrency()) || th == -1)
     th = std::thread::hardware_concurrency();
   if (th < 1)
     th = 1;
-  threadpool.resize(th - 1);
-  return get_threads();
+  get_threadpool().resize(static_cast<std::size_t>(th - 1));
+  return static_cast<int>(get_threadpool().size()) + 1;
 }
 
 FPLLL_END_NAMESPACE
