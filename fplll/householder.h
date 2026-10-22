@@ -146,7 +146,7 @@ public:
 #endif  // DEBUG
   }
 
-  ~MatHouseholder() {}
+  ~MatHouseholder() noexcept {}
 
   /**
    * Returns f (* 2^expo if enable_row_expo) = R(i, j).

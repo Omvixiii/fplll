@@ -40,7 +40,7 @@ BKZReduction<ZT, FT>::BKZReduction(MatGSOInterface<ZT, FT> &m, LLLReduction<ZT, 
   this->delta = param.delta;
 }
 
-template <class ZT, class FT> BKZReduction<ZT, FT>::~BKZReduction() {}
+template <class ZT, class FT> BKZReduction<ZT, FT>::~BKZReduction() noexcept {}
 
 template <class ZT, class FT>
 void BKZReduction<ZT, FT>::rerandomize_block(int min_row, int max_row, int density)

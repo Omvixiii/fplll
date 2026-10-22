@@ -17,7 +17,7 @@ template <> inline FP_NR<dd_real>::FP_NR() {}
 
 template <> inline FP_NR<dd_real>::FP_NR(const FP_NR<dd_real> &f) { data = f.data; }
 
-template <> inline FP_NR<dd_real>::~FP_NR() {}
+template <> inline FP_NR<dd_real>::~FP_NR() noexcept {}
 
 template <> inline unsigned int FP_NR<dd_real>::get_prec() { return PREC_DD; }
 

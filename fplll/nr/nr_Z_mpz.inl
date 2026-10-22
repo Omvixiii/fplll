@@ -14,7 +14,7 @@ template <> inline Z_NR<mpz_t>::Z_NR(const Z_NR<mpz_t> &z) { mpz_init_set(data, 
 
 // Note - you'll still need to call mpz_free on a, because references are non-owning.
 template <> inline Z_NR<mpz_t>::Z_NR(const mpz_t &z) { mpz_init_set(data, z); }
-template <> inline Z_NR<mpz_t>::~Z_NR() { mpz_clear(data); }
+template <> inline Z_NR<mpz_t>::~Z_NR() noexcept { mpz_clear(data); }
 
 /** get data */
 template <> inline double Z_NR<mpz_t>::get_d() const { return mpz_get_d(data); }

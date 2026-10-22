@@ -20,7 +20,7 @@ template <> inline FP_NR<double>::FP_NR() : data(0.0) {}
 
 template <> inline FP_NR<double>::FP_NR(const FP_NR<double> &f) { data = f.data; }
 
-template <> inline FP_NR<double>::~FP_NR() {}
+template <> inline FP_NR<double>::~FP_NR() noexcept {}
 
 template <> inline unsigned int FP_NR<double>::get_prec() { return PREC_DOUBLE; }
 

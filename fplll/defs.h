@@ -93,7 +93,7 @@ extern int debug_depth;
 struct DebugTracer
 {
   DebugTracer(const char *f) : f(f) { debug_depth++; }
-  ~DebugTracer()
+  ~DebugTracer() noexcept
   {
     debug_depth--;
     FPLLL_TRACE("</" << f << ">");

@@ -98,7 +98,7 @@ template <class ZT, class FT> class BKZReduction
    */
 public:
   BKZReduction(MatGSOInterface<ZT, FT> &m, LLLReduction<ZT, FT> &lll_obj, const BKZParam &param);
-  ~BKZReduction();
+  ~BKZReduction() noexcept;
 
   /**
    * @brief Preprocesses a block

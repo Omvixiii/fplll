@@ -17,7 +17,7 @@ template <> inline FP_NR<mpfr_t>::FP_NR(const FP_NR<mpfr_t> &f)
   mpfr_init_set(data, f.data, GMP_RNDN);
 }
 
-template <> inline FP_NR<mpfr_t>::~FP_NR() { mpfr_clear(data); }
+template <> inline FP_NR<mpfr_t>::~FP_NR() noexcept { mpfr_clear(data); }
 
 template <> inline unsigned int FP_NR<mpfr_t>::get_prec() { return mpfr_get_default_prec(); }
 

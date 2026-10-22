@@ -72,7 +72,7 @@ public:
     FPLLL_CHECK(nr_solutions > 0, "Evaluator: nr_solutions must be strictly positive!");
     FPLLL_CHECK(strategy <= 2, "Evaluator: invalid strategy");
   }
-  virtual ~Evaluator() {}
+  virtual ~Evaluator() noexcept {}
 
   /** configuration */
   size_t max_sols;
@@ -174,7 +174,7 @@ public:
       : Evaluator<FT>(nr_solutions, update_strategy, find_subsolutions)
   {
   }
-  virtual ~FastEvaluator() {}
+  virtual ~FastEvaluator() noexcept {}
 
   virtual void eval_sol(const vector<FT> &new_sol_coord, const enumf &new_partial_dist,
                         enumf &max_dist) override
@@ -242,7 +242,7 @@ public:
         ctx(ctx)
   {
   }
-  virtual ~CallbackEvaluator() {}
+  virtual ~CallbackEvaluator() noexcept {}
 
   virtual void eval_sol(const vector<FT> &new_sol_coord, const enumf &new_partial_dist,
                         enumf &max_dist) override
@@ -277,7 +277,7 @@ public:
     max_dm_u.resize(d);
   }
 
-  virtual ~ErrorBoundedEvaluator() {}
+  virtual ~ErrorBoundedEvaluator() noexcept {}
 
   /** Configuration */
   EvaluatorMode eval_mode;
@@ -321,7 +321,7 @@ public:
       : ErrorBoundedEvaluator(d, mu, r, eval_mode, nr_solutions, update_strategy, find_subsolutions)
   {
   }
-  virtual ~FastErrorBoundedEvaluator() {}
+  virtual ~FastErrorBoundedEvaluator() noexcept {}
 
   virtual bool get_max_error(FP_NR<mpfr_t> &max_error, const FP_NR<mpfr_t> &sol_dist) override;
   virtual void eval_sol(const vector<FP_NR<mpfr_t>> &new_sol_coord, const enumf &new_partial_dist,
@@ -348,7 +348,7 @@ public:
     int_max_dist = -1;
   }
 
-  virtual ~ExactErrorBoundedEvaluator() {}
+  virtual ~ExactErrorBoundedEvaluator() noexcept {}
 
   /**
    * Sets max_error to 0: the result is guaranteed.

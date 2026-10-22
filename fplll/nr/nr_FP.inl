@@ -29,7 +29,7 @@ public:
    */
   inline FP_NR();
   inline FP_NR(const FP_NR<F> &f);
-  inline ~FP_NR();
+  inline ~FP_NR() noexcept;
   inline FP_NR(const double d) : FP_NR() { *this = d; };
   inline FP_NR(const char *s) : FP_NR() { *this = s; };
 

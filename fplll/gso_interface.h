@@ -93,7 +93,7 @@ public:
    *   Affects the behaviour of row_addmul(_we).
    *   See the documentation of row_addmul.
    */
-  virtual ~MatGSOInterface();
+  virtual ~MatGSOInterface() noexcept;
 
   MatGSOInterface(Matrix<ZT> &arg_u, Matrix<ZT> &arg_uinv_t, int flags)
       : enable_int_gram(flags & GSO_INT_GRAM), enable_row_expo(flags & GSO_ROW_EXPO),
@@ -624,7 +624,7 @@ protected:
 #endif
 };
 
-template <class ZT, class FT> inline MatGSOInterface<ZT, FT>::~MatGSOInterface()
+template <class ZT, class FT> inline MatGSOInterface<ZT, FT>::~MatGSOInterface() noexcept
 {
   // delete gptr;
 }

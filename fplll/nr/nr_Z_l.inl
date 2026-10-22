@@ -17,7 +17,7 @@ template <> inline Z_NR<long>::Z_NR() {}
 
 template <> inline Z_NR<long>::Z_NR(const Z_NR<long> &z) : data(z.data) {}
 template <> inline Z_NR<long>::Z_NR(const long &z) : data(z) {}
-template <> inline Z_NR<long>::~Z_NR() {}
+template <> inline Z_NR<long>::~Z_NR() noexcept {}
 
 /** get data */
 template <> inline double Z_NR<long>::get_d() const { return static_cast<double>(data); }

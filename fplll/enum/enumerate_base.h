@@ -47,7 +47,7 @@ public:
 
     return nodes[level];
   }
-  virtual ~EnumerationBase() {}
+  virtual ~EnumerationBase() noexcept {}
 
 protected:
   /* configuration */
