@@ -109,9 +109,9 @@ under `cmake/modules/`; consumers can locate dependencies through
 The installed configuration keeps its module search path local and propagates
 `QUIET` and `REQUIRED` through `find_dependency()`.
 
-The two multiline templates remain separate from generation logic. Shared
-VS Code language mappings in `.vscode/settings.json` recognize `.h.in`,
-`.cpp.in`, and `.cmake.in` files without changing each developer's user settings.
+The two multiline templates remain separate from generation logic. Local
+VS Code language mappings in the ignored `.vscode/settings.json` can associate
+`.h.in` and `.cpp.in` with C++, and `.cmake.in` with CMake.
 For C++ templates under `cmake/`, `.clangd` suppresses diagnostics and skips
 background indexing because CMake placeholders and directives are not valid C++.
 Generated headers and sources retain normal clangd analysis.

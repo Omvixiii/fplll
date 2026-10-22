@@ -3,10 +3,9 @@
 /_install/
 /.cache/
 
-# Local working notes and editor configuration, except shared language mappings
+# Local working notes and editor configuration
 /notes/
-/.vscode/*
-!/.vscode/settings.json
+.vscode/
 /CMakeUserPresets.json
 /compile_commands.json
 .venv

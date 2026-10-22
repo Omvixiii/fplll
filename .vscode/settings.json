@@ -1,7 +1,0 @@
-{
-    "files.associations": {
-        "*.h.in": "cpp",
-        "*.cpp.in": "cpp",
-        "*.cmake.in": "cmake"
-    }
-}
