@@ -1,42 +1,83 @@
 # Building fplll
 
-## Requirements and presets
+## Requirements and first build
 
-Use CMake 3.21 or newer for the checked-in presets, Ninja, ccache, GMP and MPFR.
-The project defaults to C++11, which remains the minimum supported standard for
-consumers. CMake discovers the compiler automatically. For nonstandard dependency
-locations, set `CMAKE_PREFIX_PATH`. Direct configuration without presets supports
-CMake 3.20 or newer.
+The library requires CMake 3.25 or newer, Ninja, a C++11-capable compiler,
+GMP 4.2 or newer, and MPFR 2.3 or newer.
+QD is optional. CMake discovers the compiler automatically; use
+`CMAKE_PREFIX_PATH` for dependencies installed outside standard search paths.
+ccache is optional.
+
+For installation, choose the final prefix at configure time:
 
 ```sh
-cmake --list-presets=all
-cmake --preset debug
-cmake --build --preset debug
-ctest --preset debug
-cmake --install build/debug
+cmake -S . -B build/install -G Ninja -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_INSTALL_PREFIX="$HOME/.local"
+cmake --build build/install --parallel
+ctest --test-dir build/install --output-on-failure --no-tests=error
+cmake --install build/install
 ```
 
-The `debug`, `release`, and `relwithdebinfo` configure presets have matching build
-and test presets. Each resolves `binaryDir` to `build/<preset>` and the install
-prefix to `_install/<preset>`. Put compiler selection, dependency paths, and build
-parallelism in an untracked `CMakeUserPresets.json`, or pass them on the command
-line. The ccache location is controlled by the local ccache configuration.
-For a shorter development build, set `FPLLL_MAX_PARALLEL_ENUM_DIM=20`; the default
-is 120. CI supplies its compiler, C++23 checks, sanitizer flags, and coverage flags
-explicitly, keeping diagnostic settings out of the portable project presets.
+The build directory retains its compiler, options, and prefix. Use a separate
+directory when switching toolchains. In-source builds, including through a
+symlink, are rejected; always pass a separate `-B` directory. CMake can create an
+initial cache before that check, so do not try configuring directly in the source
+directory.
 
-For an edit/build loop, select the `fplll_cli` target in CMake Tools or build
-that target with the `debug` preset. This builds the library and CLI without
-compiling every test executable. Build the default `all` target before running
-the full CTest suite. Changing the compiler, C++ standard, or configured
-features still requires recompiling the affected objects; a no-op reconfigure
-does not.
+## Development presets
 
-Consumers and package managers may configure a different binary directory
-using `cmake -S <source> -B <binary>`. A binary directory equal to the source
-directory, including through a symlink, is rejected before compiler detection.
-CMake itself may create an initial cache before this check runs, so use presets
-instead of attempting an in-source configure in the checkout.
+The default contribution check configures, builds, and tests in order:
+
+```sh
+cmake --workflow --preset debug
+```
+
+Use the `release` configure, build, and test presets for optimized validation.
+The Debug and distcheck workflows build the test executables before running
+them: **CTest does not compile changed code.**
+For the edit/build loop, build the default targets or select a particular one:
+
+```sh
+cmake --build --preset debug
+cmake --build --preset debug --target fplll_cli
+ctest --preset debug -R '^test_lll$'
+```
+
+The last command is useful after the relevant targets have been rebuilt. The
+`fplll_cli` target builds its library and CLI, not the test executables. Add
+`--verbose` to a build command to inspect compiler and linker commands.
+
+The `debug`, `release`, and `ubsan` configure presets have matching build and
+test presets; the `distcheck` build preset targets the release build tree.
+
+| Preset | Purpose |
+| --- | --- |
+| `debug` | Default development build and validation |
+| `release` | Optimized build and validation |
+| `ubsan` | Debug build with UndefinedBehaviorSanitizer |
+
+The `ubsan` preset requires GCC or Clang and the matching runtime. Configure,
+build, and test it separately:
+
+```sh
+cmake --preset ubsan
+cmake --build --preset ubsan
+ctest --preset ubsan
+```
+
+Each preset uses `build/<preset>/` and an installation prefix of
+`_install/<preset>/`. Project presets define shared build scenarios, not machine
+settings. Pass occasional compiler, dependency, or launcher choices on the
+command line; save repeated choices in an untracked `CMakeUserPresets.json` only
+when useful. For an installed ccache, configure with
+`-DCMAKE_CXX_COMPILER_LAUNCHER=ccache`. Set parallelism with `--parallel` or
+`CMAKE_BUILD_PARALLEL_LEVEL`; no fixed job count is part of the shared presets.
+List all available presets with `cmake --list-presets=all`.
+
+CMake Tools can select the shared presets and build targets directly. The
+checked-in `.clangd` reads `build/debug/compile_commands.json` after Debug has
+been configured. It does not follow preset selection automatically; select the
+appropriate compilation database in your editor when using another build.
 
 ## Output ownership
 
@@ -44,17 +85,17 @@ instead of attempting an in-source configure in the checkout.
 | --- | --- |
 | Public configuration header | `fplll/fplll_config.h` |
 | Generated enumeration translation units | `generated/enum-parallel/` |
-| Executables, debug tools and tests | `bin/<CONFIG>/` |
-| Shared and static libraries, including variants | `lib/<CONFIG>/` |
+| Executables, debug tools and tests | `bin/` |
+| Shared and static libraries, including variants | `lib/` |
 | Per-test working directories and generated test data | `test-work/<CONFIG>/<test-name>/` |
 | CMake test metadata (`CMakeFiles/`, `CTestTestfile.cmake`) | `tests/` |
 | Package metadata | `fplll.pc`, `fplllConfig*.cmake` |
 | Source archive | `fplll-<version>.tar.gz` |
 | API documentation | `doc/html/` |
 
-`<CONFIG>` is uppercase, for example `DEBUG` or `RELEASE`. The same rule applies
-to custom configurations and multi-config generators. A build without a
-configuration uses `bin/`, `lib/` and `test-work/` directly.
+The single-configuration Ninja presets keep a flat layout: the Debug CLI is
+`build/debug/bin/fplll`. In `test-work/`, `<CONFIG>` is uppercase, for example
+`DEBUG`; each configuration and test is isolated.
 
 Targets inherit the generated header directories ahead of source directories.
 Do not use relative includes into the source tree for generated headers.
@@ -70,7 +111,6 @@ directories are generated in the binary tree and are never source files.
 | Option | Default / purpose |
 | --- | --- |
 | `BUILD_TESTING` | `ON`; build and register the 15 numerical tests and `llldiff` |
-| `FPLLL_VERSION` | Empty; automatically determine the version, or supply `X.Y.Z` for a release |
 | `FPLLL_WITH_QD` | `OFF`; enable QD arithmetic |
 | `FPLLL_USE_MPIR`, `FPLLL_MPIR_ROOT` | Select MPIR instead of GMP |
 | `FPLLL_WITH_RECURSIVE_ENUM` | `ON`; select recursive enumeration |
@@ -81,9 +121,16 @@ directories are generated in the binary tree and are never source files.
 Parallel dimensions are multiples of ten between 20 and 160 and must be smaller
 than `FPLLL_MAX_ENUM_DIM`. MPIR and external enumeration require independently
 installed dependencies; their availability is separate from the default build.
-Sanitizer builds also require the matching compiler runtime libraries.
+The ubsan build also requires the matching compiler runtime library.
 The `CMAKE_CXX_STANDARD` value in a preset or embedding project takes precedence
 over the C++11 default.
+
+QD is explicitly disabled by default. `-DFPLLL_WITH_QD=ON` requires a usable QD
+installation and fails if it cannot be found; unlike the historical Autotools
+auto-detection, installing QD does not silently change the enabled arithmetic.
+For a shorter local build, `-DFPLLL_MAX_PARALLEL_ENUM_DIM=20` compiles fewer
+parallel-enumeration specializations. It changes the configured capability;
+retain the default 120 for normal release validation.
 
 CMake's `configure_file()` generates the public configuration header from
 `cmake/fplll_config.h.in`. The shorter per-dimension enumeration sources and
@@ -120,30 +167,21 @@ Default targets include shared/static `fplll` libraries, `fplll_cli` (output
 name `fplll`), `latticegen`, and tests when enabled. Optional targets are
 `fplllv`, `fplllv_static`, `fpllld`, `fpllld_static`, `fplll_dbg` and
 `latticegen_dbg`; `dbg` builds both debug executables. Shared/static variants
-reuse OBJECT libraries.
+reuse OBJECT libraries. The `fpllld` and `*_dbg` variants enable fplll's `DEBUG`
+macro; this is separate from the Debug build type, which controls compiler
+optimization and debugging information.
+
+When embedded with `add_subdirectory()`, fplll provides its library and tool
+targets and installation rules. Tests and project lifecycle targets are only
+registered in a top-level build.
 
 ## Version management
 
-The checkout has no manually maintained version file. CMake resolves the version
-in this order: an explicit `-DFPLLL_VERSION=X.Y.Z`, generated source-archive
-metadata, then the nearest reachable Git tag named `X.Y.Z` or `vX.Y.Z`. An empty
-`FPLLL_VERSION` cache entry keeps Git detection automatic on each configure.
-To return a release build directory to automatic detection, configure with
-`-DFPLLL_VERSION=`.
-
-`project(fplll VERSION ...)` supplies the numeric version for CMake package
-compatibility, pkg-config, documentation, and archive names. CLI version strings
-also identify commits after the tag and uncommitted tracked changes, for example
-`5.5.0-58-g123abcd-dirty`. With no reachable release tag, local builds use `0.0.0`
-and identify the Git commit when available; a tree without Git or archive metadata
-uses `0.0.0-dev`. Such builds do not claim to be a release.
-
-Release CI takes the numeric version from the triggering tag and passes it to
-CMake. CPack writes that resolved version into `cmake/FplllArchiveVersion.cmake`
-inside the archive staging directory. Extracted archives therefore retain the
-same version without Git, even after their source directory is renamed, and the
-checkout remains untouched. Shared-library ABI versions remain independent of
-the release version.
+`project(fplll VERSION ...)` in `CMakeLists.txt` is the version source for CMake
+package compatibility, the generated public configuration header, pkg-config,
+documentation, and archive names. Building a checkout or extracted source archive
+does not require Git or a version override. Shared-library ABI versions are
+maintained separately from the release version.
 
 ## Installation and downstream use
 
@@ -153,23 +191,92 @@ target_link_libraries(my_program PRIVATE fplll::fplll)
 # Or use fplll::fplll_static.
 ```
 
-Point `CMAKE_PREFIX_PATH` at the installation prefix. For non-CMake consumers,
-add its `lib/pkgconfig/` to `PKG_CONFIG_PATH` and use `pkg-config fplll`.
+Include the public API with `#include <fplll/fplll.h>`. Point
+`CMAKE_PREFIX_PATH` at the installation prefix; the exported targets carry
+required dependencies and include paths. The historical `<fplll.h>` entry point
+remains as a forwarding header. For non-CMake consumers, add the
+installation's `lib/pkgconfig/` (or configured library directory) to
+`PKG_CONFIG_PATH`, and use `pkg-config --cflags --libs fplll`. Use
+`pkg-config --static --libs fplll` when linking statically. The `gmp` and
+`mpfr` modules (and `qd` when enabled) must be resolvable by pkg-config; the
+CMake package path does not depend on pkg-config.
 The install includes public headers, both libraries, the two CLI programs and
 the default strategy data. `llldiff` and debug tools are not installed.
 On macOS and Unix, installed tools use a relative runtime library path when
 the library directory is relative to the install prefix.
 
+The default strategy-data path is compiled into the library. Configure the
+intended final `CMAKE_INSTALL_PREFIX` before building. Installing with a
+different `--prefix` is not rejected up front, but the installed tools then
+fail at runtime with a clear message because the compiled strategy directory
+does not exist there. Reconfigure and rebuild to change the final prefix. The
+installed tree is not generally relocatable merely because its libraries use
+relative runtime paths.
+
+Package managers can stage that fixed final layout with `DESTDIR`:
+
+```sh
+DESTDIR=/absolute/staging cmake --install build/install
+```
+
+This prepends the staging root to installed paths without changing the compiled
+final prefix. A staged tree is not the final runtime location.
+
+## Clean and uninstall
+
+```sh
+cmake --build --preset debug --target clean
+cmake --build build/install --target uninstall
+```
+
+`clean` is the generator's native target: it removes compiled outputs and
+preserves the configuration, configure-generated sources, and installation
+manifest. The next build can run without reconfiguring. It does not uninstall
+files. To discard configuration state as well, remove that specific build
+directory after checking it contains no needed files.
+
+`uninstall` removes files and symlinks listed in that build directory's
+`install_manifest.txt`; it neither rebuilds nor deletes an installation prefix
+recursively. Missing manifests fail with a diagnostic. Retain the build
+directory until uninstalling. For a staged install, supply the same `DESTDIR`:
+
+```sh
+DESTDIR=/absolute/staging cmake --build build/install --target uninstall
+```
+
+The manifest describes the most recent installation from that build directory.
+Uninstall a staging tree before using the same directory for a different
+installation. Package-manager installations should be removed by their package
+manager.
+
 ## Source packages
 
 ```sh
-cmake --preset debug
-cmake --build --preset debug --target package_source
+cmake --preset release
+cmake --build --preset release --target package_source
 ```
 
 Source archives exclude Git metadata, local notes, editor/agent state, caches,
-build outputs and installation prefixes. The `package_source` target replaces
-the old source distribution workflow.
+build outputs and installation prefixes. The `package_source` target creates the
+archive; archive creation alone does not verify a release.
+Run the complete distribution check with:
+
+```sh
+cmake --workflow --preset distcheck
+```
+
+The check creates an archive in `build/release/`, then validates that exact
+archive without relying on the original checkout or build outputs. It extracts
+read-only sources, builds in a separate directory, runs the numerical tests,
+and checks the installed package metadata, strategy-data loading, and
+manifest-based uninstall. It separately checks `DESTDIR` staging,
+clean/rebuild behavior, and source-tree cleanliness.
+
+The archive and stage logs remain in the build directory. Logs are under
+`build/release/distcheck/logs/`; on failure the sandbox is retained at
+`build/release/distcheck/work/` so the failing command and inputs can be
+inspected. Successful checks remove the sandbox. The ordinary test suite does
+not run this full release lifecycle.
 
 ## Development utilities
 
@@ -219,8 +326,8 @@ scopes can change API page URLs.
 
 ## Local code coverage
 
-Keep Codecov as the report service and collect gcov-format data locally. Run
-the following block from the repository root with Bash and the existing Apple
+This optional recipe collects gcov-format data locally. Run the following block
+from the repository root with Bash and the existing Apple
 Clang toolchain. With GCC, change `clang++` to the chosen GCC C++ compiler and
 `coverage_gcov=(llvm-cov gcov)` to its matching `coverage_gcov=(gcov)` command
 (use matching version suffixes when applicable).
@@ -313,17 +420,6 @@ All 15 tests passed in two clean measurements, with identical covered-line sets.
 | Files | Executable lines | Covered | Uncovered | Coverage (rounded down) |
 | --- | --- | --- | --- | --- |
 | 63 | 8,090 | 5,179 | 2,911 | 64.01% |
-
-## Continuous integration
-
-Pull requests check C++ formatting and workflow syntax, and build and run the
-numerical tests with GCC C++23. The formatting check installs only formatting
-tools. Build checks use compiler caches.
-Upstream `master` pushes also update coverage. The weekly and manually triggered
-CMake workflow runs focused address- and undefined-behavior sanitizer tests.
-Release tags validate the C++11 release preset before publishing a source
-archive; manually triggered source-package runs also upload the archive as an
-artifact. Docker image publishing is a separate upstream-only workflow.
 
 ## Historical baseline and cleanup
 

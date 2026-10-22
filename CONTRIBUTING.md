@@ -20,16 +20,17 @@ Now clone your git repo where my-github-name is your account name on GitHub:
 git clone git@github.com:my-github-name/fplll.git
 ```
 
-Build and test using the CMake presets:
+Install CMake 3.25 or newer, Ninja, a C++11-capable compiler, GMP, and MPFR.
+Configure, build, and test with the shared workflow:
 
 ```sh
-cmake --preset debug
-cmake --build --preset debug
-ctest --preset debug
+cmake --workflow --preset debug
 ```
 
-For verbose compiler commands, add `--verbose` to the build command. See the
-[build guide](doc/building.md) for dependencies, options and output locations.
+For the edit/build loop, use `cmake --build --preset debug`, optionally selecting
+a target with `--target` or adding `--verbose` for compiler commands. CTest alone
+does not build changed code; run the workflow before submitting a change. See
+the [build guide](doc/building.md) for options, diagnostics, and output locations.
 
 ## Reporting Bugs
 
@@ -94,13 +95,15 @@ We want your submission. But we also want to provide a stable experience for our
 
 ### Run the tests
 
-Before you submit a pull request, please run tests:
+Before you submit a pull request, configure, build, and run the tests:
 
 ```sh
-ctest --preset debug
+cmake --workflow --preset debug
 ```
 
-These checks are also run automatically for every pull request. Nothing failing tests will be accepted.
+Use the `release` configure, build, and test presets to validate an optimized
+build. Changes to installation, packaging, or the build system should also pass
+`cmake --workflow --preset distcheck`; see the [build guide](doc/building.md#source-packages).
 
 ### If you add code please add tests
 
@@ -116,9 +119,8 @@ Pull requests should be as small/atomic as possible.
 
 ### Coding Conventions
 
-The public library remains compatible with C++11. The GCC development preset
-uses C++23 so contributors can use modern language features in development
-without raising the consumer compatibility baseline.
+The public library and default builds remain compatible with C++11. A newer
+compiler mode used locally must not introduce requirements beyond that baseline.
 
 Please keep your code as clean and straightforward as possible. Code is written for the consumption by compilers and for the consumption by human beings. By making code clear and easy to understand, others can build on it and fix issues should they arise.
 
@@ -149,7 +151,8 @@ configuration. Keep formatting changes separate from functional changes.
 
 ### Enforcement of the coding convention
 
-Starting from fplll 5.1.0, the coding convention is [enforced](https://github.com/fplll/fplll/pull/215) throughout the whole project. In particular, the code of every pull request has to strictly adhere to the coding convention, and a GitHub Action will error when it is not the case. Automatic formatting can (and should) be performed by the command
+The coding convention applies throughout the project. Automatic formatting can
+be performed with:
 
 ```sh
 cmake --build --preset debug --target format
@@ -172,9 +175,14 @@ void formatted_code_again;
 
 ### Faster compilation
 
-The shared and static libraries reuse the same compiled OBJECT library. The
-presets also enable ccache; configure its cache location and size locally.
+The shared and static libraries reuse the same compiled OBJECT library. Build
+only the target you are changing during development, then run the workflow for
+full validation. To enable an installed ccache, configure with
+`-DCMAKE_CXX_COMPILER_LAUNCHER=ccache`; shared presets do not require it.
 Debug variant objects are compiled only when a debug variant target is requested.
+These variants enable fplll's `DEBUG` macro and are distinct from the Debug
+build type. Reducing the parallel enumeration dimension is an optional local
+tradeoff, not the release default; see the [build guide](doc/building.md#build-options-and-targets).
 
 ### Attribution
 

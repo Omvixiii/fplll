@@ -1,8 +1,5 @@
 # fplll
 
-[![CMake build](https://github.com/fplll/fplll/actions/workflows/cmake.yml/badge.svg)](https://github.com/fplll/fplll/actions/workflows/cmake.yml)
-[![Codecov](https://codecov.io/gh/fplll/fplll/branch/master/graph/badge.svg)](https://codecov.io/gh/fplll/fplll)
-
 fplll is a library and command-line toolkit for lattice reduction. It provides
 floating-point LLL, BKZ (including BKZ 2.0), Slide reduction, self-dual BKZ,
 shortest-vector enumeration, and closest-vector enumeration. See the
@@ -10,39 +7,28 @@ shortest-vector enumeration, and closest-vector enumeration. See the
 
 ## Build from source
 
-Install CMake 3.21 or newer, Ninja, ccache, a C++11-capable compiler, GMP, and
-MPFR. QD is optional. All presets use Ninja and ccache; CMake discovers the
-C++ compiler automatically.
+Install CMake 3.25 or newer, Ninja, a C++11-capable compiler, GMP 4.2 or
+newer, and MPFR 2.3 or newer. Choose the final installation prefix when
+configuring, then build, test, and install:
 
 ```sh
-cmake --preset debug
-cmake --build --preset debug
-ctest --preset debug
+cmake -S . -B build/install -G Ninja -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_INSTALL_PREFIX="$HOME/.local"
+cmake --build build/install --parallel
+ctest --test-dir build/install --output-on-failure --no-tests=error
+cmake --install build/install
 ```
 
-Use `release` for optimized builds or `relwithdebinfo` for optimized builds
-with debug symbols. Use `asan` or `ubsan` for address or undefined behavior
-checks with GCC or Clang and the corresponding sanitizer runtime. Both inherit
-the Debug configuration.
-
-Each preset keeps its build output under `build/<preset>/`,
-with executables in `bin/<CONFIG>/` (for example, `build/debug/bin/DEBUG/`).
-Installation defaults to `_install/<preset>/` inside the checkout:
+The checked-in presets configure Ninja builds and run the Debug workflow, which
+configures, builds, and runs the tests in order:
 
 ```sh
-cmake --preset release
-cmake --build --preset release
-ctest --preset release
-cmake --install build/release
+cmake --workflow --preset debug
 ```
 
-Put local overrides, such as compiler selection, dependency paths, and build
-parallelism, in an untracked `CMakeUserPresets.json` that inherits the project
-presets.
-
-CMake determines development versions from Git tags automatically. Release CI
-supplies the version through `-DFPLLL_VERSION=X.Y.Z`; generated source archives
-retain it without Git. No version file needs to be edited before building.
+Executables are in `build/debug/bin/`. Use the `release` configure, build, and
+test presets for an optimized build; the optional `ubsan` preset supports
+diagnosis. No user preset or ccache installation is required.
 
 The [build guide](doc/building.md) covers optional features, installation,
 downstream CMake and pkg-config use, and source archives.
@@ -53,8 +39,8 @@ The build provides `fplll` for lattice reduction and `latticegen` for generating
 example lattices. Matrix rows are basis vectors. For example:
 
 ```sh
-build/debug/bin/DEBUG/latticegen r 10 1000 |
-  build/debug/bin/DEBUG/fplll -a lll
+build/debug/bin/latticegen r 10 1000 |
+  build/debug/bin/fplll -a lll
 ```
 
 ### latticegen

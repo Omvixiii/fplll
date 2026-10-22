@@ -2,10 +2,10 @@
 
 ## How to use
 
-The build places `fplll` and `latticegen` under `build/<preset>/bin/<CONFIG>/`
-(for example, `build/gcc-debug/bin/DEBUG/`). Installation places them in the
-prefix's `bin/` directory. `llldiff` is a test helper and is not installed.
-The examples below assume the current directory is the build's `bin/<CONFIG>/`
+The build places `fplll` and `latticegen` under `build/<preset>/bin/` (for
+example, `build/debug/bin/`). Installation places them in the prefix's `bin/`
+directory. `llldiff` is a test helper and is not installed.
+The examples below assume the current directory is the build's `bin/`
 directory so the programs can be invoked as `./fplll` and `./latticegen`.
 
 ### latticegen
