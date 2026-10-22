@@ -47,17 +47,20 @@ The last command is useful after the relevant targets have been rebuilt. The
 `fplll_cli` target builds its library and CLI, not the test executables. Add
 `--verbose` to a build command to inspect compiler and linker commands.
 
-The `debug`, `release`, and `ubsan` configure presets have matching build and
-test presets; the `distcheck` build preset targets the release build tree.
+All configure presets except `distcheck` have matching build and test presets;
+the `distcheck` build preset targets the release build tree.
 
 | Preset | Purpose |
 | --- | --- |
 | `debug` | Default development build and validation |
 | `release` | Optimized build and validation |
 | `ubsan` | Debug build with UndefinedBehaviorSanitizer |
+| `warnings` | Debug build with the project's strict warnings and `-Werror` |
+| `asan` | Debug build with AddressSanitizer and UndefinedBehaviorSanitizer |
+| `tsan` | Debug build with ThreadSanitizer |
 
-The `ubsan` preset requires GCC or Clang and the matching runtime. Configure,
-build, and test it separately:
+The sanitizer and warnings presets require a matching GCC or Clang toolchain.
+Configure, build, and test each separately:
 
 ```sh
 cmake --preset ubsan
@@ -115,6 +118,8 @@ directories are generated in the binary tree and are never source files.
 | `FPLLL_MAX_ENUM_DIM` | `256`; maximum enumeration dimension |
 | `FPLLL_MAX_PARALLEL_ENUM_DIM` | `120`; `0` disables parallel enumeration |
 | `FPLLL_EXTENUM_DIR`, `FPLLL_EXTENUM_LIBRARY`, `FPLLL_EXTENUM_FUNCTION` | External enumeration library and symbol |
+| `FPLLL_WARNINGS`, `FPLLL_WARNINGS_AS_ERRORS` | `OFF`; enable `-Wall -Wextra -Wpedantic -Wshadow` (and optionally `-Werror`) |
+| `FPLLL_BUILD_BENCHMARKS` | `OFF`; build the `fplll_bench` microbenchmark target |
 
 Parallel dimensions are multiples of ten between 20 and 160 and must be smaller
 than `FPLLL_MAX_ENUM_DIM`. External enumeration requires an independently
