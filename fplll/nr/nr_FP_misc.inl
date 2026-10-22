@@ -48,25 +48,6 @@ inline void FP_NR<long double>::set_z(const Z_NR<mpz_t> &a, mp_rnd_t /*rnd*/)
 
 #endif
 
-/* set_z (to dpe_t) */
-#ifdef FPLLL_WITH_DPE
-
-#ifdef FPLLL_WITH_ZLONG
-/** set_z (from long to dpe_t) */
-template <> template <> inline void FP_NR<dpe_t>::set_z(const Z_NR<long> &a, mp_rnd_t /*rnd*/)
-{
-  dpe_set_si(data, a.get_data());
-}
-#endif
-
-/* set_z (from default mpz_t to dpe_t) */
-template <> template <> inline void FP_NR<dpe_t>::set_z(const Z_NR<mpz_t> &a, mp_rnd_t /*rnd*/)
-{
-  dpe_set_z(data, const_cast<mpz_t &>(a.get_data()));
-}
-
-#endif
-
 /* set_z (to dd_real) */
 #ifdef FPLLL_WITH_QD
 
@@ -194,35 +175,6 @@ template <class Z>
 inline void FP_NR<long double>::get_z_exp(Z_NR<Z> &a, long &expo) const
 {
   return get_z_exp_we(a, expo, 0);
-}
-
-#endif
-
-/* get_z_exp_we (dpe_t --> Z_NR) */
-#ifdef FPLLL_WITH_DPE
-
-#ifdef FPLLL_WITH_ZLONG
-/** get_z_exp_we (from dpe_t to Z_NR<long>) */
-template <> template <> inline void FP_NR<dpe_t>::get_z_exp(Z_NR<long> &a, long &expo) const
-{
-  expo = 0;
-  a    = get_si();
-}
-#endif
-
-/** get_z_exp_we (from dpe_t to default mpz_t Z_NR<mpz_t>) */
-template <> template <> inline void FP_NR<dpe_t>::get_z_exp(Z_NR<mpz_t> &a, long &expo) const
-{
-  expo = max(DPE_EXP(data) - DPE_BITSIZE, 0);
-  mpz_set_d(a.get_data(), trunc(ldexp(DPE_MANT(data), DPE_EXP(data) - expo)));
-}
-
-/** get_z_exp_we (from dpe_t to Z_NR<class Z>) */
-template <>
-template <class Z>
-inline void FP_NR<dpe_t>::get_z_exp_we(Z_NR<Z> &a, long &expo, long /*expo_add*/) const
-{
-  return get_z_exp(a, expo);
 }
 
 #endif

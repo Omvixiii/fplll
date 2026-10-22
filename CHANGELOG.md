@@ -20,6 +20,15 @@
 - Consolidate historical release notes here; keep local migration notes out of
   version control and source packages.
 
+### Removed
+
+- The DPE floating-point backend (`FT_DPE`, `-f dpe`, `nr/dpe.h`,
+  `nr_FP_dpe.inl`).  Heuristic LLL now uses `double` with GSO row-exponent
+  tracking, and falls back to MPFR when the required precision exceeds double.
+  Benchmarked heuristic LLL is about 60% faster on 60-100 dimensional integer
+  relation lattices with identical reduction quality; the default wrapper path
+  is unchanged.
+
 ### Changed
 
 - Library diagnostics are silent by default and go through

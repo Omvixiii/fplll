@@ -891,12 +891,6 @@ int bkz_reduction(ZZ_mat<mpz_t> *B, ZZ_mat<mpz_t> *U, const BKZParam &param, Flo
     status = bkz_reduction_f<FP_NR<long double>>(*B, param, sel_ft, lll_delta, u, u_inv);
   }
 #endif
-#ifdef FPLLL_WITH_DPE
-  else if (sel_ft == FT_DPE)
-  {
-    status = bkz_reduction_f<FP_NR<dpe_t>>(*B, param, sel_ft, lll_delta, u, u_inv);
-  }
-#endif
 #ifdef FPLLL_WITH_QD
   else if (sel_ft == FT_DD)
   {
@@ -971,14 +965,6 @@ template class BKZAutoAbort<Z_NR<mpz_t>, FP_NR<long double>>;
 
 template class BKZReduction<Z_NR<long>, FP_NR<long double>>;
 template class BKZAutoAbort<Z_NR<long>, FP_NR<long double>>;
-#endif
-
-#ifdef FPLLL_WITH_DPE
-template class BKZReduction<Z_NR<mpz_t>, FP_NR<dpe_t>>;
-template class BKZAutoAbort<Z_NR<mpz_t>, FP_NR<dpe_t>>;
-
-template class BKZReduction<Z_NR<long>, FP_NR<dpe_t>>;
-template class BKZAutoAbort<Z_NR<long>, FP_NR<dpe_t>>;
 #endif
 
 #ifdef FPLLL_WITH_QD

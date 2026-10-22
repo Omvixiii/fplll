@@ -16,10 +16,6 @@
 #include "nr_Z_l.inl"
 #include "nr_Z_mpz.inl"
 
-#ifdef FPLLL_WITH_DPE
-#include "nr_FP_dpe.inl"
-#endif
-
 #ifdef FPLLL_WITH_QD
 #include "nr_FP_dd.inl"
 #include "nr_FP_qd.inl"
@@ -52,9 +48,6 @@ template <> inline const char *num_type_str<double>() { return "double"; }
 template <> inline const char *num_type_str<mpz_t>() { return "mpz_t"; }
 #ifdef FPLLL_WITH_LONG_DOUBLE
 template <> inline const char *num_type_str<long double>() { return "long double"; }
-#endif
-#ifdef FPLLL_WITH_DPE
-template <> inline const char *num_type_str<dpe_t>() { return "dpe_t"; }
 #endif
 #ifdef FPLLL_WITH_QD
 template <> inline const char *num_type_str<dd_real>() { return "dd_real"; }

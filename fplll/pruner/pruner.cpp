@@ -134,13 +134,6 @@ int run_pruner(ZZ_mat<mpz_t> &B, FloatType float_type, int precision, int prune_
                                               prune_min_prob, gh_factor);
   }
 #endif
-#ifdef FPLLL_WITH_DPE
-  else if (sel_ft == FT_DPE)
-  {
-    status = run_pruner_f<FP_NR<dpe_t>>(B, sel_ft, prune_start, prune_end, prune_pre_nodes,
-                                        prune_min_prob, gh_factor);
-  }
-#endif
 #ifdef FPLLL_WITH_QD
   else if (sel_ft == FT_DD)
   {
@@ -316,17 +309,6 @@ template int run_pruner_f<FP_NR<qd_real>> (ZZ_mat<mpz_t> &b, int sel_ft, int pru
 
 #endif
 
-
-#ifdef FPLLL_WITH_DPE
-// DPE
-template class Pruner<FP_NR<dpe_t>>;
-template void prune<FP_NR<dpe_t>>(PruningParams &,const double, const double, const vector<double> &, const double, const PrunerMetric, const int);
-template void prune<FP_NR<dpe_t>>(PruningParams &,const double, const double, const vector<vector<double>> &, const double, const PrunerMetric, const int);
-template FP_NR<dpe_t> svp_probability<FP_NR<dpe_t>>(const PruningParams &pruning);
-template FP_NR<dpe_t> svp_probability<FP_NR<dpe_t>>(const vector<double> &pr);
-template int run_pruner_f<FP_NR<dpe_t>> (ZZ_mat<mpz_t> &b, int sel_ft, int prune_start, int prune_end, double prune_pre_nodes, double prune_min_prob, double gh_factor);
-
-#endif
 /* clang-format on */
 
 FPLLL_END_NAMESPACE

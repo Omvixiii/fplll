@@ -57,7 +57,6 @@ Options for LLL-reduction:
 * `-p precision` : precision of the floating-point arithmetic, works only with `-f mpfr`.
 * `-f dd` : sets the floating-point type to double-double.
 * `-f qd` : sets the floating-point type to quad-double.
-* `-f dpe` : sets the floating-point type to DPE (default if `m=heuristic`).
 * `-f double` : sets the floating-point type to double (default if `m=fast`).
 * `-f longdouble` : sets the floating-point type to long double.
 
@@ -270,7 +269,6 @@ Please add yourself here if you make a contribution.
 
 ### Acknowledgments
 
-* Patrick Pelissier and Paul Zimmermann for `dpe`.
 
 * David H. Bailey for `QD`.
 

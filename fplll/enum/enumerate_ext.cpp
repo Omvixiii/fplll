@@ -178,10 +178,6 @@ template class ExternalEnumeration<Z_NR<mpz_t>, FP_NR<dd_real>>;
 template class ExternalEnumeration<Z_NR<mpz_t>, FP_NR<qd_real>>;
 #endif
 
-#ifdef FPLLL_WITH_DPE
-template class ExternalEnumeration<Z_NR<mpz_t>, FP_NR<dpe_t>>;
-#endif
-
 template class ExternalEnumeration<Z_NR<mpz_t>, FP_NR<mpfr_t>>;
 
 template class ExternalEnumeration<Z_NR<long>, FP_NR<double>>;
@@ -194,10 +190,6 @@ template class ExternalEnumeration<Z_NR<long>, FP_NR<long double>>;
 template class ExternalEnumeration<Z_NR<long>, FP_NR<dd_real>>;
 
 template class ExternalEnumeration<Z_NR<long>, FP_NR<qd_real>>;
-#endif
-
-#ifdef FPLLL_WITH_DPE
-template class ExternalEnumeration<Z_NR<long>, FP_NR<dpe_t>>;
 #endif
 
 template class ExternalEnumeration<Z_NR<long>, FP_NR<mpfr_t>>;

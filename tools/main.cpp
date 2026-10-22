@@ -579,8 +579,6 @@ void read_options(int argc, char **argv, Options &o)
       CHECK(ac < argc, "missing value after -f switch");
       if (strcmp("mpfr", argv[ac]) == 0)
         o.float_type = FT_MPFR;
-      else if (strcmp("dpe", argv[ac]) == 0)
-        o.float_type = FT_DPE;
       else if (strcmp("dd", argv[ac]) == 0)
         o.float_type = FT_DD;
       else if (strcmp("qd", argv[ac]) == 0)
@@ -590,7 +588,7 @@ void read_options(int argc, char **argv, Options &o)
       else if (strcmp("longdouble", argv[ac]) == 0)
         o.float_type = FT_LONG_DOUBLE;
       else
-        ABORT_MSG("parse error in -f switch: mpfr, qd, dd, dpe, double or longdouble expected");
+        ABORT_MSG("parse error in -f switch: mpfr, qd, dd, double or longdouble expected");
     }
     else if (strcmp(argv[ac], "-s") == 0)
     {
@@ -689,7 +687,7 @@ void read_options(int argc, char **argv, Options &o)
            << "  -t <theta> (default=0.001; alias to -theta <theta>)\n"
            << "  -l <lovasz>\n"
            << "       If <lovasz> != 0, Lovasz's condition, otherwise, Siegel's condition\n"
-           << "  -f [mpfr|dd|qd|dpe|double|longdouble]\n"
+           << "  -f [mpfr|dd|qd|double|longdouble]\n"
            << "       Floating-point type in LLL\n"
            << "  -p <precision>\n"
            << "       Floating-point precision (only with -f mpfr)\n"

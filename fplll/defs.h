@@ -23,7 +23,6 @@
 #define FPLLL_WITH_LONG_DOUBLE
 #endif
 
-#define FPLLL_WITH_DPE
 #define FPLLL_WITH_ZLONG
 
 #include <algorithm>
@@ -55,9 +54,6 @@
 #include <fplll/fplll_config.h>
 #include <gmp.h>
 #include <mpfr.h>
-#ifdef FPLLL_WITH_DPE
-#include "nr/dpe.h"
-#endif
 
 #if defined(__sun) || defined(__CYGWIN__)
 #include <ieeefp.h>
@@ -271,14 +267,13 @@ enum FloatType
   FT_DEFAULT     = 0,
   FT_DOUBLE      = 1,
   FT_LONG_DOUBLE = 2,
-  FT_DPE         = 3,
-  FT_DD          = 4,
-  FT_QD          = 5,
-  FT_MPFR        = 6
+  FT_DD          = 3,
+  FT_QD          = 4,
+  FT_MPFR        = 5
 };
 
-inline constexpr std::array<std::string_view, 7> FLOAT_TYPE_STR = {
-    "", "double", "long double", "dpe", "dd", "qd", "mpfr"};
+inline constexpr std::array<std::string_view, 6> FLOAT_TYPE_STR = {"",   "double", "long double",
+                                                                   "dd", "qd",     "mpfr"};
 
 enum LLLFlags
 {

@@ -525,11 +525,6 @@ template class MatGSO<Z_NR<long>, FP_NR<qd_real>>;
 template class MatGSO<Z_NR<mpz_t>, FP_NR<qd_real>>;
 #endif
 
-#ifdef FPLLL_WITH_DPE
-template class MatGSO<Z_NR<long>, FP_NR<dpe_t>>;
-template class MatGSO<Z_NR<mpz_t>, FP_NR<dpe_t>>;
-#endif
-
 template class MatGSO<Z_NR<long>, FP_NR<mpfr_t>>;
 template class MatGSO<Z_NR<mpz_t>, FP_NR<mpfr_t>>;
 

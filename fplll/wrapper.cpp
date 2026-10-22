@@ -17,9 +17,11 @@
 
 #include "wrapper.h"
 #include "detail/precision.h"
+
 #include "hlll.h"
 #include "lll.h"
 #include "util.h"
+#include <type_traits>
 
 FPLLL_BEGIN_NAMESPACE
 
@@ -120,6 +122,8 @@ int Wrapper::call_lll(ZZ_mat<Z> &bz, ZZ_mat<Z> &uz, ZZ_mat<Z> &u_invZ, LLLMethod
     gso_flags |= GSO_INT_GRAM;
   if (method == LM_FAST)
     gso_flags |= GSO_ROW_EXPO;
+  if (std::is_same<F, double>::value)
+    gso_flags |= GSO_ROW_EXPO;
   if (method != LM_PROVED && precision == 0)
     gso_flags |= GSO_OP_FORCE_LONG;
 
@@ -169,7 +173,7 @@ int Wrapper::proved_lll(ZZ_mat<Z> &bz, ZZ_mat<Z> &uz, ZZ_mat<Z> &u_invZ, int pre
 }
 
 /**
- * In heuristic_loop(), we only use double or dpe_t or mpfr_t.
+ * In heuristic_loop(), we only use double or mpfr_t.
  */
 int Wrapper::heuristic_loop(int precision)
 {
@@ -179,11 +183,7 @@ int Wrapper::heuristic_loop(int precision)
     kappa = heuristic_lll<mpz_t, mpfr_t>(b, u, u_inv, precision, delta, eta);
   else
   {
-#ifdef FPLLL_WITH_DPE
-    kappa = heuristic_lll<mpz_t, dpe_t>(b, u, u_inv, 0, delta, eta);
-#else
-    kappa = heuristic_lll<mpz_t, mpfr_t>(b, u, u_inv, precision, delta, eta);
-#endif
+    kappa = heuristic_lll<mpz_t, double>(b, u, u_inv, 0, delta, eta);
   }
 
   if (kappa == 0)
@@ -204,13 +204,7 @@ int Wrapper::proved_loop(int precision)
 #endif
     kappa = proved_lll<mpz_t, mpfr_t>(b, u, u_inv, precision, delta, eta);
   else if (max_exponent * 2 > MAX_EXP_DOUBLE)
-  {
-#ifdef FPLLL_WITH_DPE
-    kappa = proved_lll<mpz_t, dpe_t>(b, u, u_inv, 0, delta, eta);
-#else
     kappa = proved_lll<mpz_t, mpfr_t>(b, u, u_inv, precision, delta, eta);
-#endif
-  }
 #ifdef FPLLL_WITH_QD
   else if (precision > numeric_limits<double>::digits)
     kappa = proved_lll<mpz_t, dd_real>(b, u, u_inv, precision, delta, eta);
@@ -250,9 +244,8 @@ int Wrapper::last_lll()
 #endif
 
   /* <mpfr, FT> */
-#ifdef FPLLL_WITH_DPE
   if (good_prec <= numeric_limits<double>::digits)
-    return proved_lll<mpz_t, dpe_t>(b, u, u_inv, good_prec, delta, eta);
+    return proved_lll<mpz_t, double>(b, u, u_inv, good_prec, delta, eta);
 #ifdef FPLLL_WITH_QD
   else if (good_prec <= PREC_DD)
   {
@@ -262,7 +255,6 @@ int Wrapper::last_lll()
       return proved_lll<mpz_t, dd_real>(b, u, u_inv, good_prec, delta, eta);
     }
   }
-#endif
 #endif
   return proved_lll<mpz_t, mpfr_t>(b, u, u_inv, good_prec, delta, eta);
 }
@@ -433,15 +425,7 @@ template <class F> bool Wrapper::call_hlll(LLLMethod method, int precision)
  */
 bool Wrapper::last_hlll()
 {
-/* <mpfr, FT> */
-#ifdef FPLLL_WITH_DPE
-  if (good_prec <= numeric_limits<double>::digits)
-    return proved_hlll<dpe_t>(good_prec);
-#ifdef FPLLL_WITH_QD
-  else if (good_prec <= PREC_DD)
-    return proved_hlll<dd_real>(good_prec);
-#endif  // FPLLL_WITH_QD
-#endif  // FPLLL_WITH_DPE
+  /* <mpfr, FT> */
   return proved_hlll<mpfr_t>(good_prec);
 }
 int Wrapper::hlll_proved_loop(int precision)
@@ -523,6 +507,8 @@ int lll_reduction_zf(ZZ_mat<ZT> &b, ZZ_mat<ZT> &u, ZZ_mat<ZT> &u_inv, double del
     gso_flags |= GSO_INT_GRAM;
   if (method == LM_FAST)
     gso_flags |= GSO_ROW_EXPO | GSO_OP_FORCE_LONG;
+  if (std::is_same<FT, double>::value)
+    gso_flags |= GSO_ROW_EXPO;
   MatGSO<Z_NR<ZT>, FP_NR<FT>> m_gso(b, u, u_inv, gso_flags);
   LLLReduction<Z_NR<ZT>, FP_NR<FT>> lll_obj(m_gso, delta, eta, flags);
   lll_obj.lll();
@@ -597,10 +583,8 @@ int lll_reduction_z(ZZ_mat<ZT> &b, ZZ_mat<ZT> &u, ZZ_mat<ZT> &u_inv, double delt
   {
     if (method == LM_FAST)
       sel_ft = FT_DOUBLE;
-#ifdef FPLLL_WITH_DPE
-    else if (sel_prec <= static_cast<int>(FP_NR<dpe_t>::get_prec()))
-      sel_ft = FT_DPE;
-#endif
+    else if (sel_prec <= static_cast<int>(FP_NR<double>::get_prec()))
+      sel_ft = FT_DOUBLE;
 #ifdef FPLLL_WITH_QD
     else if (sel_prec <= static_cast<int>(FP_NR<dd_real>::get_prec()))
       sel_ft = FT_DD;
@@ -622,10 +606,6 @@ int lll_reduction_z(ZZ_mat<ZT> &b, ZZ_mat<ZT> &u, ZZ_mat<ZT> &u_inv, double delt
 #ifdef FPLLL_WITH_LONG_DOUBLE
   else if (sel_ft == FT_LONG_DOUBLE)
     sel_prec = FP_NR<long double>::get_prec();
-#endif
-#ifdef FPLLL_WITH_DPE
-  else if (sel_ft == FT_DPE)
-    sel_prec = FP_NR<dpe_t>::get_prec();
 #endif
 #ifdef FPLLL_WITH_QD
   else if (sel_ft == FT_DD)
@@ -666,12 +646,6 @@ int lll_reduction_z(ZZ_mat<ZT> &b, ZZ_mat<ZT> &u, ZZ_mat<ZT> &u_inv, double delt
     status = lll_reduction_zf<ZT, long double>(b, u, u_inv, delta, eta, method, flags);
   }
 #endif
-#ifdef FPLLL_WITH_DPE
-  else if (sel_ft == FT_DPE)
-  {
-    status = lll_reduction_zf<ZT, dpe_t>(b, u, u_inv, delta, eta, method, flags);
-  }
-#endif
 #ifdef FPLLL_WITH_QD
   else if (sel_ft == FT_DD)
   {
@@ -710,7 +684,7 @@ int lll_reduction_z(ZZ_mat<ZT> &b, ZZ_mat<ZT> &u, ZZ_mat<ZT> &u_inv, double delt
 }
 
 // Verify if b is hlll reduced according to delta and eta
-// For FT == dpe or FT == mpfr
+// For FT == mpfr
 template <class ZT, class FT>
 int is_hlll_reduced_pr(ZZ_mat<ZT> &b, ZZ_mat<ZT> &u, ZZ_mat<ZT> &u_inv, double delta, double eta,
                        double theta)
@@ -753,6 +727,8 @@ int hlll_reduction_zf(ZZ_mat<ZT> &b, ZZ_mat<ZT> &u, ZZ_mat<ZT> &u_inv, double de
   if (b.get_rows() == 0 || b.get_cols() == 0)
     return RED_SUCCESS;
   int householder_flags = HOUSEHOLDER_DEFAULT;
+  if (std::is_same<FT, double>::value)
+    householder_flags |= HOUSEHOLDER_ROW_EXPO;
   if (method == LM_FAST)
   {
     householder_flags |= HOUSEHOLDER_ROW_EXPO | HOUSEHOLDER_OP_FORCE_LONG;
@@ -850,10 +826,8 @@ int hlll_reduction_z(ZZ_mat<ZT> &b, ZZ_mat<ZT> &u, ZZ_mat<ZT> &u_inv, double del
   {
     if (method == LM_FAST)
       sel_ft = FT_DOUBLE;
-#ifdef FPLLL_WITH_DPE
-    else if (sel_prec <= static_cast<int>(FP_NR<dpe_t>::get_prec()))
-      sel_ft = FT_DPE;
-#endif
+    else if (sel_prec <= static_cast<int>(FP_NR<double>::get_prec()))
+      sel_ft = FT_DOUBLE;
 #ifdef FPLLL_WITH_QD
     else if (sel_prec <= static_cast<int>(FP_NR<dd_real>::get_prec()))
       sel_ft = FT_DD;
@@ -875,10 +849,6 @@ int hlll_reduction_z(ZZ_mat<ZT> &b, ZZ_mat<ZT> &u, ZZ_mat<ZT> &u_inv, double del
 #ifdef FPLLL_WITH_LONG_DOUBLE
   else if (sel_ft == FT_LONG_DOUBLE)
     sel_prec = FP_NR<long double>::get_prec();
-#endif
-#ifdef FPLLL_WITH_DPE
-  else if (sel_ft == FT_DPE)
-    sel_prec = FP_NR<dpe_t>::get_prec();
 #endif
 #ifdef FPLLL_WITH_QD
   else if (sel_ft == FT_DD)
@@ -913,10 +883,6 @@ int hlll_reduction_z(ZZ_mat<ZT> &b, ZZ_mat<ZT> &u, ZZ_mat<ZT> &u_inv, double del
 #ifdef FPLLL_WITH_LONG_DOUBLE
   else if (sel_ft == FT_LONG_DOUBLE)
     status = hlll_reduction_zf<ZT, long double>(b, u, u_inv, delta, eta, theta, c, method, flags);
-#endif
-#ifdef FPLLL_WITH_DPE
-  else if (sel_ft == FT_DPE)
-    status = hlll_reduction_zf<ZT, dpe_t>(b, u, u_inv, delta, eta, theta, c, method, flags);
 #endif
 #ifdef FPLLL_WITH_QD
   else if (sel_ft == FT_DD)

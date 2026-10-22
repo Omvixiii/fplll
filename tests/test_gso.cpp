@@ -417,17 +417,6 @@ int main(int /*argc*/, char ** /*argv*/)
   status |= test_int_rel<mpz_t, qd_real>(50, 20);
   status |= test_int_rel<mpz_t, qd_real>(40, 10);
 #endif
-#ifdef FPLLL_WITH_DPE
-  status |= test_filename<mpz_t, dpe_t>(TESTDATADIR "/tests/lattices/example2_in");
-  status |= test_filename<mpz_t, dpe_t>(TESTDATADIR "/tests/lattices/example3_in");
-  status |= test_filename<mpz_t, dpe_t>(TESTDATADIR "/tests/lattices/example_cvp_in_lattice");
-  status |= test_filename<mpz_t, dpe_t>(TESTDATADIR "/tests/lattices/example_cvp_in_lattice2");
-  status |= test_filename<mpz_t, dpe_t>(TESTDATADIR "/tests/lattices/example_cvp_in_lattice3");
-  status |= test_filename<mpz_t, dpe_t>(TESTDATADIR "/tests/lattices/example_cvp_in_lattice4");
-  status |= test_filename<mpz_t, dpe_t>(TESTDATADIR "/tests/lattices/example_cvp_in_lattice5");
-  status |= test_int_rel<mpz_t, dpe_t>(50, 20);
-  status |= test_int_rel<mpz_t, dpe_t>(40, 10);
-#endif
 
   if (status == 0)
   {

@@ -344,14 +344,6 @@ template void adjust_radius_to_gh_bound<FP_NR<qd_real>>(FP_NR<qd_real> &max_dist
                                                         double gh_factor);
 #endif
 
-#ifdef FPLLL_WITH_DPE
-template class MatGSOInterface<Z_NR<long>, FP_NR<dpe_t>>;
-template class MatGSOInterface<Z_NR<mpz_t>, FP_NR<dpe_t>>;
-template void adjust_radius_to_gh_bound<FP_NR<dpe_t>>(FP_NR<dpe_t> &max_dist, long max_dist_expo,
-                                                      int block_size, const FP_NR<dpe_t> &root_det,
-                                                      double gh_factor);
-#endif
-
 template class MatGSOInterface<Z_NR<long>, FP_NR<mpfr_t>>;
 template class MatGSOInterface<Z_NR<mpz_t>, FP_NR<mpfr_t>>;
 template void adjust_radius_to_gh_bound<FP_NR<mpfr_t>>(FP_NR<mpfr_t> &max_dist, long max_dist_expo,

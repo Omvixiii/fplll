@@ -389,7 +389,7 @@ bool MatHouseholder<ZT, FT>::size_reduce(int k, int size_reduction_end, int size
     // R(k, i) / R(i, i) = ftmp1 * 2^(row_expo[k] - row_expo[i])
     ftmp1.div(R(k, i), R(i, i));
 
-    /* If T = mpfr or dpe, enable_row_expo must be false and then, expo1 - expo0 == 0 (required by
+    /* If T = mpfr, enable_row_expo must be false and then, expo1 - expo0 == 0 (required by
      * rnd_we with these types) */
     // rnd(R(k, i) / R(i, i)) = ftmp1 * 2^(row_expo[k] - row_expo[i])
     ftmp1.rnd_we(ftmp1, row_expo[k] - row_expo[i]);
@@ -546,11 +546,6 @@ template class MatHouseholder<Z_NR<mpz_t>, FP_NR<dd_real>>;
 
 template class MatHouseholder<Z_NR<long>, FP_NR<qd_real>>;
 template class MatHouseholder<Z_NR<mpz_t>, FP_NR<qd_real>>;
-#endif
-
-#ifdef FPLLL_WITH_DPE
-template class MatHouseholder<Z_NR<long>, FP_NR<dpe_t>>;
-template class MatHouseholder<Z_NR<mpz_t>, FP_NR<dpe_t>>;
 #endif
 
 template class MatHouseholder<Z_NR<long>, FP_NR<mpfr_t>>;

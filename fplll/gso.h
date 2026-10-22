@@ -105,7 +105,7 @@ public:
    *   conversion to floating-point, which hopefully avoids some overflows.
    *   This option cannot be enabled if enable_int_gram=true and works only
    *   with FT=double and FT=long double. It is useless and MUST NOT be used
-   *   for FT=dpe or FT=mpfr_t.
+   *   for FT=mpfr_t.
    * @param row_op_force_long
    *   Affects the behaviour of row_addmul(_we).
    *   See the documentation of row_addmul.

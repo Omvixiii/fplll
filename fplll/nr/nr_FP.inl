@@ -15,7 +15,7 @@ template <class F> class Z_NR;
 /**
  * FP_NR stores floating-point numbers. This template provides a uniform
  * interface for doing floating-point computations with several underlying
- * types (double, dpe_t and mpfr_t). For all functions, the rounding
+ * types (double and mpfr_t). For all functions, the rounding
  * mode rnd is ignored unless F=mpfr_t.
  */
 template <class F = mpfr_t> class FP_NR
@@ -90,7 +90,7 @@ public:
    *  trunc(value * 2^expo_add) ~= x * 2^expo
    * The '~=' is an equality if trunc(value * 2^expo_add) <= LONG_MAX.
    * expo is the minimum non-negative value such that x <= LONG_MAX.
-   * expo_add must be 0 if T=dpe_t or T=mpfr_t.
+   * expo_add must be 0 if T=mpfr_t.
    */
   inline long get_si_exp_we(long &expo, long expo_add) const;
 
@@ -113,7 +113,7 @@ public:
   /**
    * Computes a and expo such that trunc(value) * 2^expo_add ~= a * 2^expo.
    * The '~=' is an equality if Z=mpz_t. expo is always non-negative.
-   * expo_add must be 0 if T=dpe_t or T=mpfr_t.
+   * expo_add must be 0 if T=mpfr_t.
    *  (in nr_FP_misc.h)
    */
   template <class Z> inline void get_z_exp_we(Z_NR<Z> &a, long &expo, long expo_add) const;
@@ -340,7 +340,7 @@ public:
 
   /**
    * value <- (rounding of a * 2^expo_add) / 2^expo_add, but never overflows.
-   * expo_add must be 0 if T=dpe_t or T=mpfr_t.
+   * expo_add must be 0 if T=mpfr_t.
    */
   inline void rnd_we(const FP_NR<F> &b, long expo_add);
 
@@ -637,10 +637,6 @@ template <class T> ostream &operator<<(ostream &os, const FP_NR<T> &x)
 {
   return os << x.get_data();
 }
-
-#ifdef FPLLL_WITH_DPE
-template <> ostream &operator<<(ostream &os, const FP_NR<dpe_t> &x);
-#endif
 
 template <> ostream &operator<<(ostream &os, const FP_NR<mpfr_t> &x);
 

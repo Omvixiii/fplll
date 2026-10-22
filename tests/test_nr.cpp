@@ -113,35 +113,6 @@ template <class FT> int test_root()
   return status;
 }
 
-#ifdef FPLLL_WITH_DPE
-int test_dpe_zero_arithmetic()
-{
-  dpe_t zero, one, result;
-  dpe_set_d(zero, 0.0);
-  dpe_set_d(one, 1.0);
-  int status = 0;
-
-  dpe_add(result, zero, one);
-  status |= (dpe_cmp_d(result, 1.0) != 0);
-  dpe_sub(result, zero, one);
-  status |= (dpe_cmp_d(result, -1.0) != 0);
-  dpe_mul(result, zero, one);
-  status |= !dpe_zero_p(result);
-  dpe_div(result, zero, one);
-  status |= !dpe_zero_p(result);
-  dpe_sqrt(result, zero);
-  status |= !dpe_zero_p(result);
-  dpe_mul_2si(result, zero, -133);
-  status |= !dpe_zero_p(result);
-  long integer;
-  status |= (dpe_get_si_exp(&integer, zero) != 0 || integer != 0);
-
-  if (status)
-    cerr << "test_nr failed: backend=dpe_t, case=zero-arithmetic" << '\n';
-  return status;
-}
-#endif
-
 int test_scoped_precision()
 {
   const unsigned int initial = FP_NR<mpfr_t>::get_prec();
@@ -185,10 +156,6 @@ int main()
 #ifdef FPLLL_WITH_LONG_DOUBLE
   status |= test_arithmetic<FP_NR<long double>>();
 #endif
-#ifdef FPLLL_WITH_DPE
-  status |= test_arithmetic<FP_NR<dpe_t>>();
-  status |= test_dpe_zero_arithmetic();
-#endif
 #ifdef FPLLL_WITH_QD
   status |= test_arithmetic<FP_NR<dd_real>>();
   status |= test_arithmetic<FP_NR<qd_real>>();
@@ -198,9 +165,6 @@ int main()
   status |= test_std<FP_NR<double>>();
 #ifdef FPLLL_WITH_LONG_DOUBLE
   status |= test_std<FP_NR<long double>>();
-#endif
-#ifdef FPLLL_WITH_DPE
-  status |= test_std<FP_NR<dpe_t>>();
 #endif
 #ifdef FPLLL_WITH_QD
   status |= test_std<FP_NR<dd_real>>();
@@ -222,9 +186,6 @@ int main()
 #ifdef FPLLL_WITH_LONG_DOUBLE
   status |= test_str<FP_NR<long double>>();
 #endif
-#ifdef FPLLL_WITH_DPE
-  status |= test_str<FP_NR<dpe_t>>();
-#endif
 #ifdef FPLLL_WITH_QD
   status |= test_str<FP_NR<dd_real>>();
   status |= test_str<FP_NR<qd_real>>();
@@ -234,10 +195,6 @@ int main()
   status |= test_hypot<FP_NR<double>>();
 #ifdef FPLLL_WITH_LONG_DOUBLE
   status |= test_hypot<FP_NR<long double>>();
-#endif
-
-#ifdef FPLLL_WITH_DPE
-  status |= test_hypot<FP_NR<dpe_t>>();
 #endif
 
 #ifdef FPLLL_WITH_QD

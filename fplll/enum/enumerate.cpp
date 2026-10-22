@@ -284,11 +284,6 @@ template class Enumeration<Z_NR<mpz_t>, FP_NR<qd_real>>;
 template class EnumerationDyn<Z_NR<mpz_t>, FP_NR<qd_real>>;
 #endif
 
-#ifdef FPLLL_WITH_DPE
-template class Enumeration<Z_NR<mpz_t>, FP_NR<dpe_t>>;
-template class EnumerationDyn<Z_NR<mpz_t>, FP_NR<dpe_t>>;
-#endif
-
 template class Enumeration<Z_NR<mpz_t>, FP_NR<mpfr_t>>;
 template class EnumerationDyn<Z_NR<mpz_t>, FP_NR<mpfr_t>>;
 
@@ -306,11 +301,6 @@ template class EnumerationDyn<Z_NR<long>, FP_NR<dd_real>>;
 
 template class Enumeration<Z_NR<long>, FP_NR<qd_real>>;
 template class EnumerationDyn<Z_NR<long>, FP_NR<qd_real>>;
-#endif
-
-#ifdef FPLLL_WITH_DPE
-template class Enumeration<Z_NR<long>, FP_NR<dpe_t>>;
-template class EnumerationDyn<Z_NR<long>, FP_NR<dpe_t>>;
 #endif
 
 template class Enumeration<Z_NR<long>, FP_NR<mpfr_t>>;

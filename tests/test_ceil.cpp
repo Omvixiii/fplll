@@ -35,10 +35,6 @@ int main(int, char **)
   status += test_ceil<qd_real>();
 #endif
 
-#ifdef FPLLL_WITH_DPE
-  status += test_ceil<dpe_t>();
-#endif
-
   if (status == 0)
   {
     std::cerr << "All tests passed" << '\n';

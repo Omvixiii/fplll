@@ -161,7 +161,6 @@ int main(int /*argc*/, char ** /*argv*/)
   status |= test_int_rel<mpz_t>(50, 1000, LM_FAST, FT_DOUBLE);
   status |= test_int_rel<mpz_t>(30, 1000, LM_PROVED, FT_MPFR);
 
-  status |= test_int_rel<mpz_t>(30, 2000, LM_PROVED, FT_DPE);
   status |= test_int_rel<mpz_t>(20, 2000, LM_PROVED, FT_MPFR);
 
   status |= test_filename<mpz_t>(TESTDATADIR "/tests/lattices/example_in", LM_FAST, FT_DOUBLE);

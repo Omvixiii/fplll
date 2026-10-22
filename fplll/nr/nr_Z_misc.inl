@@ -30,13 +30,6 @@ template <> template <> inline void Z_NR<long>::get_f_exp(FP_NR<long double> &f,
 }
 #endif
 
-#ifdef FPLLL_WITH_DPE
-template <> template <> inline void Z_NR<long>::get_f_exp(FP_NR<dpe_t> & /*f*/, long & /*expo*/)
-{
-  FPLLL_DEBUG_ABORT("get_f_exp unimplemented for dpe_t");
-}
-#endif
-
 #ifdef FPLLL_WITH_QD
 template <> template <> inline void Z_NR<long>::get_f_exp(FP_NR<dd_real> &f, long &expo)
 {
@@ -71,13 +64,6 @@ template <> template <> inline void Z_NR<mpz_t>::get_f_exp(FP_NR<double> &f, lon
 template <> template <> inline void Z_NR<mpz_t>::get_f_exp(FP_NR<long double> &f, long &expo)
 {
   f.get_data() = LDConvHelper::mpz_get_ld_2exp(&expo, data);
-}
-#endif
-
-#ifdef FPLLL_WITH_DPE
-template <> template <> inline void Z_NR<mpz_t>::get_f_exp(FP_NR<dpe_t> & /*f*/, long & /*expo*/)
-{
-  FPLLL_DEBUG_ABORT("get_f_exp unimplemented for dpe_t");
 }
 #endif
 
@@ -125,10 +111,6 @@ template <> template <> inline void Z_NR<long>::set_f(const FP_NR<qd_real> &a)
 }
 #endif
 
-#ifdef FPLLL_WITH_DPE
-template <> template <> inline void Z_NR<long>::set_f(const FP_NR<dpe_t> &a) { data = a.get_si(); }
-#endif
-
 template <> template <> inline void Z_NR<long>::set_f(const FP_NR<mpfr_t> &a) { data = a.get_si(); }
 
 #endif  // #ifdef FPLLL_WITH_ZLONG
@@ -145,13 +127,6 @@ template <> template <> inline void Z_NR<mpz_t>::set_f(const FP_NR<double> &a)
 template <> template <> inline void Z_NR<mpz_t>::set_f(const FP_NR<long double> &a)
 {
   LDConvHelper::mpz_set_ld(data, a.get_data());
-}
-#endif
-
-#ifdef FPLLL_WITH_DPE
-template <> template <> inline void Z_NR<mpz_t>::set_f(const FP_NR<dpe_t> &a)
-{
-  dpe_get_z(data, const_cast<dpe_t &>(a.get_data()));
 }
 #endif
 
