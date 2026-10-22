@@ -15,7 +15,7 @@ template <class T> bool test_ceil()
   status |= (ceiled != 4);
 
   // Case 2: calling ceil either gives us a number >= value.
-  value = rand();
+  value = RandGenInt::get();
   ceiled.ceil(value);
   status |= (ceiled < value);
   return status;

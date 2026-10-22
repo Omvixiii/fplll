@@ -193,10 +193,10 @@ template <class ZT, class FT> int test_ggso(ZZ_mat<ZT> &A)
   // TEST B
   // ------------------------
 
-  for (int i = 0; i < rand() % 10 + 1; i++)
+  for (int i = 0; i < (RandGenInt::get() & 0x7fffffff) % 10 + 1; i++)
   {
-    int k = rand() % r;
-    int j = rand() % r;
+    int k = (RandGenInt::get() & 0x7fffffff) % r;
+    int j = (RandGenInt::get() & 0x7fffffff) % r;
     M.move_row(k, j);
     M2.move_row(k, j);
     M3.move_row(k, j);
@@ -209,10 +209,10 @@ template <class ZT, class FT> int test_ggso(ZZ_mat<ZT> &A)
   M.row_op_begin(0, r);
   M2.row_op_begin(0, r);
   M3.row_op_begin(0, r);
-  for (int i = 0; i < rand() % 10 + 1; i++)
+  for (int i = 0; i < (RandGenInt::get() & 0x7fffffff) % 10 + 1; i++)
   {
-    int k = rand() % r;
-    int j = rand() % r;
+    int k = (RandGenInt::get() & 0x7fffffff) % r;
+    int j = (RandGenInt::get() & 0x7fffffff) % r;
     M.row_add(k, j);
     M2.row_add(k, j);
     M3.row_add(k, j);

@@ -128,7 +128,8 @@ template <class FT> int test_list_cvp()
     // Generate a point in the half lattice
     for (size_t i = 0; i < d; ++i)
     {
-      size_t c = (i == rep || rand() % 2);  // make sure at least one of them is non-zero
+      size_t c =
+          (i == rep || RandGenInt::get_bit() > 0);  // make sure at least one of them is non-zero
       // std::cerr << c;
       if (!c)
         continue;
