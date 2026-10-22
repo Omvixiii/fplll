@@ -70,8 +70,8 @@ and [worked examples](doc/usage.md#examples).
 
 See the [library usage notes](doc/usage.md#how-to-use-as-a-library) and
 [API documentation](https://fplll.github.io/fplll/annotated.html). With Doxygen
-installed when configuring CMake, the `doc` target generates local API
-reference pages. Its configuration is explained in the
+1.9.8 or newer installed when configuring CMake, the `doc` target generates
+local API reference pages. Its configuration is explained in the
 [build guide](doc/building.md#development-utilities).
 
 ## Citation

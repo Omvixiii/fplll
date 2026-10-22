@@ -92,8 +92,8 @@ over the C++11 default. The source-package isolation test builds without a
 standard override and verifies the C++11 baseline.
 
 The remaining `.in` files contain configure-time substitutions: feature and
-version macros, per-dimension enumeration sources, package metadata, or Doxygen
-paths. The CLI programs use the version in `fplll/fplll_config.h`, so a second
+version macros, per-dimension enumeration sources, or package metadata.
+The CLI programs use the version in `fplll/fplll_config.h`, so a second
 private version header is unnecessary. CMake's `configure_file()` updates
 generated outputs only when their content changes, keeping no-op
 reconfiguration from recompiling the project.
@@ -172,14 +172,33 @@ the old source distribution workflow; the isolation test verifies the archive.
 ## Development utilities
 
 The `check-style` target checks C++ formatting without changing source files.
-The `format` target applies clang-format. With Doxygen installed at configure
-time, the `doc` target generates API documentation under the binary directory.
-The root [`Doxyfile`](../Doxyfile) supplies the API layout, source exclusions,
-and HTML template settings; CMake includes it through
-[`cmake/Doxyfile.in`](../cmake/Doxyfile.in) to set the current version and
-source/build paths. Keep both files while this documentation target exists:
-deleting the base configuration would also discard the project's custom
-documentation settings. Doxygen is optional for normal builds.
+The `format` target applies clang-format. With Doxygen 1.9.8 or newer installed
+at configure time, build the `doc` target to generate API documentation:
+
+```sh
+cmake --preset debug
+cmake --build --preset debug --target doc
+```
+
+CMake's `doxygen_add_docs()` generates `Doxyfile.doc` in the binary directory
+using the project's name and version. Project-specific settings live in
+`cmake/documentation.cmake`; the root `CMakeLists.txt` loads the module and
+calls `fplll_add_documentation()`. Its function scope keeps Doxygen settings
+local. No source-tree Doxyfile or custom HTML templates are needed.
+The inputs are library sources, the README, changelog,
+and the usage, build, and contribution guides. Heading links use GitHub-style
+anchors so they work in both the repository and generated pages. Undocumented
+API entries remain visible; namespace macros are expanded so classes and
+functions appear in their C++ scopes.
+
+HTML output is written to `doc/html/` under the binary directory. Doxygen's
+native theme supplies navigation and search. Formulas use MathJax 3.2.2 from
+a CDN, so formula rendering requires network access. Graphviz is optional;
+when available, dependency and hierarchy diagrams use SVG. Doxygen is optional
+for normal builds, and documentation is generated only when `doc` is requested.
+Reconfigure after installing Doxygen to make the target available. Review
+generated pages and external links before publishing: correcting namespace
+scopes can change API page URLs.
 
 ## Local code coverage
 

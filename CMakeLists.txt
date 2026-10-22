@@ -467,15 +467,8 @@ add_custom_target(format
     -DFPLLL_FORMAT=ON -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/CheckStyle.cmake"
   VERBATIM)
 
-find_package(Doxygen QUIET)
-if(DOXYGEN_FOUND)
-  # Override the historical Doxyfile's relative paths without editing sources.
-  configure_file(cmake/Doxyfile.in "${CMAKE_CURRENT_BINARY_DIR}/Doxyfile" @ONLY)
-  add_custom_target(doc
-    COMMAND "${DOXYGEN_EXECUTABLE}" "${CMAKE_CURRENT_BINARY_DIR}/Doxyfile"
-    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-    VERBATIM)
-endif()
+include(cmake/documentation.cmake)
+fplll_add_documentation()
 
 # Release archives are built entirely inside the binary directory.
 set(CPACK_PACKAGE_NAME fplll)

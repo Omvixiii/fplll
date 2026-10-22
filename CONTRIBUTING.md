@@ -144,7 +144,7 @@ Furthermore, the pixel shortage is over. We want to see:
 - `grid` instead of `g`
 - `my_function_that_does_things` instead of `mftdt`
 
-The repository's [.clang-format](.clang-format) is the authoritative formatting
+The repository's `.clang-format` is the authoritative formatting
 configuration. Keep formatting changes separate from functional changes.
 
 ### Enforcement of the coding convention
@@ -181,7 +181,7 @@ headers of files you change.
 
 ## Documentation
 
-With Doxygen installed, configure a preset and build the `doc` target:
+With Doxygen 1.9.8 or newer installed, configure a preset and build the `doc` target:
 
 ```sh
 cmake --preset debug
@@ -189,7 +189,9 @@ cmake --build --preset debug --target doc
 ```
 
 HTML output is written to `build/debug/doc/html/`. Library sources, the
-README, and the usage and build guides are documentation inputs; build
-configuration headers and local notes are excluded.
+README, changelog, and usage, build, and contribution guides are documentation
+inputs; build configuration headers and local notes are excluded.
+The [build guide](doc/building.md#development-utilities) describes the generated
+configuration, optional Graphviz diagrams, and formula rendering.
 Review the generated documentation before publishing to the separate `gh-pages`
 checkout. Never generate documentation into the source tree.
