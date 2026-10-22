@@ -1,0 +1,235 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - build/cmake-only
+      - next/6.0
+      - master
+  pull_request:
+  workflow_dispatch:
+
+env:
+  CMAKE_BUILD_PARALLEL_LEVEL: 4
+  CTEST_OUTPUT_ON_FAILURE: 1
+
+jobs:
+  linux:
+    name: linux / ${{ matrix.compiler }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - compiler: gcc-13
+            cc: gcc-13
+            cxx: g++-13
+          - compiler: clang-18
+            cc: clang-18
+            cxx: clang++-18
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build cmake libgmp-dev libmpfr-dev pkg-config \
+            g++-13 clang-18
+      - name: Configure
+        env:
+          CC: ${{ matrix.cc }}
+          CXX: ${{ matrix.cxx }}
+        run: >
+          cmake -S . -B build -G Ninja
+          -DCMAKE_BUILD_TYPE=Release
+          -DFPLLL_WARNINGS=ON
+      - name: Build
+        run: cmake --build build --parallel
+      - name: Test
+        run: ctest --test-dir build --output-on-failure -j4
+
+  linux-gcc14:
+    name: linux / gcc-14 (container)
+    runs-on: ubuntu-24.04
+    container: gcc:14
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          apt-get update
+          apt-get install -y cmake ninja-build libgmp-dev libmpfr-dev pkg-config
+      - name: Configure
+        run: >
+          cmake -S . -B build -G Ninja
+          -DCMAKE_BUILD_TYPE=Release
+          -DFPLLL_WARNINGS=ON
+      - name: Build
+        run: cmake --build build --parallel
+      - name: Test
+        run: ctest --test-dir build --output-on-failure -j4
+
+  macos:
+    name: macos / appleclang
+    runs-on: macos-14
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: brew install ninja gmp mpfr pkg-config
+      - name: Configure
+        run: >
+          cmake -S . -B build -G Ninja
+          -DCMAKE_BUILD_TYPE=Release
+          -DFPLLL_WARNINGS=ON
+      - name: Build
+        run: cmake --build build --parallel
+      - name: Test
+        run: ctest --test-dir build --output-on-failure -j4
+
+  warnings:
+    # Advisory while the baseline cleanup lands; make this blocking in Phase 3.
+    name: strict warnings
+    runs-on: ubuntu-24.04
+    continue-on-error: true
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build cmake libgmp-dev libmpfr-dev pkg-config clang-18
+      - name: Configure
+        env:
+          CXX: clang++-18
+        run: cmake --preset warnings
+      - name: Build
+        run: cmake --build --preset warnings
+
+  sanitizers:
+    name: asan + ubsan
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build cmake libgmp-dev libmpfr-dev pkg-config clang-18
+      - name: Configure
+        env:
+          CXX: clang++-18
+        run: cmake --preset asan
+      - name: Build
+        run: cmake --build --preset asan --parallel
+      - name: Test
+        run: ctest --preset asan -j2
+
+  quality:
+    name: format and static analysis
+    runs-on: ubuntu-24.04
+    continue-on-error: true
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build cmake libgmp-dev libmpfr-dev pkg-config \
+            clang-format-18 clang-tidy-18
+          sudo ln -sf /usr/bin/clang-format-18 /usr/local/bin/clang-format
+      - name: Format check
+        run: cmake -DFPLLL_SOURCE_DIR="$PWD" -P cmake/lints.cmake
+      - name: Configure for clang-tidy
+        run: >
+          cmake -S . -B build-tidy -G Ninja
+          -DCMAKE_BUILD_TYPE=Debug
+          -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+      - name: clang-tidy (project sources)
+        run: |
+          clang-tidy-18 -p build-tidy --quiet $(git ls-files 'fplll/*.cpp') || true
+
+  install-consumer:
+    name: install, headers, consumer, ABI
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build cmake libgmp-dev libmpfr-dev pkg-config g++-13
+      - name: Configure
+        env:
+          CXX: g++-13
+        run: >
+          cmake -S . -B build -G Ninja
+          -DCMAKE_BUILD_TYPE=Release
+          -DCMAKE_INSTALL_PREFIX="$PWD/_install"
+      - name: Build
+        run: cmake --build build --parallel
+      - name: Install
+        run: cmake --install build
+      - name: Check install manifest
+        run: python3 scripts/check_install_manifest.py --prefix _install
+      - name: Check installed headers
+        run: >
+          python3 scripts/check_headers.py
+          --include-dir _install/include
+          --compiler g++-13
+          --std c++11
+      - name: Build and run consumer
+        run: |
+          cmake -S tests/consumer -B consumer-build -G Ninja \
+            -DCMAKE_PREFIX_PATH="$PWD/_install"
+          cmake --build consumer-build --parallel
+          ./consumer-build/consumer > /dev/null
+      - name: Dump ABI symbols
+        run: |
+          library="$(find _install/lib -type f \( -name 'libfplll*.so*' -o -name 'libfplll*.dylib' \) ! -name '*.a' | head -1)"
+          scripts/abi_dump.sh "$library" abi-symbols.txt
+      - name: Upload ABI symbols
+        uses: actions/upload-artifact@v4
+        with:
+          name: abi-symbols
+          path: abi-symbols.txt
+
+  benchmarks:
+    name: benchmark smoke test
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build cmake libgmp-dev libmpfr-dev pkg-config g++-13
+      - name: Configure
+        env:
+          CXX: g++-13
+        run: >
+          cmake -S . -B build -G Ninja
+          -DCMAKE_BUILD_TYPE=Release
+          -DFPLLL_BUILD_BENCHMARKS=ON
+      - name: Build
+        run: cmake --build build --parallel
+      - name: Run benchmark smoke test
+        run: ./build/bin/fplll_bench --dims 20,30 --bits 30 --repeats 1
+
+  distcheck:
+    name: release lifecycle
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build cmake libgmp-dev libmpfr-dev pkg-config \
+            gcc g++ cpack
+      - name: Configure
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+      - name: Build
+        run: cmake --build build --parallel
+      - name: distcheck
+        run: cmake --build build --target distcheck
