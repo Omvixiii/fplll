@@ -14,9 +14,7 @@
   along with fplll. If not, see <http://www.gnu.org/licenses/>. */
 
 #include "pruner.h"
-#include "../ballvol.const"
 #include "../detail/precision.h"
-#include "../factorial.const"
 #include "../fplll.h"
 
 // Implementation-include components; these are not separate translation units.
@@ -191,13 +189,47 @@ template <class FT> void Pruner<FT>::set_tabulated_consts()
 {
   if (tabulated_values_imported)
     return;
+
+  // Factorials are exact integers; convert them to decimal strings and let the
+  // floating-point backend round them.
+  mpz_t factorial;
+  mpz_init_set_ui(factorial, 1);
   for (int i = 0; i < PRUNER_MAX_N; ++i)
   {
-    tabulated_factorial[i] = pre_factorial[i];
-    tabulated_ball_vol[i]  = pre_ball_vol[i];
+    if (i > 0)
+      mpz_mul_ui(factorial, factorial, static_cast<unsigned long>(i));
+    char *decimal          = mpz_get_str(nullptr, 10, factorial);
+    tabulated_factorial[i] = decimal;
+    std::free(decimal);
   }
+  mpz_clear(factorial);
+
+  // Volume of the unit ball in dimension i: pi^(i/2) / Gamma(i/2 + 1).
+  mpfr_t pi, exponent, value, gamma, tmp;
+  mpfr_inits2(256, pi, exponent, value, gamma, tmp, static_cast<mpfr_ptr>(nullptr));
+  mpfr_const_pi(pi, MPFR_RNDN);
+  for (int i = 0; i < PRUNER_MAX_N; ++i)
+  {
+    mpfr_set_ui(tmp, static_cast<unsigned long>(i), MPFR_RNDN);
+    mpfr_div_2ui(tmp, tmp, 1, MPFR_RNDN);
+    mpfr_pow(value, pi, tmp, MPFR_RNDN);
+    mpfr_add_ui(tmp, tmp, 1, MPFR_RNDN);
+    mpfr_gamma(gamma, tmp, MPFR_RNDN);
+    mpfr_div(value, value, gamma, MPFR_RNDN);
+
+    mpfr_exp_t decimal_exponent = 0;
+    char *mantissa              = mpfr_get_str(nullptr, &decimal_exponent, 10, 0, value, MPFR_RNDN);
+    std::string text            = "0.";
+    text += mantissa;
+    text += "e";
+    text += std::to_string(decimal_exponent);
+    tabulated_ball_vol[i] = text.c_str();
+    mpfr_free_str(mantissa);
+  }
+  mpfr_clears(pi, exponent, value, gamma, tmp, static_cast<mpfr_ptr>(nullptr));
+  mpfr_free_cache();
+
   tabulated_values_imported = 1;
-  return;
 }
 
 template <class FT>

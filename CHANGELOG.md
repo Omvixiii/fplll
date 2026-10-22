@@ -30,6 +30,8 @@
   POSIX headers are gone from the public headers.
 - Numeric command-line arguments and `Z_NR<long>`/`FP_NR<double>` string
   parsing use `std::from_chars` and reject malformed input.
+- The 4,100-line generated factorial and unit-ball-volume tables were replaced
+  by runtime GMP/MPFR computation in the pruner; numeric output is unchanged.
 
 ## Historical releases
 
