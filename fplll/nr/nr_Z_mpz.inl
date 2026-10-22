@@ -245,7 +245,7 @@ template <> inline ostream &operator<<(ostream &os, const Z_NR<mpz_t> &x)
 
 template <> inline istream &operator>>(istream &is, Z_NR<mpz_t> &x)
 {
-  static string s;
+  string s;
   char c;
 
   s.clear();

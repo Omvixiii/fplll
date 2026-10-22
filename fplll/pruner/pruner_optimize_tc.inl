@@ -2,9 +2,6 @@
 
 FPLLL_BEGIN_NAMESPACE
 
-#define BALANCE_HEURISTIC_PRUNER_OPTIMIZE
-// #define DEBUG_PRUNER_OPTIMIZE_TC
-
 /**
  *  preparation work to have some raw pruning coefficients
  */
@@ -22,13 +19,6 @@ template <class FT> void Pruner<FT>::optimize_coefficients_preparation(/*io*/ ve
   if (!(flags & PRUNER_START_FROM_INPUT))
   {
     greedy(b);
-#ifdef DEBUG_PRUNER_OPTIMIZE_TC
-    cerr << "# [Greedy]" << endl;
-    cerr << b << endl;
-    cerr << "# [Greedy] single_enum_cost  = " << single_enum_cost(b) << endl;
-    cerr << "# [Greedy] succ_probability  = " << measure_metric(b) << endl;
-    cerr << "# [Greedy]    all_enum_cost  = " << repeated_enum_cost(b) << endl;
-#endif
   }
 
   // greedy method for min pruning coefficients.
@@ -84,13 +74,6 @@ template <class FT> void Pruner<FT>::optimize_coefficients_evec_core(/*io*/ vect
       cerr << "\nGradient descent start (dim=" << n << ")" << endl;
     }
     gradient_descent(b);
-#ifdef DEBUG_PRUNER_OPTIMIZE_TC
-    cerr << "# [Descent]" << endl;
-    cerr << b << endl;
-    cerr << "# [Descent] single_enum_cost  = " << single_enum_cost(b) << endl;
-    cerr << "# [Descent] succ_probability  = " << measure_metric(b) << endl;
-    cerr << "# [Descent]    all_enum_cost  = " << repeated_enum_cost(b) << endl;
-#endif
   };
 
   // gradient method
@@ -103,13 +86,6 @@ template <class FT> void Pruner<FT>::optimize_coefficients_evec_core(/*io*/ vect
     while (nelder_mead_step(b))
     {
     };
-#ifdef DEBUG_PRUNER_OPTIMIZE_TC
-    cerr << "# [Nelder-Mead]" << endl;
-    cerr << b << endl;
-    cerr << "# [Nelder-Mead] single_enum_cost  = " << single_enum_cost(b) << endl;
-    cerr << "# [Nelder-Mead] succ_probability  = " << measure_metric(b) << endl;
-    cerr << "# [Nelder-Mead]    all_enum_cost  = " << repeated_enum_cost(b) << endl;
-#endif
   };
   save_coefficients(pr, b);
 }
@@ -144,13 +120,6 @@ template <class FT> void Pruner<FT>::optimize_coefficients_full_core(/*io*/ vect
     }
 
     gradient_descent(b);
-#ifdef DEBUG_PRUNER_OPTIMIZE_TC
-    cerr << "# [Descent]" << endl;
-    cerr << b << endl;
-    cerr << "# [Descent] single_enum_cost  = " << single_enum_cost(b) << endl;
-    cerr << "# [Descent] succ_probability  = " << measure_metric(b) << endl;
-    cerr << "# [Descent]    all_enum_cost  = " << repeated_enum_cost(b) << endl;
-#endif
   };
 
   // Nelder-Mead method
@@ -163,14 +132,6 @@ template <class FT> void Pruner<FT>::optimize_coefficients_full_core(/*io*/ vect
     while (nelder_mead_step(b))
     {
     };
-
-#ifdef DEBUG_PRUNER_OPTIMIZE_TC
-    cerr << "# [Nelder-Mead]" << endl;
-    cerr << b << endl;
-    cerr << "# [Nelder-Mead] single_enum_cost  = " << single_enum_cost(b) << endl;
-    cerr << "# [Nelder-Mead] succ_probability  = " << measure_metric(b) << endl;
-    cerr << "# [Nelder-Mead]    all_enum_cost  = " << repeated_enum_cost(b) << endl;
-#endif
   };
 
   save_coefficients(pr, b);
@@ -209,11 +170,9 @@ void Pruner<FT>::optimize_coefficients_local_adjust_decr_single(/*io*/ vector<do
     // find bottleneck index
     old_cfs = single_enum_cost(b, &(detailed_cost));
 
-// heuristic
-#ifdef BALANCE_HEURISTIC_PRUNER_OPTIMIZE
+    // heuristic
     if (old_cfs < sqrt(old_cf) / 10.0)
       break;
-#endif
 
     current_max = 0.0;
     maxi        = 0;
@@ -267,13 +226,6 @@ void Pruner<FT>::optimize_coefficients_local_adjust_decr_single(/*io*/ vector<do
     }
   }
 
-#ifdef DEBUG_PRUNER_OPTIMIZE_TC
-  cerr << "# [TuningCost]" << endl;
-  cerr << b << endl;
-  cerr << "# [TuningCost] all_enum_cost    = " << repeated_enum_cost(b) << endl;
-  cerr << "# [TuningCost] succ_probability = " << measure_metric(b) << endl;
-#endif
-
   save_coefficients(pr, b);
 }
 
@@ -319,10 +271,8 @@ void Pruner<FT>::optimize_coefficients_local_adjust_incr_prob(/*io*/ vector<doub
     if (ind <= 1)
       break;
 
-#ifdef BALANCE_HEURISTIC_PRUNER_OPTIMIZE
     if (old_cfs > sqrt(old_cf) / 10.0)
       break;
-#endif
 
     for (int i = ind; i >= 1; --i)
     {
@@ -369,13 +319,6 @@ void Pruner<FT>::optimize_coefficients_local_adjust_incr_prob(/*io*/ vector<doub
     if (new_cf > (old_cf0 * 1.1) || tours > 4)
       break;
   }
-
-#ifdef DEBUG_PRUNER_OPTIMIZE_TC
-  cerr << "# [TuningProb]" << endl;
-  cerr << b << endl;
-  cerr << "# [TuningProb] all_enum_cost    = " << repeated_enum_cost(b) << endl;
-  cerr << "# [TuningProb] succ_probability = " << measure_metric(b) << endl;
-#endif
 
   save_coefficients(pr, b);
 }
@@ -594,7 +537,7 @@ template <class FT> int Pruner<FT>::nelder_mead_step(/*io*/ vec &b)
   int l  = dn + 1;
   evec tmp_constructor(dn);
   vector<evec> bs(l);  // The simplexe (d+1) vector of dim d
-  FT *fs = new FT[l];  // Values of f at the simplex vertices
+  vector<FT> fs(l);    // Values of f at the simplex vertices
 
   for (int i = 0; i < l; ++i)  // Intialize the simplex
   {

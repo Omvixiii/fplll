@@ -15,6 +15,7 @@
 
 #include "pruner.h"
 #include "../ballvol.const"
+#include "../detail/precision.h"
 #include "../factorial.const"
 #include "../fplll.h"
 
@@ -156,10 +157,9 @@ int run_pruner(ZZ_mat<mpz_t> &B, FloatType float_type, int precision, int prune_
 #endif
   else if (sel_ft == FT_MPFR)
   {
-    int old_prec = FP_NR<mpfr_t>::set_prec(precision);
-    status       = run_pruner_f<FP_NR<mpfr_t>>(B, sel_ft, prune_start, prune_end, prune_pre_nodes,
-                                               prune_min_prob, gh_factor);
-    FP_NR<mpfr_t>::set_prec(old_prec);
+    ScopedPrecision precision_guard(static_cast<unsigned int>(precision));
+    status = run_pruner_f<FP_NR<mpfr_t>>(B, sel_ft, prune_start, prune_end, prune_pre_nodes,
+                                         prune_min_prob, gh_factor);
   }
   else
   {

@@ -15,6 +15,7 @@
    You should have received a copy of the GNU Lesser General Public License
    along with fplll. If not, see <http://www.gnu.org/licenses/>. */
 
+#include "detail/precision.h"
 #include <iomanip>
 
 #include "bkz.h"
@@ -433,8 +434,6 @@ bool BKZReduction<ZT, FT>::hkz(int &kappa_max, const BKZParam &param, int min_ro
   }
 
   // this line fixes fpylll issue 73 with stalling BKZ instances
-  // test basis: tests/lattices/stalling_93_53.txt. Test with command
-  // fplll -a bkz -b 53 -s strategies/default.json -f double tests/lattices/stalling_93_53.txt
   lll_obj.size_reduction(max_row - 1, max_row, max_row - 2);
 
   return clean;
@@ -905,9 +904,8 @@ int bkz_reduction(ZZ_mat<mpz_t> *B, ZZ_mat<mpz_t> *U, const BKZParam &param, Flo
 #endif
   else if (sel_ft == FT_MPFR)
   {
-    int old_prec = FP_NR<mpfr_t>::set_prec(precision);
-    status       = bkz_reduction_f<FP_NR<mpfr_t>>(*B, param, sel_ft, lll_delta, u, u_inv);
-    FP_NR<mpfr_t>::set_prec(old_prec);
+    ScopedPrecision precision_guard(static_cast<unsigned int>(precision));
+    status = bkz_reduction_f<FP_NR<mpfr_t>>(*B, param, sel_ft, lll_delta, u, u_inv);
   }
   else
   {

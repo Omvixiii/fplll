@@ -14,6 +14,7 @@
    along with fplll. If not, see <http://www.gnu.org/licenses/>. */
 
 #include "util.h"
+#include "detail/precision.h"
 
 #ifdef DEBUG
 int debug_depth = 0;
@@ -27,15 +28,6 @@ enum MinPrecAlgo
   MINPREC_L2
 };
 
-/*
-  Helper variables for LDConvHelper (declared in nr_Z.inl, must be defined in exactly
-  one source file)
-*/
-#ifdef FPLLL_WITH_LONG_DOUBLE
-thread_local mpfr_t temp_mpfr;
-thread_local bool temp_mpfr_initialized{false};
-#endif
-
 /* State of the random generator (declared in nr.h, must be defined in exactly
    one source file) */
 bool RandGen::initialized = false;
@@ -44,7 +36,7 @@ gmp_randstate_t RandGen::gmp_state;
 static int compute_min_prec(double &rho, int d, double delta, double eta, double epsilon,
                             MinPrecAlgo algo)
 {
-  int old_prec = FP_NR<mpfr_t>::set_prec(53);
+  ScopedPrecision precision_guard(53);
   FP_NR<mpfr_t> f_minprec, f_rho, f_d, f_eta, f_delta, f_epsilon, tmp1, tmp2;
 
   // These four conversions are exact
@@ -92,7 +84,6 @@ static int compute_min_prec(double &rho, int d, double delta, double eta, double
   f_minprec.add(tmp1, tmp2, GMP_RNDU);
   int minprec = static_cast<int>(ceil(f_minprec.get_d(GMP_RNDU)));
   mpfr_free_cache();
-  FP_NR<mpfr_t>::set_prec(old_prec);
   return minprec;
 }
 
@@ -114,7 +105,7 @@ int hlll_min_prec(int d_i, int n_i, double delta_d, double eta_d, double theta_d
   FPLLL_CHECK(eta_d >= 0.5, "theta must be larger than or equal to 0.5.");
   FPLLL_CHECK(eta_d - theta_d > 0.5, "eta - theta must be larger than 0.5.");
 
-  int old_prec = FP_NR<mpfr_t>::set_prec(53);
+  ScopedPrecision precision_guard(53);
   FP_NR<mpfr_t> d, n, delta, eta, theta, c, alpha, c0, c1, rho, phi, p0, p;
   FP_NR<mpfr_t> ftmp0, ftmp1, ftmp2, ftmp3, ftmp4;
 
@@ -195,8 +186,6 @@ int hlll_min_prec(int d_i, int n_i, double delta_d, double eta_d, double theta_d
 
   // Convert p in int
   int p_i = static_cast<int>(ceil(p.get_d(GMP_RNDU)));
-
-  FP_NR<mpfr_t>::set_prec(old_prec);
 
   return p_i;
 }

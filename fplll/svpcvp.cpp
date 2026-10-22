@@ -16,6 +16,7 @@
    along with fplll. If not, see <http://www.gnu.org/licenses/>. */
 
 #include "svpcvp.h"
+#include "detail/precision.h"
 #include "enum/enumerate.h"
 #include "gso.h"
 #include "util.h"
@@ -106,7 +107,7 @@ static int shortest_vector_ex(ZZ_mat<mpz_t> &b, vector<Z_NR<mpz_t>> &sol_coord, 
   double rho;
   int min_prec = gso_min_prec(rho, d, LLL_DEF_DELTA, LLL_DEF_ETA);
   int prec     = max(53, min_prec + 10);
-  int old_prec = FP_NR<mpfr_t>::set_prec(prec);
+  ScopedPrecision precision_guard(static_cast<unsigned int>(prec));
 
   // Allocates space for vectors and matrices in constructors
   ZZ_mat<mpz_t> empty_mat;
@@ -237,7 +238,6 @@ static int shortest_vector_ex(ZZ_mat<mpz_t> &b, vector<Z_NR<mpz_t>> &sol_coord, 
   }
 
   delete evaluator;
-  FP_NR<mpfr_t>::set_prec(old_prec);
   return result;
 }
 
@@ -302,7 +302,7 @@ static int shortest_vector_ex(
   double rho;
   int min_prec = gso_min_prec(rho, d, LLL_DEF_DELTA, LLL_DEF_ETA);
   int prec     = max(53, min_prec + 10);
-  int old_prec = FP_NR<mpfr_t>::set_prec(prec);
+  ScopedPrecision precision_guard(static_cast<unsigned int>(prec));
 
   // Allocates space for vectors and matrices in constructors
   FP_NR<mpfr_t> max_dist;
@@ -433,7 +433,6 @@ static int shortest_vector_ex(
   }
 
   delete evaluator;
-  FP_NR<mpfr_t>::set_prec(old_prec);
   return result;
 }
 
@@ -546,7 +545,7 @@ int closest_vector(ZZ_mat<mpz_t> &b, const vector<Z_NR<mpz_t>> &int_target,
   double rho;
   int min_prec = gso_min_prec(rho, d, LLL_DEF_DELTA, LLL_DEF_ETA);
   int prec     = max(53, min_prec + 10);
-  int old_prec = FP_NR<mpfr_t>::set_prec(prec);
+  ScopedPrecision precision_guard(static_cast<unsigned int>(prec));
 
   // Allocates space for vectors and matrices in constructors
   ZZ_mat<mpz_t> empty_mat;
@@ -655,7 +654,6 @@ int closest_vector(ZZ_mat<mpz_t> &b, const vector<Z_NR<mpz_t>> &int_target,
     result = RED_SUCCESS;
   }
 
-  FP_NR<mpfr_t>::set_prec(old_prec);
   return result;
 }
 

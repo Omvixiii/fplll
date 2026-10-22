@@ -94,32 +94,6 @@ template <class ZT> int lll(Options &o, ZZ_mat<ZT> &b)
 
 /* BKZ reduction */
 
-void read_pruning_vector(const char *file_name, PruningParams &pr, int n)
-{
-  double x;
-  FILE *file = fopen(file_name, "r");
-  CHECK(file, "Cannot open '" << file_name << "'");
-
-  pr.coefficients.clear();
-  for (int i = 0; i <= n && fscanf(file, "%lf", &x) == 1; i++)
-  {
-    pr.coefficients.push_back(x);
-    CHECK(x > 0 && x <= 1,
-          "Number " << x << " in file '" << file_name << "' is not in the interval (0,1]");
-    if (i == 0)
-    {
-      CHECK(x == 1, "The first number in file '" << file_name << "' should be 1");
-    }
-    else
-    {
-      CHECK(pr.coefficients[i] <= pr.coefficients[i - 1],
-            "File '" << file_name << "' should contain a non-increasing sequence of numbers");
-    }
-  }
-  CHECK(static_cast<int>(pr.coefficients.size()) == n,
-        "File '" << file_name << "' should contain exactly " << n << " numbers");
-}
-
 template <class ZT> int bkz(Options &, ZZ_mat<ZT> &) { ABORT_MSG("mpz required for BKZ"); }
 
 template <> int bkz(Options &o, ZZ_mat<mpz_t> &b)
@@ -507,7 +481,7 @@ void read_options(int argc, char **argv, Options &o)
       else if (strcmp(argv[ac], "pru") == 0)
         o.action = ACTION_PRU;
       else
-        ABORT_MSG("parse error in -a switch: lll or svp expected");
+        ABORT_MSG("parse error in -a switch: unknown action");
     }
     else if (strcmp(argv[ac], "-b") == 0)
     {
@@ -571,7 +545,7 @@ void read_options(int argc, char **argv, Options &o)
     else if (strcmp(argv[ac], "-c") == 0 || strcmp(argv[ac], "-r") == 0)
     {
       ++ac;
-      CHECK(ac < argc, "missing value after -c switch");
+      CHECK(ac < argc, "missing value after -c/-r switch");
       o.c = atof(argv[ac]);
     }
     else if (strcmp(argv[ac], "-bkzghbound") == 0)
@@ -616,7 +590,7 @@ void read_options(int argc, char **argv, Options &o)
       else if (strcmp("longdouble", argv[ac]) == 0)
         o.float_type = FT_LONG_DOUBLE;
       else
-        ABORT_MSG("parse error in -f switch : mpfr, qd, dd, dpe or double expected");
+        ABORT_MSG("parse error in -f switch: mpfr, qd, dd, dpe, double or longdouble expected");
     }
     else if (strcmp(argv[ac], "-s") == 0)
     {
@@ -691,7 +665,7 @@ void read_options(int argc, char **argv, Options &o)
       cout << "Usage: " << argv[0] << " [options] [file]\n"
 
            << "List of options:\n"
-           << "  -a [lll|bkz|hkz|svp|sdb|sld|cvp]\n"
+           << "  -a [lll|bkz|hkz|svp|sdb|sld|cvp|hlll|pru]\n"
            << "       lll = LLL-reduce the input matrix (default)\n"
            << "       bkz = BKZ-reduce the input matrix\n"
            << "       hkz = HKZ-reduce the input matrix\n"
@@ -700,14 +674,15 @@ void read_options(int argc, char **argv, Options &o)
            << "       sld = slide reduce the input matrix\n"
            << "       cvp = compute the vector in the input lattice closest to an input vector\n"
            << "       hlll = HLLL-reduce the input matrix\n"
+           << "       pru = run the pruning-parameter optimizer\n"
            << "  -v\n"
            << "       Enable verbose mode\n"
            << "  -nolll\n"
            << "       Does not apply initial LLL-reduction (for bkz, hkz and svp)\n"
            << "  -c <c>\n"
            << "       An arbitrary double constant > 0 for HLLL (default=0.1)\n"
-           << "  -r <size>\n"
-           << "       Was the number of rows (ignored)\n"
+           << "  -r <c>\n"
+           << "       Alias for -c (HLLL constant)\n"
 
            << "  -d <delta> (default=0.99; alias to -delta <delta>)\n"
            << "  -e <eta> (default=0.51; alias to -eta <eta>)\n"

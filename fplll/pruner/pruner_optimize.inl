@@ -2,7 +2,6 @@
 
 FPLLL_BEGIN_NAMESPACE
 
-// #define DEBUG_PRUNER_OPTIMIZE
 #define NUM_OPTIMIZATION_TOURS 3
 
 template <class FT> void Pruner<FT>::optimize_coefficients_cost_vary_prob(/*io*/ vector<double> &pr)
@@ -21,15 +20,6 @@ template <class FT> void Pruner<FT>::optimize_coefficients_cost_vary_prob(/*io*/
   best_b = b;
   old_c0 = target_function(b);
   min_c  = old_c0;
-
-#ifdef DEBUG_PRUNER_OPTIMIZE
-  FT old_sc   = single_enum_cost(b);
-  FT old_prob = measure_metric(b);
-  cerr << "# [Stage ho] half-optimization done." << endl;
-  cerr << "# [Stage ho]    all_enum_cost = " << old_c0 << endl;
-  cerr << "# [Stage ho] single_enum_cost = " << old_sc << endl;
-  cerr << "# [Stage ho] succ_probability = " << old_prob << endl;
-#endif
 
   // step 2 use full coefficients if enabled
   if (!(flags & PRUNER_HALF))
@@ -57,15 +47,6 @@ template <class FT> void Pruner<FT>::optimize_coefficients_cost_vary_prob(/*io*/
         best_b = b;
       }
 
-#ifdef DEBUG_PRUNER_OPTIMIZE
-      old_sc   = single_enum_cost(b);
-      old_prob = measure_metric(b);
-      cerr << "# [Stage ft] full-tuning done." << endl;
-      cerr << "# [Stage ft]    all_enum_cost = " << old_c1 << endl;
-      cerr << "# [Stage ft] single_enum_cost = " << old_sc << endl;
-      cerr << "# [Stage ft] succ_probability = " << old_prob << endl;
-#endif
-
       // step 2.2 full optimization
       optimize_coefficients_full_core(pr);
 
@@ -76,15 +57,6 @@ template <class FT> void Pruner<FT>::optimize_coefficients_cost_vary_prob(/*io*/
         min_c  = new_c;
         best_b = b;
       }
-
-#ifdef DEBUG_PRUNER_OPTIMIZE
-      old_sc   = single_enum_cost(b);
-      old_prob = measure_metric(b);
-      cerr << "# [Stage fo] full-optimization done." << endl;
-      cerr << "# [Stage fo]    all_enum_cost = " << new_c << endl;
-      cerr << "# [Stage fo] single_enum_cost = " << old_sc << endl;
-      cerr << "# [Stage fo] succ_probability = " << old_prob << endl;
-#endif
 
       // break if not improving
       if (new_c / old_c0 > 0.995 and tours > NUM_OPTIMIZATION_TOURS)
@@ -110,15 +82,6 @@ void Pruner<FT>::optimize_coefficients_cost_fixed_prob(/*io*/ vector<double> &pr
   optimize_coefficients_local_adjust_smooth(pr);
   optimize_coefficients_full_core(pr);
 
-#ifdef DEBUG_PRUNER_OPTIMIZE
-  load_coefficients(b, pr);
-  cerr << "# [Stage ho] half-optimization done." << endl;
-  cerr << "# [Stage ho]    all_enum_cost = " << repeated_enum_cost(b) << endl;
-  cerr << "# [Stage fo] single_enum_cost = " << single_enum_cost(b) << endl;
-  cerr << "# [Stage ho] succ_probability = " << measure_metric(b) << endl;
-  cerr << b << endl;
-#endif
-
   // step 2 achieve target succ. prob
   optimize_coefficients_local_adjust_smooth(pr);
   load_coefficients(b, pr);
@@ -133,15 +96,6 @@ void Pruner<FT>::optimize_coefficients_cost_fixed_prob(/*io*/ vector<double> &pr
   // step 3: some local tweaking
   optimize_coefficients_local_adjust_smooth(pr);
   optimize_coefficients_local_adjust_prob(pr);
-
-#ifdef DEBUG_PRUNER_OPTIMIZE
-  load_coefficients(b, pr);
-  cerr << "# [Stage fo] full-optimization done." << endl;
-  cerr << "# [Stage fo]    all_enum_cost = " << repeated_enum_cost(b) << endl;
-  cerr << "# [Stage fo] single_enum_cost = " << single_enum_cost(b) << endl;
-  cerr << "# [Stage fo] succ_probability = " << measure_metric(b) << endl;
-  cerr << b << endl;
-#endif
 }
 
 /**

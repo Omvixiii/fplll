@@ -49,12 +49,11 @@ struct Options
   Options()
       : action(ACTION_LLL), method(LM_WRAPPER), int_type(ZT_MPZ), float_type(FT_DEFAULT),
         delta(LLL_DEF_DELTA), eta(LLL_DEF_ETA), precision(0), early_red(false), siegel(false),
-        no_lll(false), block_size(0), bkz_gh_factor(1.1), verbose(false), input_file(NULL),
-        output_format(NULL), theta(HLLL_DEF_THETA), c(HLLL_DEF_C)
+        no_lll(false), block_size(0), bkz_flags(0), bkz_max_loops(0), prune_start(0), prune_end(0),
+        prune_pre_nodes(0.0), prune_min_prob(0.0), bkz_max_time(0.0), bkz_gh_factor(1.1),
+        verbose(false), input_file(nullptr), output_format(nullptr), theta(HLLL_DEF_THETA),
+        c(HLLL_DEF_C)
   {
-    bkz_flags     = 0;
-    bkz_max_loops = 0;
-    bkz_max_time  = 0;
   }
   Action action;
   LLLMethod method;

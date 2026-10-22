@@ -174,7 +174,6 @@ template <class ZT, class FT> bool HLLLReduction<ZT, FT>::hlll()
 
 template <class ZT, class FT> bool HLLLReduction<ZT, FT>::lovasz_test(int k)
 {
-#ifndef MODIFIED_LOVASZ_TEST
   // This Lovasz test is the one proposed in [MSV, ISSAC'09]
   //
   // Prior, we used another test, which is dR[k-1].cmp(R(k, k - 1)^2 + R(k, k)^2) <= 0, if R(k, k)
@@ -185,7 +184,6 @@ template <class ZT, class FT> bool HLLLReduction<ZT, FT>::lovasz_test(int k)
   // (https://github.com/gilvillard/hplll/releases), this can maybe be retested. An example of
   // matrices that was not HLLL reduced because of a fail in this test can be generated thanks to
   // latticegen -randseed 122 r 300 30000.
-  // Such a test can be activate by compiling with -DMODIFIED_LOVASZ_TEST
 
   m.get_norm_square_b(ftmp0, k, expo0);  // ||b[k]||^2 = ftmp0 * 2^expo0
   m.norm_square_R_row(ftmp1, k, 0, k - 1,
@@ -204,38 +202,6 @@ template <class ZT, class FT> bool HLLLReduction<ZT, FT>::lovasz_test(int k)
   //   dR[k-1] * 2^(2*expo0) <= ftmp1 * 2^expo1
   //   dR[k-1] <= ftmp1 * 2^(expo1 - 2*expo0)
   ftmp1.mul_2si(ftmp1, expo1 - 2 * expo0);
-#else  // MODIFIED_LOVASZ_TEST
-  // Modified Lovasz test, following the comment above.
-  // FIXME: probably not maintained, especially if code is not compiled with -DMODIFIED_LOVASZ_TEST
-  // for a while.
-
-  m.norm_square_R_row(ftmp1, k, k, m.get_n(),
-                      expo1);  // sum_{i = k}^{i < n}R[k][i]^2 = ftmp1 * 2^expo1
-// Since we do not necessarily need expo1 (since expo0 and expo1 are correlated), we can
-// avoid to return it.
-#ifdef DEBUG
-  m.get_R(ftmp0, k, k - 1, expo0);  // R(k, k - 1) = ftmp0 * 2^expo0
-#else   // DEBUG
-  m.get_R(ftmp0, k, k - 1);  // R(k, k - 1) = ftmp0 * 2^(expo1 / 2)
-#endif  // DEBUG
-
-  ftmp0.mul(ftmp0, ftmp0);  // R(k, k - 1)^2 = ftmp0 * 2^(2 * expo 0)
-
-  // If this check is false, we need to reenable
-  // ftmp0.mul_2si(ftmp0, 2 * expo0 - expo1);  // 2 * expo0 since R(k, k-1)^2 = ftmp0 *
-  // (2^expo0)^2
-  FPLLL_DEBUG_CHECK(2 * expo0 == expo1);
-
-  ftmp1.add(ftmp0, ftmp1);  // sum_{i = k}^{i < n}R[k][i]^2 + R(k, k-1)^2 = ftmp1 * 2^expo1
-
-  expo0 = m.get_row_expo(k - 1);
-
-  // Here, delta * R(k - 1, k - 1)^2 = dR[k-1] * 2^(2*expo0). We want to compare
-  //   delta * R(k - 1, k - 1)^2 <= sum_{i = k}^{i < n}R[k][i]^2 + R(k, k-1)^2
-  //   dR[k-1] * 2^(2*expo0) <= ftmp1 * 2^expo1
-  //   dR[k-1] <= ftmp1 * 2^(expo1 - 2*expo0)
-  ftmp1.mul_2si(ftmp1, expo1 - 2 * expo0);
-#endif  // MODIFIED_LOVASZ_TEST
 
   return (dR[k - 1].cmp(ftmp1) <= 0);
 }
@@ -281,7 +247,6 @@ void HLLLReduction<ZT, FT>::size_reduction(int kappa, int size_reduction_end,
   bool not_stop      = true;
   bool prev_not_stop = true;
 
-#ifndef HOUSEHOLDER_USE_SIZE_REDUCTION_TEST
   /*
    * Variables introduced in hplll (https://github.com/gilvillard/hplll)
    * See commit a6b29d1a23ca34000264e22608ef23a64e3cac9d
@@ -295,9 +260,6 @@ void HLLLReduction<ZT, FT>::size_reduction(int kappa, int size_reduction_end,
    * TODO: this hard coded value must be theoretically analyzed.
    */
   FT approx = 0.1;
-#else   // HOUSEHOLDER_USE_SIZE_REDUCTION_TEST
-  FT approx = sr;
-#endif  // HOUSEHOLDER_USE_SIZE_REDUCTION_TEST
 
   m.update_R(kappa, false);
 
@@ -370,82 +332,6 @@ void HLLLReduction<ZT, FT>::size_reduction(int kappa, int size_reduction_end,
  */
 template <class ZT, class FT> bool HLLLReduction<ZT, FT>::verify_size_reduction(int kappa)
 {
-#ifdef HOUSEHOLDER_VERIFY_SIZE_REDUCTION_HPLLL
-  /*
-   * This test tries to mimick to the test of hplll in hsizereduce. It tests if
-   *   |R(k, i)| / R(i, i) <= (0.00...01 * ||b[kappa]||) / R(i, i) + 1
-   * but we test with this one
-   *   |R(k, i)| <= 0.00...01 * ||b[kappa]|| + R(i, i)
-   */
-
-  // TODO: can this test be more concise. This test is used at the end of each call to
-  // size_reduction, improving it can save time, especially if, for now, it does not help
-  // to detect loss of precision during the computation.
-
-  m.get_norm_square_b(ftmp0, kappa, expo0);  // ||b[kappa]||^2 = ftmp0 * 2^expo0
-
-  FPLLL_DEBUG_CHECK(expo0 % 2 == 0);
-  ftmp0.sqrt(ftmp0);
-  expo0 = expo0 / 2;  // ||b[kappa]|| = ftmp0 * 2^expo0
-
-  ftmp2 = 0.00000000001;
-  ftmp0.mul(ftmp0, ftmp2);  // See hplll, to tune for theta depending on the precision.
-  // 0.00000000001 * ||b[kappa]|| = ftmp0 * 2^expo0
-
-  for (int i = 0; i < kappa; i++)
-  {
-// Since we do not necessarily need expo1 (since expo0 and expo1 are correlated), we can
-// avoid to return it.
-#ifdef DEBUG
-    m.get_R(ftmp1, kappa, i, expo1);  // R(kappa, i) = ftmp1 * 2^expo1
-#else                                 // DEBUG
-    m.get_R(ftmp1, kappa, i);  // R(kappa, i) = ftmp1 * 2^expo0
-#endif                                // DEBUG
-
-    FPLLL_DEBUG_CHECK(expo0 == expo1);  // Since R[kappa] and b[kappa] share the same row_expo.
-    ftmp1.abs(ftmp1);
-
-    m.get_R(ftmp2, i, i, expo2);  // R(i, i) = ftmp2 * 2^expo2
-
-#if 0
-    // We want to test if
-    //   |R(kappa, i)| <= (0.00...01 * ||b[kappa]||) + R(i, i)
-    //   ftmp1 * 2^expo1 <= ftmp0 * 2^expo1 + ftmp2 * 2^expo2, since expo0 == expo1
-    //   ftmp1 <= ftmp0 + ftmp2 * 2^(expo2 - expo1);
-
-    ftmp2.mul_2si(ftmp2, expo2 - expo1);
-    ftmp2.add(ftmp0, ftmp2);
-
-#else  // 0
-    // We want to test if (theoretically the same test as in hplll)
-    //   |R(kappa, i)| / R(i, i) <= (0.00...01 * ||b[kappa]||) / R(i, i) + 1
-    //   ftmp1 / ftmp2 * 2^(expo1 - expo2) <= ftmp0 / ftmp2 * 2^(expo0 - expo2) + 1
-    //   ftmp1 / ftmp2 <= ftmp0 / ftmp2 + 2^(expo2 - expo1), since expo0 == expo1
-
-    ftmp1.div(ftmp1, ftmp2);
-    // Here, |R(kappa, i)| / R(i, i) = ftmp1 * 2^(expo1 - expo2)
-
-    ftmp2.div(ftmp0, ftmp2);
-    // Here, (0.00...01 * ||b[kappa]||) / R(i, i) = ftmp2 * 2^(expo1 - expo2);
-
-    FT one = 1.0;
-    one.mul_2si(one, expo2 - expo1);
-    ftmp2.add(one, ftmp2);
-#endif  // 0
-
-    if (ftmp1.cmp(ftmp2) > 0)
-    {
-#ifdef HOUSEHOLDER_DEBUG
-      cerr << "This is probably the first time this test is used." << endl;
-#endif  // HOUSEHOLDER_DEBUG
-
-      cerr << "Anomaly: weak size reduction is not complete kappa = " << kappa << " and i = " << i
-           << endl;
-
-      return false;
-    }
-  }
-#else  // HOUSEHOLDER_VERIFY_SIZE_REDUCTION_HPLLL
   /*
    * This test is similar to the test of hplll in hsizereduce. It is however not
    * exactly the same, this one crudely verify the condition of the weak-size
@@ -483,9 +369,6 @@ template <class ZT, class FT> bool HLLLReduction<ZT, FT>::verify_size_reduction(
 
     if (ftmp0.cmp(ftmp2) > 0)
     {
-#ifdef HOUSEHOLDER_DEBUG
-      cerr << "This is probably the first time this test is used." << endl;
-#endif  // HOUSEHOLDER_DEBUG
 
       cerr << "Anomaly: weak size reduction is not complete kappa = " << kappa << " and i = " << i
            << endl;
@@ -493,7 +376,6 @@ template <class ZT, class FT> bool HLLLReduction<ZT, FT>::verify_size_reduction(
       return false;
     }
   }
-#endif  // HOUSEHOLDER_VERIFY_SIZE_REDUCTION_HPLLL
 
   return true;
 }

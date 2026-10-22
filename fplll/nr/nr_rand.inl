@@ -27,14 +27,6 @@ public:
     init();
     gmp_randseed_ui(gmp_state, time(NULL));
   }
-  static void init_with_time2()
-  {
-    init();
-    struct timeval time;
-    gettimeofday(&time, NULL);
-    gmp_randseed_ui(gmp_state, (time.tv_sec * 1000) + (time.tv_usec / 1000));
-  }
-  static bool get_initialized() { return initialized; }
   static gmp_randstate_t &get_gmp_state()
   {
     if (!initialized)

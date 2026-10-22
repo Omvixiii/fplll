@@ -98,17 +98,9 @@ public:
   virtual inline int get_rows_of_b() const;
   virtual inline void negate_row_of_b(int i);
 
-  //  inline void set_g(Matrix<ZT> arg_g)
   virtual inline void create_rows(int n_new_rows);
   virtual inline void remove_last_rows(int n_removed_rows);
 
-  /*
-    virtual inline void dump_mu_d(double *mu, int offset = 0, int block_size = -1);
-    virtual inline void dump_mu_d(vector<double> mu, int offset = 0, int block_size = -1);
-
-    virtual inline void dump_r_d(double *r, int offset = 0, int block_size = -1);
-    virtual inline void dump_r_d(vector<double> r, int offset = 0, int block_size = -1);
-  */
   virtual void move_row(int old_r, int new_r);
 
   virtual void row_addmul_we(int i, int j, const FT &x, long expo_add);
@@ -116,8 +108,6 @@ public:
   // b[i] += b[j] / b[i] -= b[j] (i > j)
   virtual void row_add(int i, int j);
   virtual void row_sub(int i, int j);
-
-  //  virtual inline void printparam(ostream &os);
 
   virtual inline ZT &sqnorm_coordinates(ZT &sqnorm, vector<ZT> coordinates);
 
@@ -147,7 +137,6 @@ private:
 
   virtual void row_addmul_si_2exp(int i, int j, long x, long expo);
   virtual void row_addmul_2exp(int i, int j, const ZT &x, long expo);
-  // virtual void apply_transform(const Matrix<FT> &transform, int src_base, int target_base);
 };
 
 template <class ZT, class FT>

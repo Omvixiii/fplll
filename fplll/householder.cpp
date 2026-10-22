@@ -61,7 +61,6 @@ template <class ZT, class FT> void MatHouseholder<ZT, FT>::update_R_last(int i)
       // ftmp0 = sqrt(-sigma[i] * ||r|| * (-sum(r[j]^2, j, 2, n-i+1) / (r[1] + s))
       ftmp0.sqrt(ftmp0);
 
-#ifndef HOUSEHOLDER_PRECOMPUTE_INVERSE
       // V(i, i) =
       // ((-sum(r[j]^2, j, 2, n-i+1) / (r[1] + s)) / sqrt(-sigma[i] * ||r|| * (-sum(r[j]^2, j, 2,
       // n-i+1) / (r[1] + s))
@@ -71,18 +70,7 @@ template <class ZT, class FT> void MatHouseholder<ZT, FT>::update_R_last(int i)
 
       V[i].div(R[i], i + 1, n, ftmp0);
 
-#else   // HOUSEHOLDER_PRECOMPUTE_INVERSE
-      ftmp0.div(1.0, ftmp0);
-      // Here, ftmp0 = 1 / sqrt(-s * vi[1])
-      V(i, i).mul(ftmp3, ftmp0);
-      R(i, i) = ftmp2;
-
-      // FIXME: not tested.
-      V[i].mul(R[i], i + 1, n, ftmp0);
-
-      R_inverse_diag[i].div(1.0, ftmp2);
-#endif  // HOUSEHOLDER_PRECOMPUTE_INVERSE
-        // Here, vi = vi / ftmp0 and ri[i..n] = (||r||, 0, 0, ..., 0)
+      // Here, vi = vi / ftmp0 and ri[i..n] = (||r||, 0, 0, ..., 0)
 
 #ifdef DEBUG
       // Setting R(i, k) to 0 is not neccessary since this value will be not used in HLLL.
@@ -110,10 +98,6 @@ template <class ZT, class FT> void MatHouseholder<ZT, FT>::update_R_last(int i)
         R(i, k) = 0.0;
 #endif  // DEBUG
       }
-
-#ifdef HOUSEHOLDER_PRECOMPUTE_INVERSE
-      R_inverse_diag[i].div(1.0, R(i, i));
-#endif  // HOUSEHOLDER_PRECOMPUTE_INVERSE
     }
   }
   else
@@ -134,12 +118,6 @@ template <class ZT, class FT> void MatHouseholder<ZT, FT>::update_R_last(int i)
       R(i, k) = 0.0;
 #endif  // DEBUG
     }
-
-#ifdef HOUSEHOLDER_PRECOMPUTE_INVERSE
-    // Result is inf.
-    // TODO: set inf instead of doing the computation.
-    R_inverse_diag[i].div(1.0, 0.0);
-#endif  // HOUSEHOLDER_PRECOMPUTE_INVERSE
   }
 
   n_known_rows++;
@@ -408,12 +386,8 @@ bool MatHouseholder<ZT, FT>::size_reduce(int k, int size_reduction_end, int size
 
   for (int i = size_reduction_end - 1; i >= size_reduction_start; i--)
   {
-// R(k, i) / R(i, i) = ftmp1 * 2^(row_expo[k] - row_expo[i])
-#ifndef HOUSEHOLDER_PRECOMPUTE_INVERSE
+    // R(k, i) / R(i, i) = ftmp1 * 2^(row_expo[k] - row_expo[i])
     ftmp1.div(R(k, i), R(i, i));
-#else   // HOUSEHOLDER_PRECOMPUTE_INVERSE
-    ftmp1.mul(R(k, i), R_inverse_diag[i]);
-#endif  // HOUSEHOLDER_PRECOMPUTE_INVERSE
 
     /* If T = mpfr or dpe, enable_row_expo must be false and then, expo1 - expo0 == 0 (required by
      * rnd_we with these types) */

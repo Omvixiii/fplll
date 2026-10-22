@@ -237,13 +237,34 @@ public:
  */
 #ifdef FPLLL_WITH_LONG_DOUBLE
 
-// Thread_local variables for doing numeric conversions.
-// These are global to replace their previous usage, but member variables
-// cannot be thread local and so they're declared at this scope.
-// NOTE: these are extern because these can only have one definition.
-// These are defined in util.cpp
-extern thread_local mpfr_t temp_mpfr;
-extern thread_local bool temp_mpfr_initialized;
+namespace detail
+{
+
+/* One MPFR scratch value per thread, released when the thread exits.  This is
+   shared by all conversions that need a temporary mpfr_t. */
+class LDConvTemp
+{
+public:
+  LDConvTemp() : initialized(false) {}
+  ~LDConvTemp()
+  {
+    if (initialized)
+      mpfr_clear(value);
+  }
+  LDConvTemp(const LDConvTemp &)            = delete;
+  LDConvTemp &operator=(const LDConvTemp &) = delete;
+
+  mpfr_t value;
+  bool initialized;
+};
+
+inline LDConvTemp &ldconv_temp()
+{
+  thread_local LDConvTemp state;
+  return state;
+}
+
+}  // namespace detail
 
 class LDConvHelper
 {
@@ -251,12 +272,11 @@ public:
   /** Converts op to a long double with rounding to nearest. */
   static long double mpz_get_ld(const mpz_t op)
   {
-    init_temp();
-    mpfr_set_z(temp_mpfr, op, GMP_RNDN);
-    return mpfr_get_ld(temp_mpfr, GMP_RNDN);  // exact
+    detail::LDConvTemp &state = detail::ldconv_temp();
+    init_temp(state);
+    mpfr_set_z(state.value, op, GMP_RNDN);
+    return mpfr_get_ld(state.value, GMP_RNDN);  // exact
   }
-
-  static void free() { free_temp(); }
 
   /**
    * Returns d and sets exp such that 0.5 <= |d| < 1 and d * 2^exp is equal
@@ -264,35 +284,28 @@ public:
    */
   static long double mpz_get_ld_2exp(long *exp, const mpz_t op)
   {
-    init_temp();
-    mpfr_set_z(temp_mpfr, op, GMP_RNDN);
-    return mpfr_get_ld_2exp(exp, temp_mpfr, GMP_RNDN);  // exact
+    detail::LDConvTemp &state = detail::ldconv_temp();
+    init_temp(state);
+    mpfr_set_z(state.value, op, GMP_RNDN);
+    return mpfr_get_ld_2exp(exp, state.value, GMP_RNDN);  // exact
   }
 
   /** Sets the value of rop from op. */
   static void mpz_set_ld(mpz_t rop, long double op)
   {
-    init_temp();
-    mpfr_set_ld(temp_mpfr, op, GMP_RNDN);  // exact
-    mpfr_get_z(rop, temp_mpfr, GMP_RNDN);
+    detail::LDConvTemp &state = detail::ldconv_temp();
+    init_temp(state);
+    mpfr_set_ld(state.value, op, GMP_RNDN);  // exact
+    mpfr_get_z(rop, state.value, GMP_RNDN);
   }
 
 private:
-  static inline void init_temp()
+  static inline void init_temp(detail::LDConvTemp &state)
   {
-    if (!temp_mpfr_initialized)
+    if (!state.initialized)
     {
-      mpfr_init2(temp_mpfr, numeric_limits<long double>::digits);
-      temp_mpfr_initialized = true;
-    }
-  }
-
-  static inline void free_temp()
-  {
-    if (temp_mpfr_initialized)
-    {
-      mpfr_clear(temp_mpfr);
-      temp_mpfr_initialized = false;
+      mpfr_init2(state.value, numeric_limits<long double>::digits);
+      state.initialized = true;
     }
   }
 };

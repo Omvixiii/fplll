@@ -19,9 +19,6 @@
 #include <fplll/fplll.h>
 #include <fplll/gso_gram.h>
 #include <fplll/gso_interface.h>
-#include <fplll/io/json.hpp>
-
-using json = nlohmann::json;
 
 #ifndef TESTDATADIR
 #define TESTDATADIR ".."

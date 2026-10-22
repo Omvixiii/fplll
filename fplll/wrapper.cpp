@@ -16,6 +16,7 @@
    along with fplll. If not, see <http://www.gnu.org/licenses/>. */
 
 #include "wrapper.h"
+#include "detail/precision.h"
 #include "hlll.h"
 #include "lll.h"
 #include "util.h"
@@ -122,21 +123,14 @@ int Wrapper::call_lll(ZZ_mat<Z> &bz, ZZ_mat<Z> &uz, ZZ_mat<Z> &u_invZ, LLLMethod
   if (method != LM_PROVED && precision == 0)
     gso_flags |= GSO_OP_FORCE_LONG;
 
-  int old_prec = FP_NR<mpfr_t>::get_prec();
-  if (precision > 0)
-  {
-    FP_NR<mpfr_t>::set_prec(precision);
-  }
+  ScopedPrecision precision_guard(precision > 0 ? static_cast<unsigned int>(precision)
+                                                : FP_NR<mpfr_t>::get_prec());
   MatGSO<ZT, FT> m_gso(bz, uz, u_invZ, gso_flags);
   LLLReduction<ZT, FT> lll_obj(m_gso, delta, eta, flags);
   lll_obj.last_early_red = last_early_red;
   lll_obj.lll();
   status         = lll_obj.status;
   last_early_red = max(last_early_red, lll_obj.last_early_red);
-  if (precision > 0)
-  {
-    FP_NR<mpfr_t>::set_prec(old_prec);
-  }
 
   if (flags & LLL_VERBOSE)
   {
@@ -413,18 +407,13 @@ template <class F> bool Wrapper::call_hlll(LLLMethod method, int precision)
   if (method == LM_FAST)
     householder_flags |= HOUSEHOLDER_ROW_EXPO | HOUSEHOLDER_OP_FORCE_LONG;
 
-  int old_prec = FP_NR<mpfr_t>::get_prec();
-
-  if (precision > 0)
-    FP_NR<mpfr_t>::set_prec(precision);
+  ScopedPrecision precision_guard(precision > 0 ? static_cast<unsigned int>(precision)
+                                                : FP_NR<mpfr_t>::get_prec());
 
   MatHouseholder<Z_NR<mpz_t>, FT> m(b, u, u_inv, householder_flags);
   HLLLReduction<Z_NR<mpz_t>, FT> hlll_obj(m, delta, eta, theta, c, flags);
   hlll_obj.hlll();
   int status = hlll_obj.get_status();
-
-  if (precision > 0)
-    FP_NR<mpfr_t>::set_prec(old_prec);
 
   if (flags & LLL_VERBOSE)
   {
@@ -483,23 +472,9 @@ bool Wrapper::hlll()
   int last_prec      = numeric_limits<double>::digits;
   bool hlll_complete = false;
 
-// TODO: since classical lll is faster than hlll for dim <~ 160, maybe we can
-// use fast_lll<double>() at the beginning of hlll, before calling
-// fast_hlll<double>()
-// Something like the one used in #if 0 should work
-#if 0
-  /* try fast_lll<mpz_t, double> */
-  int kappa        = fast_lll<double>(delta, eta);
-  bool lll_failure = (kappa != 0);
-
-  /* try fast_lll<mpz_t, double> */
-  if (lll_failure)
-    hlll_complete = fast_hlll<double>();
-  else
-    hlll_complete = true;
-#else  // 0
+  // Take the fast HLLL path first; hplll-style shortcuts can be revisited
+  // separately.
   hlll_complete = fast_hlll<double>();
-#endif  // 0
 
   /* try fast_hlll<mpz_t, long double> */
 #ifdef FPLLL_WITH_LONG_DOUBLE
@@ -713,9 +688,8 @@ int lll_reduction_z(ZZ_mat<ZT> &b, ZZ_mat<ZT> &u, ZZ_mat<ZT> &u_inv, double delt
 #endif
   else if (sel_ft == FT_MPFR)
   {
-    int old_prec = FP_NR<mpfr_t>::set_prec(sel_prec);
-    status       = lll_reduction_zf<ZT, mpfr_t>(b, u, u_inv, delta, eta, method, flags);
-    FP_NR<mpfr_t>::set_prec(old_prec);
+    ScopedPrecision precision_guard(static_cast<unsigned int>(sel_prec));
+    status = lll_reduction_zf<ZT, mpfr_t>(b, u, u_inv, delta, eta, method, flags);
   }
   else
   {
@@ -731,22 +705,6 @@ int lll_reduction_z(ZZ_mat<ZT> &b, ZZ_mat<ZT> &u, ZZ_mat<ZT> &u_inv, double delt
   }
   zeros_first(b, u, u_inv);
   return status;
-}
-
-// Verify if b is hlll reduced according to delta and eta
-// For FT != dpe and FT != mpfr
-// This function is not used, but can be used during a testing step.
-template <class ZT, class FT>
-int is_hlll_reduced_zf(ZZ_mat<ZT> &b, ZZ_mat<ZT> &u, ZZ_mat<ZT> &u_inv, double delta, double eta,
-                       double theta)
-{
-  if (b.get_rows() == 0 || b.get_cols() == 0)
-    return RED_SUCCESS;
-
-  int householder_flags = HOUSEHOLDER_DEFAULT | HOUSEHOLDER_ROW_EXPO;
-  MatHouseholder<Z_NR<ZT>, FP_NR<FT>> m(b, u, u_inv, householder_flags);
-
-  return is_hlll_reduced<Z_NR<ZT>, FP_NR<FT>>(m, delta, eta, theta);
 }
 
 // Verify if b is hlll reduced according to delta and eta
@@ -843,7 +801,7 @@ int hlll_reduction_z(ZZ_mat<ZT> &b, ZZ_mat<ZT> &u, ZZ_mat<ZT> &u_inv, double del
       cerr << endl;
     }
 
-    int old_prec = FP_NR<mpfr_t>::set_prec(sel_prec);
+    ScopedPrecision precision_guard(static_cast<unsigned int>(sel_prec));
 
     status = is_hlll_reduced_pr<ZT, mpfr_t>(b, u, u_inv, delta, eta, theta);
 
@@ -855,8 +813,6 @@ int hlll_reduction_z(ZZ_mat<ZT> &b, ZZ_mat<ZT> &u, ZZ_mat<ZT> &u_inv, double del
         cerr << "Basis is not reduced";
       cerr << endl;
     }
-
-    FP_NR<mpfr_t>::set_prec(old_prec);
 
     return status;
   }
@@ -978,9 +934,8 @@ int hlll_reduction_z(ZZ_mat<ZT> &b, ZZ_mat<ZT> &u, ZZ_mat<ZT> &u_inv, double del
 #endif
   else if (sel_ft == FT_MPFR)
   {
-    int old_prec = FP_NR<mpfr_t>::set_prec(sel_prec);
-    status       = hlll_reduction_zf<ZT, mpfr_t>(b, u, u_inv, delta, eta, theta, c, method, flags);
-    FP_NR<mpfr_t>::set_prec(old_prec);
+    ScopedPrecision precision_guard(static_cast<unsigned int>(sel_prec));
+    status = hlll_reduction_zf<ZT, mpfr_t>(b, u, u_inv, delta, eta, theta, c, method, flags);
   }
   else
   {

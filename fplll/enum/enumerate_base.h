@@ -33,26 +33,6 @@ FPLLL_BEGIN_NAMESPACE
 inline void roundto(int &dest, const double &src) { dest = (int)round(src); }
 inline void roundto(double &dest, const double &src) { dest = round(src); }
 
-/* config */
-#define MAXTEMPLATEDDIMENSION 80  // unused
-// #define FORCE_ENUM_INLINE // not recommended
-/* end config */
-
-#ifndef __has_attribute
-#define __has_attribute(x) 0  // Compatibility with non - GCC/clang compilers.
-#endif
-#if __has_attribute(always_inline)
-#define ALWAYS_INLINE __attribute__((always_inline))
-#else
-#define ALWAYS_INLINE
-#endif
-
-#ifndef FORCE_ENUM_INLINE
-#define ENUM_ALWAYS_INLINE
-#else
-#define ENUM_ALWAYS_INLINE ALWAYS_INLINE
-#endif
-
 class EnumerationBase
 {
 public:
@@ -106,8 +86,7 @@ protected:
 
   /* need templated function argument for support of integer specialization for kk==-1 */
   template <int kk, int kk_start, bool dualenum, bool findsubsols, bool enable_reset>
-  inline void enumerate_recursive(opts<kk, kk_start, dualenum, findsubsols, enable_reset>)
-      ENUM_ALWAYS_INLINE;
+  inline void enumerate_recursive(opts<kk, kk_start, dualenum, findsubsols, enable_reset>);
   template <int kk_start, bool dualenum, bool findsubsols, bool enable_reset>
   inline void enumerate_recursive(opts<-1, kk_start, dualenum, findsubsols, enable_reset>)
   {

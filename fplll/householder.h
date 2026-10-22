@@ -116,11 +116,6 @@ public:
      * otherwise, we essentially 0 - 0 */
     fill(expo_norm_square_b.begin(), expo_norm_square_b.end(), 0);
 
-#ifdef HOUSEHOLDER_PRECOMPUTE_INVERSE
-    // Initialize R_inverse_diag
-    R_inverse_diag.resize(d);
-#endif  // HOUSEHOLDER_PRECOMPUTE_INVERSE
-
     if (enable_row_expo)
       // Initialize tmp_col_expo
       tmp_col_expo.resize(n);

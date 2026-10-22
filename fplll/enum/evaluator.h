@@ -28,7 +28,6 @@ enum EvaluatorMode
 {
   EVALMODE_SV    = 0,
   EVALMODE_CV    = 0,
-  EVALMODE_COUNT = 1,
   EVALMODE_PRINT = 2
 };
 

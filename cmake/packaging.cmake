@@ -61,6 +61,7 @@ function(fplll_configure_packaging)
     FILES_MATCHING
       PATTERN "*.h"
       PATTERN "*.hpp"
+      PATTERN "detail" EXCLUDE
       PATTERN "enum-parallel" EXCLUDE
       PATTERN "json.hpp" EXCLUDE)
   install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/fplll/nr/"
