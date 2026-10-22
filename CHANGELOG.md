@@ -1,6 +1,12 @@
 # Changelog
 
-## 6.0 (unreleased)
+## 6.0 (2026-10-23)
+
+fplll 6.0 requires C++23 and a rebuild against SONAME 10.  It removes the
+MPIR, DPE and `ZZ_mat<double>` backends and the recursive-enumeration switch,
+makes the library silent by default, modernizes the option enums and strategy
+API, and replaces the generated pruner tables with runtime computation.  See
+[the 6.0 migration guide](doc/migration-6.0.md).
 
 ### Build and development
 
