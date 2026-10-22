@@ -117,6 +117,20 @@ template <class FT> int test_root()
   return status;
 }
 
+int test_integer_parsing()
+{
+  Z_NR<long> value;
+  if (!value.set_str("123"))
+    return 1;
+  if (value.get_si() != 123)
+    return 1;
+  if (value.set_str("12x"))
+    return 1;
+  if (value.set_str(""))
+    return 1;
+  return 0;
+}
+
 int test_scoped_precision()
 {
   const unsigned int initial = FP_NR<mpfr_t>::get_prec();
@@ -155,6 +169,7 @@ int main()
 {
 
   int status = 0;
+  status |= test_integer_parsing();
   status |= test_scoped_precision();
   status |= test_arithmetic<FP_NR<double>>();
 #ifdef FPLLL_WITH_LONG_DOUBLE

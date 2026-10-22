@@ -43,7 +43,6 @@ template <class T> T parse_option(const char *text, const char *option)
   return value;
 }
 
-using namespace std;
 using namespace fplll;
 
 enum Action

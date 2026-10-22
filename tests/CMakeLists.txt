@@ -31,5 +31,6 @@ foreach(test_name IN LISTS FPLLL_TESTS)
   target_link_libraries(${test_name} PRIVATE fplll)
   add_test(NAME ${test_name} COMMAND ${test_name})
   set_tests_properties(${test_name} PROPERTIES
-    WORKING_DIRECTORY "${test_work_dir}")
+    WORKING_DIRECTORY "${test_work_dir}"
+    TIMEOUT 300)
 endforeach()
