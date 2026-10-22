@@ -28,6 +28,7 @@
 
 #include <algorithm>
 #include <array>
+#include <atomic>
 #include <climits>
 #include <cmath>
 #include <cstddef>
@@ -36,12 +37,20 @@
 #include <cstring>
 #include <ctime>
 #include <fstream>
+#include <functional>
+#include <future>
 #include <iostream>
 #include <limits>
+#include <map>
+#include <memory>
+#include <mutex>
 #include <sstream>
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <thread>
+#include <utility>
+#include <vector>
 
 #include <fplll/fplll_config.h>
 #include <gmp.h>
@@ -116,7 +125,67 @@ struct DebugTracer
     The fplll namespace */
 FPLLL_BEGIN_NAMESPACE
 
-using namespace std;
+/* Explicitly re-export the standard-library names used by the public headers.
+   This keeps the historical unqualified spelling working without importing all
+   of namespace std.  A later pass qualifies the remaining uses. */
+using std::abs;
+using std::array;
+using std::atomic;
+using std::ceil;
+using std::cerr;
+using std::cin;
+using std::copy;
+using std::cos;
+using std::cout;
+using std::endl;
+using std::exp;
+using std::fabs;
+using std::fill;
+using std::find;
+using std::floor;
+using std::forward;
+using std::function;
+using std::future;
+using std::get;
+using std::getline;
+using std::greater;
+using std::ifstream;
+using std::ios;
+using std::ios_base;
+using std::istream;
+using std::istringstream;
+using std::less;
+using std::log;
+using std::make_pair;
+using std::make_unique;
+using std::max;
+using std::min;
+using std::move;
+using std::multimap;
+using std::numeric_limits;
+using std::ofstream;
+using std::ostream;
+using std::ostringstream;
+using std::pair;
+using std::pow;
+using std::reverse;
+using std::round;
+using std::setfill;
+using std::setprecision;
+using std::setw;
+using std::shared_ptr;
+using std::sin;
+using std::sort;
+using std::sqrt;
+using std::string;
+using std::stringstream;
+using std::swap;
+using std::thread;
+using std::to_string;
+using std::tuple;
+using std::unique;
+using std::unique_ptr;
+using std::vector;
 
 /* this trick will not work on 16-bit machines*/
 #if (LONG_MAX == 2147483647L)
