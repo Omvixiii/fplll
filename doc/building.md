@@ -191,12 +191,14 @@ maintained separately from the release version.
 ## Installation and downstream use
 
 ```cmake
-find_package(fplll 5.5 CONFIG REQUIRED)
+find_package(fplll 6.0 CONFIG REQUIRED)
 target_link_libraries(my_program PRIVATE fplll::fplll)
 # Or use fplll::fplll_static.
 ```
 
-Include the public API with `#include <fplll/fplll.h>`. Point
+Include the public API with `#include <fplll/fplll.h>`.  The
+[6.0 migration guide](migration-6.0.md) lists the API and build changes for
+upgrading from 5.x. Point
 `CMAKE_PREFIX_PATH` at the installation prefix; the exported targets carry
 required dependencies and include paths. The historical `<fplll.h>` entry point
 remains as a forwarding header. For non-CMake consumers, add the

@@ -8,7 +8,7 @@ if(FPLLL_SOURCE_DIR_REAL STREQUAL FPLLL_BINARY_DIR_REAL)
     "In-source builds are disabled. Configure with a CMake Preset or pass a separate -B binary directory.")
 endif()
 
-project(fplll VERSION 5.5.0 LANGUAGES CXX)
+project(fplll VERSION 6.0.0 LANGUAGES CXX)
 
 # C++23 is the project baseline. Embedders may request a newer standard; the
 # target-level feature below rejects older ones with a clear configure error.
@@ -17,9 +17,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED YES)
 set(CMAKE_CXX_EXTENSIONS NO)
 
 # Product version and the Libtool 9:0:0 ABI are independent.
-set(FPLLL_ABI_VERSION 9.0.0)
-set(FPLLL_SOVERSION 9)
-set(FPLLL_MACHO_VERSION 10.0.0)
+set(FPLLL_ABI_VERSION 10.0.0)
+set(FPLLL_SOVERSION 10)
+set(FPLLL_MACHO_VERSION 11.0.0)
 
 # Multi-config generators append their own configuration directory.
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bin")

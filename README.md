@@ -65,8 +65,8 @@ local API reference pages. Its configuration is explained in the
 ```bibtex
 @unpublished{fplll,
   author = {The {FPLLL} development team},
-  title = {{fplll}, a lattice reduction library, {Version}: 5.5.0},
-  year = 2023,
+  title = {{fplll}, a lattice reduction library, {Version}: 6.0.0},
+  year = 2026,
   note = {Available at \url{https://github.com/fplll/fplll}},
   url = {https://github.com/fplll/fplll}
 }
@@ -77,6 +77,7 @@ local API reference pages. Its configuration is explained in the
 fplll is licensed under the [GNU Lesser General Public License, version 2.1 or
 later](LICENSE). The full license text is available in `LICENSE`.
 
+Upgrading from 5.x is described in the [6.0 migration guide](doc/migration-6.0.md).
 Changes are recorded in [CHANGELOG.md](CHANGELOG.md); contributor guidance is
 in [CONTRIBUTING.md](CONTRIBUTING.md). For bug reports and feature requests,
 use [GitHub Issues](https://github.com/fplll/fplll/issues).
