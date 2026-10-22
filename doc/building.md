@@ -3,7 +3,9 @@
 ## Requirements and first build
 
 The library requires CMake 3.25 or newer, Ninja, a C++23-capable compiler,
-GMP 4.2 or newer, and MPFR 2.3 or newer.
+GMP 4.2 or newer, and MPFR 2.3 or newer. The validated toolchain floor is
+GCC 14, Clang 18 (with libstdc++ 14 or libc++ 18) and AppleClang 16; older
+compilers may accept a C++23 mode but are not supported.
 QD is optional. CMake discovers the compiler automatically; use
 `CMAKE_PREFIX_PATH` for dependencies installed outside standard search paths.
 ccache is optional.

@@ -18,8 +18,10 @@
 #ifndef FPLLL_H
 #define FPLLL_H
 
-#if __cplusplus < 202302L
-#error fplll needs at least a C++23 compliant compiler
+/* Accept the value reported by the first C++23 compiler modes: GCC 13 and
+   Clang 17 report 202100L even though they support the mode. */
+#if __cplusplus < 202100L
+#error fplll needs a C++23 compiler mode
 #endif
 
 #include "bkz.h"            // IWYU pragma: export
