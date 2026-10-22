@@ -281,6 +281,11 @@ DPE_INLINE void dpe_get_z(mpz_t x, const dpe_t y)
 /* return e and x such that y = x*2^e */
 DPE_INLINE mp_exp_t dpe_get_z_exp(mpz_t x, const dpe_t y)
 {
+  if (DPE_UNLIKELY(DPE_MANT(y) == 0.0))
+  {
+    mpz_set_ui(x, 0);
+    return 0;
+  }
   mpz_set_d(x, DPE_MANT(y) * DPE_2_POW_BITSIZE);
   return DPE_EXP(y) - DPE_BITSIZE;
 }
@@ -291,6 +296,11 @@ DPE_INLINE mp_exp_t dpe_get_z_exp(mpz_t x, const dpe_t y)
 /* set x to y where y is mpfr_t. */
 DPE_INLINE void dpe_get_mpfr(mpfr_t y, const dpe_t x, const mp_rnd_t rnd)
 {
+  if (DPE_UNLIKELY(DPE_MANT(x) == 0.0))
+  {
+    mpfr_set_d(y, 0.0, rnd);
+    return;
+  }
   mpfr_set_d(y, DPE_MANT(x), rnd);
   mpfr_mul_2si(y, y, DPE_EXP(x), rnd);
 }
@@ -309,7 +319,11 @@ DPE_INLINE void dpe_set_mpfr(dpe_t x, const mpfr_t y)
 /* x <- y + z, assuming y and z are normalized, returns x normalized */
 DPE_INLINE void dpe_add(dpe_t x, const dpe_t y, const dpe_t z)
 {
-  if (DPE_UNLIKELY(DPE_EXP(y) > DPE_EXP(z) + DPE_BITSIZE))
+  if (DPE_UNLIKELY(DPE_MANT(y) == 0.0))
+    dpe_set(x, z);
+  else if (DPE_UNLIKELY(DPE_MANT(z) == 0.0))
+    dpe_set(x, y);
+  else if (DPE_UNLIKELY(DPE_EXP(y) > DPE_EXP(z) + DPE_BITSIZE))
     /* |z| < 1/2*ulp(y), thus o(y+z) = y */
     dpe_set(x, y);
   else if (DPE_UNLIKELY(DPE_EXP(z) > DPE_EXP(y) + DPE_BITSIZE))
@@ -335,7 +349,11 @@ DPE_INLINE void dpe_add(dpe_t x, const dpe_t y, const dpe_t z)
 /* x <- y - z, assuming y and z are normalized, returns x normalized */
 DPE_INLINE void dpe_sub(dpe_t x, const dpe_t y, const dpe_t z)
 {
-  if (DPE_UNLIKELY(DPE_EXP(y) > DPE_EXP(z) + DPE_BITSIZE))
+  if (DPE_UNLIKELY(DPE_MANT(z) == 0.0))
+    dpe_set(x, y);
+  else if (DPE_UNLIKELY(DPE_MANT(y) == 0.0))
+    dpe_neg(x, z);
+  else if (DPE_UNLIKELY(DPE_EXP(y) > DPE_EXP(z) + DPE_BITSIZE))
     /* |z| < 1/2*ulp(y), thus o(y-z) = y */
     dpe_set(x, y);
   else if (DPE_UNLIKELY(DPE_EXP(z) > DPE_EXP(y) + DPE_BITSIZE))
@@ -361,14 +379,24 @@ DPE_INLINE void dpe_sub(dpe_t x, const dpe_t y, const dpe_t z)
 /* x <- y * z, assuming y and z are normalized, returns x normalized */
 DPE_INLINE void dpe_mul(dpe_t x, const dpe_t y, const dpe_t z)
 {
-  DPE_MANT(x) = DPE_MANT(y) * DPE_MANT(z);
-  DPE_EXP(x)  = DPE_EXP(y) + DPE_EXP(z);
+  if (DPE_UNLIKELY(DPE_MANT(y) == 0.0 || DPE_MANT(z) == 0.0))
+    dpe_set_d(x, 0.0);
+  else
+  {
+    DPE_MANT(x) = DPE_MANT(y) * DPE_MANT(z);
+    DPE_EXP(x)  = DPE_EXP(y) + DPE_EXP(z);
+  }
   dpe_normalize(x);
 }
 
 /* x <- y * z, assuming y and z are normalized, returns x normalized */
 DPE_INLINE void dpe_mul_d(dpe_t x, const dpe_t y, const double z)
 {
+  if (DPE_UNLIKELY(DPE_MANT(y) == 0.0 || z == 0.0))
+  {
+    dpe_set_d(x, 0.0);
+    return;
+  }
   dpe_t zt;
   dpe_set_d(zt, z);
   DPE_MANT(x) = DPE_MANT(y) * DPE_MANT(zt);
@@ -395,6 +423,11 @@ DPE_INLINE void dpe_submul(dpe_t x, const dpe_t y, const dpe_t z)
 /* x <- sqrt(y), assuming y is normalized, returns x normalized */
 DPE_INLINE void dpe_sqrt(dpe_t x, const dpe_t y)
 {
+  if (DPE_UNLIKELY(DPE_MANT(y) == 0.0))
+  {
+    dpe_set_d(x, 0.0);
+    return;
+  }
   DPE_EXP_T ey = DPE_EXP(y);
   if (ey % 2)
   {
@@ -413,8 +446,13 @@ DPE_INLINE void dpe_sqrt(dpe_t x, const dpe_t y)
    Assumes z is not zero. */
 DPE_INLINE void dpe_div(dpe_t x, const dpe_t y, const dpe_t z)
 {
-  DPE_MANT(x) = DPE_MANT(y) / DPE_MANT(z);
-  DPE_EXP(x)  = DPE_EXP(y) - DPE_EXP(z);
+  if (DPE_UNLIKELY(DPE_MANT(y) == 0.0))
+    dpe_set_d(x, 0.0);
+  else
+  {
+    DPE_MANT(x) = DPE_MANT(y) / DPE_MANT(z);
+    DPE_EXP(x)  = DPE_EXP(y) - DPE_EXP(z);
+  }
   dpe_normalize(x);
 }
 
@@ -437,6 +475,11 @@ DPE_INLINE void dpe_div_ui(dpe_t x, const dpe_t y, unsigned long z)
 /* x <- y * 2^e */
 DPE_INLINE void dpe_mul_2si(dpe_t x, const dpe_t y, long e)
 {
+  if (DPE_UNLIKELY(DPE_MANT(y) == 0.0))
+  {
+    dpe_set_d(x, 0.0);
+    return;
+  }
   DPE_MANT(x) = DPE_MANT(y);
   DPE_EXP(x)  = DPE_EXP(y) + (DPE_EXP_T)e;
 }
@@ -444,6 +487,11 @@ DPE_INLINE void dpe_mul_2si(dpe_t x, const dpe_t y, long e)
 /* x <- y * 2^e */
 DPE_INLINE void dpe_mul_2exp(dpe_t x, const dpe_t y, unsigned long e)
 {
+  if (DPE_UNLIKELY(DPE_MANT(y) == 0.0))
+  {
+    dpe_set_d(x, 0.0);
+    return;
+  }
   DPE_MANT(x) = DPE_MANT(y);
   DPE_EXP(x)  = DPE_EXP(y) + (DPE_EXP_T)e;
 }
@@ -451,6 +499,11 @@ DPE_INLINE void dpe_mul_2exp(dpe_t x, const dpe_t y, unsigned long e)
 /* x <- y / 2^e */
 DPE_INLINE void dpe_div_2exp(dpe_t x, const dpe_t y, unsigned long e)
 {
+  if (DPE_UNLIKELY(DPE_MANT(y) == 0.0))
+  {
+    dpe_set_d(x, 0.0);
+    return;
+  }
   DPE_MANT(x) = DPE_MANT(y);
   DPE_EXP(x)  = DPE_EXP(y) - (DPE_EXP_T)e;
 }
@@ -459,6 +512,11 @@ DPE_INLINE void dpe_div_2exp(dpe_t x, const dpe_t y, unsigned long e)
    type has fewer bits than the significand in dpe_t) */
 DPE_INLINE DPE_EXP_T dpe_get_si_exp(long *x, const dpe_t y)
 {
+  if (DPE_UNLIKELY(DPE_MANT(y) == 0.0))
+  {
+    *x = 0;
+    return 0;
+  }
   if (sizeof(long) == 4) /* 32-bit word: long has 31 bits */
   {
     *x = (long)(DPE_MANT(y) * 2147483648.0);

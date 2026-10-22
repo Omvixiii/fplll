@@ -30,12 +30,24 @@ template <class FT> int test_enum(size_t d)
     total += a[i];
   }
 
-  status |= (total != enum_obj.get_nodes());
+  if (total != enum_obj.get_nodes())
+  {
+    std::cerr << "test_counter failed: backend=" << num_type_str<FT>()
+              << ", case=node-total, dimension=" << d << ", seed=0x1337, expected=" << total
+              << ", actual=" << enum_obj.get_nodes() << std::endl;
+    status |= 1;
+  }
 
   // Check that we haven't overwritten beyond our bounds
   for (unsigned int i = d + 1; i < a.size(); i++)
   {
-    status |= (enum_obj.get_nodes(i) != 0);
+    if (enum_obj.get_nodes(i) != 0)
+    {
+      std::cerr << "test_counter failed: backend=" << num_type_str<FT>()
+                << ", case=unused-level, dimension=" << d << ", seed=0x1337, level=" << i
+                << ", expected=0, actual=" << enum_obj.get_nodes(i) << std::endl;
+      status |= 1;
+    }
   }
 
   return status;
