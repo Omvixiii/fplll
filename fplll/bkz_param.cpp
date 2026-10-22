@@ -42,15 +42,15 @@ const std::string &default_strategy_path()
   return ret;
 }
 
-const std::string strategy_full_path(const std::string &strategy_path)
+std::optional<std::string> strategy_full_path(std::string_view strategy_path)
 {
-  if (std::ifstream(strategy_path).good())
-    return strategy_path;
-  std::string path = default_strategy_path() + "/" + strategy_path;
+  const std::string candidate(strategy_path);
+  if (std::ifstream(candidate).good())
+    return candidate;
+  std::string path = default_strategy_path() + "/" + candidate;
   if (std::ifstream(path).good())
     return path;
-  path.clear();
-  return path;
+  return std::nullopt;
 }
 
 const std::string &default_strategy()
@@ -77,17 +77,19 @@ const PruningParams &Strategy::get_pruning(double radius, double gh) const
   return *best;
 }
 
-vector<Strategy> load_strategies_json(const std::string &filename)
+vector<Strategy> load_strategies_json(std::string_view filename)
 {
   json js;
   {
-    std::ifstream fs(strategy_full_path(filename));
-    if (fs.fail())
-      throw std::runtime_error("Cannot open strategies file '" + filename + "'. Tried '" +
-                               filename + "' and '" + default_strategy_path() + "/" + filename +
+    const std::optional<std::string> full_path = strategy_full_path(filename);
+    if (!full_path)
+      throw std::runtime_error("Cannot open strategies file '" + std::string(filename) +
+                               "'. Tried '" + std::string(filename) + "' and '" +
+                               default_strategy_path() + "/" + std::string(filename) +
                                "'. Configured strategy directory: '" + default_strategy_path() +
                                "'. Install the strategy data at the configured prefix or pass an "
                                "existing strategy file explicitly.");
+    std::ifstream fs(*full_path);
     fs >> js;
   }
 

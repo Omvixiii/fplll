@@ -730,8 +730,8 @@ template <class ZT, class FT> bool BKZReduction<ZT, FT>::set_status(int new_stat
 // Generate the json file by hand to generate a flexible human-readable file.
 // TODO: think about use io/json.hpp
 template <class ZT, class FT>
-void BKZReduction<ZT, FT>::dump_gso(const std::string &filename, bool append,
-                                    const std::string &step, const int loop, const double time)
+void BKZReduction<ZT, FT>::dump_gso(std::string_view filename, bool append, std::string_view step,
+                                    const int loop, const double time)
 {
   ofstream dump;
   // Enable exceptions
@@ -741,11 +741,11 @@ void BKZReduction<ZT, FT>::dump_gso(const std::string &filename, bool append,
   {
     if (append)
     {
-      dump.open(filename.c_str(), std::ios_base::app);
+      dump.open(std::string(filename), std::ios_base::app);
     }
     else
     {
-      dump.open(filename.c_str());
+      dump.open(std::string(filename));
       dump << "[" << '\n';
     }
   }

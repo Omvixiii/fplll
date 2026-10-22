@@ -55,6 +55,9 @@ changes that need action when upgrading.
   `PRUNER_MAX_N` are unchanged.
 - `get_red_status_str` and the status/method/type string tables are backed by
   `std::string_view` arrays with corrected sizes.
+- `strategy_full_path` returns `std::optional<std::string>`;
+  `load_strategies_json` and `BKZReduction::dump_gso` accept `std::string_view`
+  arguments.
 
 ## Migration checklist
 

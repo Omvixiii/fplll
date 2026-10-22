@@ -284,7 +284,7 @@ public:
    *    should be overwritten)
    * **/
 
-  void dump_gso(const std::string &filename, bool append, const std::string &step, const int loop,
+  void dump_gso(std::string_view filename, bool append, std::string_view step, const int loop,
                 const double time);
 
   /**
