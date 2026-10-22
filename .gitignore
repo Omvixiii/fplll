@@ -1,24 +1,14 @@
-# Build, install and local cache trees
+# Build and install trees
 /build/
 /_install/
-/.cache/
 
 # Local working notes and editor configuration
 /notes/
 .vscode/
 /CMakeUserPresets.json
 /compile_commands.json
-.venv
+/.venv/
 
 # CMake may create these before rejecting an in-source configure.
 /CMakeCache.txt
 /CMakeFiles/
-
-# Generated API documentation and editor indexes
-/doc/html/
-/GPATH
-/GRTAGS
-/GSYMS
-/GTAGS
-TAGS
-**/*.DS_Store

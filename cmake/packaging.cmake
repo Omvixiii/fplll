@@ -156,18 +156,17 @@ function(fplll_configure_packaging)
   set(CPACK_SOURCE_PACKAGE_FILE_NAME "fplll-${PROJECT_VERSION}")
   set(CPACK_SOURCE_INSTALLED_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR};/")
   set(CPACK_VERBATIM_VARIABLES YES)
-  string(REGEX REPLACE "([][+.*()^$?|\\\\])" "\\\\\\1"
-    FPLLL_SOURCE_REGEX "${CMAKE_CURRENT_SOURCE_DIR}")
-  string(REGEX REPLACE "([][+.*()^$?|\\\\])" "\\\\\\1"
-    FPLLL_BINARY_REGEX "${CMAKE_CURRENT_BINARY_DIR}")
   set(CPACK_SOURCE_IGNORE_FILES
-    "^${FPLLL_BINARY_REGEX}(/|$)"
-    "^${FPLLL_SOURCE_REGEX}/(build|_install|notes|[.]git|[.]cache|[.]venv|[.]vscode|[.]agents|[.]codex)(/|$)"
-    "^${FPLLL_SOURCE_REGEX}/CMakeUserPresets[.]json$"
-    "^${FPLLL_SOURCE_REGEX}/CMakeCache[.]txt$"
-    "^${FPLLL_SOURCE_REGEX}/CMakeFiles/"
-    "^${FPLLL_SOURCE_REGEX}/compile_commands[.]json$"
-    "^${FPLLL_SOURCE_REGEX}/doc/html/"
-    "[.]swp$" "~$")
+    "${CMAKE_CURRENT_BINARY_DIR}/"
+    "/build/"
+    "/_install/"
+    "/.git/"
+    "/.venv/"
+    "/.vscode/"
+    "/notes/"
+    "/CMakeUserPresets.json$"
+    "/compile_commands.json$"
+    "/CMakeCache.txt$"
+    "/CMakeFiles/")
   include(CPack)
 endfunction()

@@ -1,0 +1,10 @@
+.git
+build
+_install
+.venv
+.vscode
+notes
+CMakeUserPresets.json
+compile_commands.json
+CMakeCache.txt
+CMakeFiles
