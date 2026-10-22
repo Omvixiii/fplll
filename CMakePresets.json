@@ -1,8 +1,8 @@
 {
-  "version": 3,
+  "version": 6,
   "cmakeMinimumRequired": {
     "major": 3,
-    "minor": 21,
+    "minor": 25,
     "patch": 0
   },
   "configurePresets": [
@@ -12,7 +12,6 @@
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/build/${presetName}",
       "cacheVariables": {
-        "CMAKE_CXX_COMPILER_LAUNCHER": "ccache",
         "CMAKE_EXPORT_COMPILE_COMMANDS": true,
         "CMAKE_INSTALL_PREFIX": "${sourceDir}/_install/${presetName}"
       }
@@ -29,20 +28,6 @@
       "inherits": "base",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release"
-      }
-    },
-    {
-      "name": "relwithdebinfo",
-      "inherits": "base",
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
-      }
-    },
-    {
-      "name": "asan",
-      "inherits": "debug",
-      "cacheVariables": {
-        "CMAKE_CXX_FLAGS": "-fsanitize=address -fno-omit-frame-pointer"
       }
     },
     {
@@ -63,16 +48,13 @@
       "configurePreset": "release"
     },
     {
-      "name": "relwithdebinfo",
-      "configurePreset": "relwithdebinfo"
-    },
-    {
-      "name": "asan",
-      "configurePreset": "asan"
-    },
-    {
       "name": "ubsan",
       "configurePreset": "ubsan"
+    },
+    {
+      "name": "distcheck",
+      "configurePreset": "release",
+      "targets": ["distcheck"]
     }
   ],
   "testPresets": [
@@ -97,19 +79,26 @@
       "configurePreset": "release"
     },
     {
-      "name": "relwithdebinfo",
-      "inherits": "base",
-      "configurePreset": "relwithdebinfo"
-    },
-    {
-      "name": "asan",
-      "inherits": "base",
-      "configurePreset": "asan"
-    },
-    {
       "name": "ubsan",
       "inherits": "base",
       "configurePreset": "ubsan"
+    }
+  ],
+  "workflowPresets": [
+    {
+      "name": "debug",
+      "steps": [
+        {"type": "configure", "name": "debug"},
+        {"type": "build", "name": "debug"},
+        {"type": "test", "name": "debug"}
+      ]
+    },
+    {
+      "name": "distcheck",
+      "steps": [
+        {"type": "configure", "name": "release"},
+        {"type": "build", "name": "distcheck"}
+      ]
     }
   ]
 }

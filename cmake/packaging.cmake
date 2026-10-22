@@ -1,52 +1,67 @@
 function(fplll_install_pkgconfig)
-  file(RELATIVE_PATH FPLLL_PC_PREFIX_RELATIVE
-    "${CMAKE_INSTALL_FULL_LIBDIR}/pkgconfig" "${CMAKE_INSTALL_PREFIX}")
-  set(FPLLL_PC_LIBDIR "${CMAKE_INSTALL_LIBDIR}")
-  if(NOT IS_ABSOLUTE "${FPLLL_PC_LIBDIR}")
-    set(FPLLL_PC_LIBDIR "\${prefix}/${FPLLL_PC_LIBDIR}")
+  # Installed headers inline GMP/MPFR calls, so those dependencies are part of
+  # the public link interface and belong in Requires.
+  set(FPLLL_PC_REQUIRES "mpfr gmp")
+  set(FPLLL_PC_CFLAGS "")
+  set(FPLLL_PC_LIBS "")
+  set(FPLLL_PC_LIBS_PRIVATE "")
+  if(CMAKE_USE_PTHREADS_INIT)
+    set(FPLLL_PC_CFLAGS "-pthread")
+    set(FPLLL_PC_LIBS "-pthread")
   endif()
-  set(FPLLL_PC_INCLUDEDIR "${CMAKE_INSTALL_INCLUDEDIR}")
-  if(NOT IS_ABSOLUTE "${FPLLL_PC_INCLUDEDIR}")
-    set(FPLLL_PC_INCLUDEDIR "\${prefix}/${FPLLL_PC_INCLUDEDIR}")
-  endif()
-  set(FPLLL_PC_LIBS "-l${FPLLL_INTEGER_LIBRARY_NAME}" "-lmpfr" "-pthread")
-  set(FPLLL_PC_CFLAGS "-I${GMP_INCLUDE_DIR}" "-I${MPFR_INCLUDE_DIR}")
   if(FPLLL_USE_MPIR)
-    list(APPEND FPLLL_PC_CFLAGS "-I${MPIR_INCLUDE_DIR}")
+    # MPIR has no pkg-config module; use explicit flags for the backend.
+    set(FPLLL_PC_REQUIRES "")
+    get_filename_component(mpfr_libdir "${MPFR_LIBRARY}" DIRECTORY)
+    get_filename_component(integer_libdir "${MPIR_LIBRARY}" DIRECTORY)
+    list(APPEND FPLLL_PC_CFLAGS
+      "-I${MPIR_INCLUDE_DIR}" "-I${MPIR_GMP_INCLUDE_DIR}" "-I${MPFR_INCLUDE_DIR}")
+    list(APPEND FPLLL_PC_LIBS
+      "-L${mpfr_libdir}" -lmpfr "-L${integer_libdir}" -lmpir)
   endif()
   if(FPLLL_WITH_QD)
-    list(APPEND FPLLL_PC_LIBS -lqd)
-    foreach(qd_include_dir IN LISTS FPLLL_QD_INCLUDE_DIRS)
-      list(APPEND FPLLL_PC_CFLAGS "-I${qd_include_dir}")
-    endforeach()
+    # QD installs qd.pc both upstream and in distributions.
+    list(PREPEND FPLLL_PC_REQUIRES qd)
   endif()
   if(FPLLL_EXTENUM_LIBRARY_PATH)
-    list(APPEND FPLLL_PC_LIBS "${FPLLL_EXTENUM_LIBRARY_PATH}")
+    list(APPEND FPLLL_PC_LIBS_PRIVATE "${FPLLL_EXTENUM_LIBRARY_PATH}")
   endif()
   if(FPLLL_ATOMIC_LIBRARY)
-    list(APPEND FPLLL_PC_LIBS "-l${FPLLL_ATOMIC_LIBRARY}")
+    list(APPEND FPLLL_PC_LIBS_PRIVATE "-l${FPLLL_ATOMIC_LIBRARY}")
   endif()
-  string(JOIN " " FPLLL_PC_LIBS ${FPLLL_PC_LIBS})
-  string(JOIN " " FPLLL_PC_CFLAGS ${FPLLL_PC_CFLAGS})
+  string(JOIN " " FPLLL_PC_REQUIRES_TEXT ${FPLLL_PC_REQUIRES})
+  string(JOIN " " FPLLL_PC_CFLAGS_TEXT ${FPLLL_PC_CFLAGS})
+  string(JOIN " " FPLLL_PC_LIBS_TEXT ${FPLLL_PC_LIBS})
+  string(JOIN " " FPLLL_PC_LIBS_PRIVATE_TEXT ${FPLLL_PC_LIBS_PRIVATE})
 
   # @ONLY preserves pkg-config's own ${variable} references.
   file(CONFIGURE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/fplll.pc" CONTENT [=[
-prefix=${pcfiledir}/@FPLLL_PC_PREFIX_RELATIVE@
+prefix=@CMAKE_INSTALL_PREFIX@
 exec_prefix=${prefix}
-libdir=@FPLLL_PC_LIBDIR@
-includedir=@FPLLL_PC_INCLUDEDIR@
+libdir=@CMAKE_INSTALL_FULL_LIBDIR@
+includedir=@CMAKE_INSTALL_FULL_INCLUDEDIR@
 
 Name: fplll
 Description: lattice algorithms with floating-point computations
 Version: @PROJECT_VERSION@
-Cflags: -I${includedir} -I${includedir}/fplll @FPLLL_PC_CFLAGS@ -pthread
-Libs: -L${libdir} -lfplll @FPLLL_PC_LIBS@
+Requires: @FPLLL_PC_REQUIRES_TEXT@
+Cflags: -I${includedir} @FPLLL_PC_CFLAGS_TEXT@
+Libs: -L${libdir} -lfplll @FPLLL_PC_LIBS_TEXT@
+Libs.private: @FPLLL_PC_LIBS_PRIVATE_TEXT@
 ]=] @ONLY)
   install(FILES "${CMAKE_CURRENT_BINARY_DIR}/fplll.pc"
     DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
 endfunction()
 
 function(fplll_configure_packaging)
+  # The historical root-level include is part of the Autotools install contract.
+  file(CONFIGURE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/fplll.h" CONTENT [=[
+// Compatibility entry point; prefer <fplll/fplll.h> in new code.
+#include <fplll/fplll.h>
+]=] @ONLY)
+  install(FILES "${CMAKE_CURRENT_BINARY_DIR}/fplll.h"
+    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
+
   set(FPLLL_PUBLIC_HEADERS
     fplll/defs.h
     fplll/fplll.h
@@ -149,6 +164,18 @@ function(fplll_configure_packaging)
     DESTINATION "${FPLLL_CMAKE_INSTALL_DIR}/modules"
     FILES_MATCHING PATTERN "Find*.cmake")
 
+  if(NOT PROJECT_IS_TOP_LEVEL)
+    return()
+  endif()
+
+  set(FPLLL_INSTALL_MANIFEST "${CMAKE_CURRENT_BINARY_DIR}/install_manifest.txt")
+  configure_file(
+    "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/cmake_uninstall.cmake.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake" @ONLY)
+  add_custom_target(uninstall
+    COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake"
+    VERBATIM)
+
   # Release archives are built entirely inside the binary directory.
   set(CPACK_PACKAGE_NAME fplll)
   set(CPACK_PACKAGE_VERSION "${PROJECT_VERSION}")
@@ -156,17 +183,20 @@ function(fplll_configure_packaging)
   set(CPACK_SOURCE_PACKAGE_FILE_NAME "fplll-${PROJECT_VERSION}")
   set(CPACK_SOURCE_INSTALLED_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR};/")
   set(CPACK_VERBATIM_VARIABLES YES)
+  # CPACK_SOURCE_IGNORE_FILES matches absolute paths. Anchor the patterns to
+  # this source tree so a checkout below a matching path is not excluded.
+  string(REGEX REPLACE "([][+.*()^$?|\\\\])" "\\\\\\1"
+    source_pattern "${CMAKE_CURRENT_SOURCE_DIR}")
+  set(source_entry "^${source_pattern}/(.*/)?")
   set(CPACK_SOURCE_IGNORE_FILES
-    "${CMAKE_CURRENT_BINARY_DIR}/"
-    "/build/"
-    "/_install/"
-    "/.git/"
-    "/.venv/"
-    "/.vscode/"
-    "/notes/"
-    "/CMakeUserPresets.json$"
-    "/compile_commands.json$"
-    "/CMakeCache.txt$"
-    "/CMakeFiles/")
+    "${source_entry}build/"
+    "${source_entry}_install/"
+    "${source_entry}[.]git($|/)"
+    "${source_entry}[.]venv($|/)"
+    "${source_entry}[.]vscode($|/)"
+    "${source_entry}CMakeUserPresets[.]json$"
+    "${source_entry}compile_commands[.]json$"
+    "${source_entry}CMakeCache[.]txt$"
+    "${source_entry}CMakeFiles/")
   include(CPack)
 endfunction()

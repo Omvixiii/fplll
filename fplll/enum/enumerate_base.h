@@ -21,10 +21,10 @@
 
 #include "../nr/nr.h"
 #include "./enumerate_ext_api.h"
-#include "fplll_config.h"
 #include <array>
 #include <cfenv>
 #include <cmath>
+#include <fplll/fplll_config.h>
 #include <numeric>
 #include <vector>
 

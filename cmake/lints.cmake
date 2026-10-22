@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.25)
 
 # Also support running this script before configuring or building the project.
 if(NOT DEFINED FPLLL_SOURCE_DIR)

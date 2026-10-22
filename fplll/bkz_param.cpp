@@ -83,7 +83,11 @@ vector<Strategy> load_strategies_json(const std::string &filename)
   {
     std::ifstream fs(strategy_full_path(filename));
     if (fs.fail())
-      throw std::runtime_error("Cannot open strategies file.");
+      throw std::runtime_error("Cannot open strategies file '" + filename + "'. Tried '" +
+                               filename + "' and '" + default_strategy_path() + "/" + filename +
+                               "'. Configured strategy directory: '" + default_strategy_path() +
+                               "'. Install the strategy data at the configured prefix or pass an "
+                               "existing strategy file explicitly.");
     fs >> js;
   }
 

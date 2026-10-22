@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.25)
 
 # Resolve aliases as well as literal paths, including use via add_subdirectory().
 file(REAL_PATH "${CMAKE_CURRENT_SOURCE_DIR}" FPLLL_SOURCE_DIR_REAL)
@@ -9,7 +9,6 @@ if(FPLLL_SOURCE_DIR_REAL STREQUAL FPLLL_BINARY_DIR_REAL)
 endif()
 
 project(fplll VERSION 5.5.0 LANGUAGES CXX)
-message(STATUS "fplll version: ${PROJECT_VERSION}")
 
 # C++11 is the compatibility baseline. Presets and embedding projects may
 # request a newer standard without this project silently overriding it.
@@ -19,15 +18,15 @@ endif()
 set(CMAKE_CXX_STANDARD_REQUIRED YES)
 set(CMAKE_CXX_EXTENSIONS NO)
 
-# One layout for executables, tests and all library variants, including custom
-# configurations and multi-config generators. Stay inside this project's binary
-# directory even when embedded in a larger build.
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY
-  "${CMAKE_CURRENT_BINARY_DIR}/bin/$<UPPER_CASE:$<CONFIG>>")
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY
-  "${CMAKE_CURRENT_BINARY_DIR}/lib/$<UPPER_CASE:$<CONFIG>>")
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY
-  "${CMAKE_CURRENT_BINARY_DIR}/lib/$<UPPER_CASE:$<CONFIG>>")
+# Product version and the Libtool 9:0:0 ABI are independent.
+set(FPLLL_ABI_VERSION 9.0.0)
+set(FPLLL_SOVERSION 9)
+set(FPLLL_MACHO_VERSION 10.0.0)
+
+# Multi-config generators append their own configuration directory.
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bin")
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/lib")
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/lib")
 
 include(GNUInstallDirs)
 list(PREPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules")
@@ -62,17 +61,65 @@ if(FPLLL_USE_MPIR)
   find_package(MPIR REQUIRED)
   set(GMP_INCLUDE_DIR "${MPIR_GMP_INCLUDE_DIR}")
   set(FPLLL_INTEGER_TARGET MPIR::MPIR)
+  set(FPLLL_INTEGER_LIBRARY "${MPIR_LIBRARY}")
+  set(FPLLL_INTEGER_HEADER mpir.h)
   set(FPLLL_INTEGER_LIBRARY_NAME mpir)
   set(HAVE_LIBMPIR 1)
 else()
   find_package(GMP REQUIRED)
   set(FPLLL_INTEGER_TARGET GMP::GMP)
+  set(FPLLL_INTEGER_LIBRARY "${GMP_LIBRARY}")
+  set(FPLLL_INTEGER_HEADER gmp.h)
   set(FPLLL_INTEGER_LIBRARY_NAME gmp)
   set(HAVE_LIBGMP 1)
 endif()
 
 find_package(MPFR REQUIRED)
 set(HAVE_LIBMPFR 1)
+
+# find_path()/find_library() cannot tell whether headers and libraries belong to
+# the same working installation, and version macros are only checked once here.
+include(CheckCXXSourceCompiles)
+include(CMakePushCheckState)
+set(_FPLLL_INTEGER_VERSION_CHECK "")
+if(NOT FPLLL_USE_MPIR)
+  set(_FPLLL_INTEGER_VERSION_CHECK
+"#if __GNU_MP_VERSION * 10000 + __GNU_MP_VERSION_MINOR * 100 + __GNU_MP_VERSION_PATCHLEVEL < 40200
+#error \"GMP >= 4.2 is required\"
+#endif")
+endif()
+cmake_push_check_state(RESET)
+set(CMAKE_REQUIRED_INCLUDES "${GMP_INCLUDE_DIR}" "${MPFR_INCLUDE_DIR}")
+if(FPLLL_USE_MPIR)
+  list(APPEND CMAKE_REQUIRED_INCLUDES "${MPIR_INCLUDE_DIR}")
+endif()
+set(CMAKE_REQUIRED_LIBRARIES "${MPFR_LIBRARY}" "${FPLLL_INTEGER_LIBRARY}")
+check_cxx_source_compiles("
+#include <${FPLLL_INTEGER_HEADER}>
+#include <mpfr.h>
+${_FPLLL_INTEGER_VERSION_CHECK}
+#ifdef MPFR_VERSION_MAJOR
+#if MPFR_VERSION_MAJOR * 100 + MPFR_VERSION_MINOR < 203
+#error \"MPFR >= 2.3 is required\"
+#endif
+#endif
+int main() {
+  mpz_t z;
+  mpz_init(z);
+  mpz_clear(z);
+  mpfr_t f;
+  mpfr_init2(f, 53);
+  mpfr_clear(f);
+  return 0;
+}" FPLLL_NUMERIC_DEPS_LINK)
+cmake_pop_check_state()
+unset(_FPLLL_INTEGER_VERSION_CHECK)
+if(NOT FPLLL_NUMERIC_DEPS_LINK)
+  message(FATAL_ERROR
+    "GMP/MPFR headers and libraries are not a matching working installation. "
+    "See CMakeError.log, fix the dependency paths, and reconfigure with "
+    "-U FPLLL_NUMERIC_DEPS_LINK to run the check again.")
+endif()
 
 set(FPLLL_QD_TARGET "")
 set(FPLLL_QD_INCLUDE_DIRS "")
@@ -98,11 +145,12 @@ if(FPLLL_EXTENUM_LIBRARY)
 
   include(CheckCXXSourceCompiles)
   set(CMAKE_REQUIRED_INCLUDES "${CMAKE_CURRENT_SOURCE_DIR}")
-  set(CMAKE_REQUIRED_LIBRARIES "${FPLLL_EXTENUM_LIBRARY_PATH}")
+  set(CMAKE_REQUIRED_LIBRARIES "${FPLLL_EXTENUM_LIBRARY_PATH}"
+    MPFR::MPFR "${FPLLL_INTEGER_TARGET}" "${FPLLL_QD_TARGET}" Threads::Threads)
   check_cxx_source_compiles(
     "#include <fplll/enum/enumerate_ext_api.h>
      extern extenum_fc_enumerate ${FPLLL_EXTENUM_FUNCTION};
-     int main() { auto function = &${FPLLL_EXTENUM_FUNCTION}; (void)function; return 0; }"
+     int main() { extenum_fc_enumerate * volatile function = &${FPLLL_EXTENUM_FUNCTION}; return function == nullptr; }"
     FPLLL_EXTENUM_LINKS)
   unset(CMAKE_REQUIRED_INCLUDES)
   unset(CMAKE_REQUIRED_LIBRARIES)
@@ -176,20 +224,18 @@ function(fplll_configure_library target)
   target_include_directories(${target}
     PUBLIC
       $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
-      $<BUILD_INTERFACE:${FPLLL_CONFIG_INCLUDE_DIR}>
       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
       $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
-      $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/fplll>
     PRIVATE
       "${CMAKE_CURRENT_SOURCE_DIR}/fplll"
       "${CMAKE_CURRENT_SOURCE_DIR}/fplll/enum-parallel")
   target_compile_features(${target} PUBLIC cxx_std_11)
+  target_link_libraries(${target} PRIVATE "${FPLLL_EXTENUM_TARGET}")
   target_link_libraries(${target} PUBLIC
     MPFR::MPFR
     "${FPLLL_INTEGER_TARGET}"
     Threads::Threads
     "${FPLLL_QD_TARGET}"
-    "${FPLLL_EXTENUM_TARGET}"
     "${FPLLL_ATOMIC_LIBRARY}")
 endfunction()
 
@@ -199,7 +245,11 @@ fplll_configure_library(fplll_objects)
 
 add_library(fplll SHARED $<TARGET_OBJECTS:fplll_objects>)
 add_library(fplll::fplll ALIAS fplll)
-set_target_properties(fplll PROPERTIES VERSION "${PROJECT_VERSION}" SOVERSION 9)
+set_target_properties(fplll PROPERTIES
+  VERSION "${FPLLL_ABI_VERSION}"
+  SOVERSION "${FPLLL_SOVERSION}"
+  MACHO_COMPATIBILITY_VERSION "${FPLLL_MACHO_VERSION}"
+  MACHO_CURRENT_VERSION "${FPLLL_MACHO_VERSION}")
 fplll_configure_library(fplll)
 
 add_library(fplll_static STATIC $<TARGET_OBJECTS:fplll_objects>)
@@ -212,7 +262,11 @@ fplll_configure_library(fplll_static)
 
 # Optional variant/debug targets for downstream packagers and developers.
 add_library(fplllv SHARED EXCLUDE_FROM_ALL $<TARGET_OBJECTS:fplll_objects>)
-set_target_properties(fplllv PROPERTIES VERSION "${PROJECT_VERSION}" SOVERSION 9)
+set_target_properties(fplllv PROPERTIES
+  VERSION "${FPLLL_ABI_VERSION}"
+  SOVERSION "${FPLLL_SOVERSION}"
+  MACHO_COMPATIBILITY_VERSION "${FPLLL_MACHO_VERSION}"
+  MACHO_CURRENT_VERSION "${FPLLL_MACHO_VERSION}")
 fplll_configure_library(fplllv)
 
 add_library(fplll_debug_objects OBJECT EXCLUDE_FROM_ALL ${FPLLL_LIBRARY_SOURCES})
@@ -221,7 +275,11 @@ fplll_configure_library(fplll_debug_objects)
 target_compile_definitions(fplll_debug_objects PRIVATE DEBUG)
 
 add_library(fpllld SHARED EXCLUDE_FROM_ALL $<TARGET_OBJECTS:fplll_debug_objects>)
-set_target_properties(fpllld PROPERTIES VERSION "${PROJECT_VERSION}" SOVERSION 9)
+set_target_properties(fpllld PROPERTIES
+  VERSION "${FPLLL_ABI_VERSION}"
+  SOVERSION "${FPLLL_SOVERSION}"
+  MACHO_COMPATIBILITY_VERSION "${FPLLL_MACHO_VERSION}"
+  MACHO_CURRENT_VERSION "${FPLLL_MACHO_VERSION}")
 fplll_configure_library(fpllld)
 target_compile_definitions(fpllld PUBLIC DEBUG)
 
@@ -248,7 +306,7 @@ target_link_libraries(fplll_cli PRIVATE fplll)
 add_executable(latticegen fplll/latticegen.cpp)
 target_link_libraries(latticegen PRIVATE fplll)
 
-# Installed tools must find fplll under a custom or relocated install prefix.
+# Installed tools find the library relative to the configured final prefix.
 if(APPLE OR UNIX)
   if(IS_ABSOLUTE "${CMAKE_INSTALL_LIBDIR}")
     set(FPLLL_TOOL_INSTALL_RPATH "${CMAKE_INSTALL_LIBDIR}")
@@ -272,26 +330,38 @@ target_link_libraries(fplll_dbg PRIVATE fpllld)
 add_executable(latticegen_dbg EXCLUDE_FROM_ALL fplll/latticegen.cpp)
 target_compile_definitions(latticegen_dbg PRIVATE DEBUG)
 target_link_libraries(latticegen_dbg PRIVATE fpllld)
-add_custom_target(dbg DEPENDS fplll_dbg latticegen_dbg)
 
-include(CTest)
-if(BUILD_TESTING)
-  add_subdirectory(tests)
+if(PROJECT_IS_TOP_LEVEL)
+  add_custom_target(dbg DEPENDS fplll_dbg latticegen_dbg)
+  include(CTest)
+  if(BUILD_TESTING)
+    add_subdirectory(tests)
+  endif()
+
+  add_custom_target(lint
+    COMMAND "${CMAKE_COMMAND}" "-DFPLLL_SOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}"
+      -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/lints.cmake"
+    USES_TERMINAL
+    VERBATIM)
+  add_custom_target(format
+    COMMAND "${CMAKE_COMMAND}" "-DFPLLL_SOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}"
+      -DFPLLL_FORMAT=ON -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/lints.cmake"
+    USES_TERMINAL
+    VERBATIM)
+
+  include(cmake/documentation.cmake)
+  fplll_add_documentation()
+
+  # Full release lifecycle check; the script reads the parent configuration
+  # from this build tree's CMakeCache.txt.
+  add_custom_target(distcheck
+    COMMAND "${CMAKE_COMMAND}"
+      "-DFPLLL_BINARY_DIR=${CMAKE_CURRENT_BINARY_DIR}"
+      "-DFPLLL_GENERATOR=${CMAKE_GENERATOR}"
+      -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/distcheck.cmake"
+    USES_TERMINAL
+    VERBATIM)
 endif()
-
-add_custom_target(lint
-  COMMAND "${CMAKE_COMMAND}" "-DFPLLL_SOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}"
-    -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/lints.cmake"
-  USES_TERMINAL
-  VERBATIM)
-add_custom_target(format
-  COMMAND "${CMAKE_COMMAND}" "-DFPLLL_SOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}"
-    -DFPLLL_FORMAT=ON -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/lints.cmake"
-  USES_TERMINAL
-  VERBATIM)
-
-include(cmake/documentation.cmake)
-fplll_add_documentation()
 
 include(cmake/packaging.cmake)
 fplll_configure_packaging()
