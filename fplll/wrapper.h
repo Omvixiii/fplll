@@ -134,17 +134,20 @@ private:
 };
 
 #define FPLLL_DECLARE_LLL(T)                                                                       \
-  int lll_reduction(ZZ_mat<T> &b, double delta = LLL_DEF_DELTA, double eta = LLL_DEF_ETA,          \
-                    LLLMethod method = LM_WRAPPER, FloatType floatType = FT_DEFAULT,               \
-                    int precision = 0, int flags = LLL_DEFAULT);                                   \
+  [[nodiscard]] int lll_reduction(ZZ_mat<T> &b, double delta = LLL_DEF_DELTA,                      \
+                                  double eta = LLL_DEF_ETA, LLLMethod method = LM_WRAPPER,         \
+                                  FloatType floatType = FT_DEFAULT, int precision = 0,             \
+                                  int flags = LLL_DEFAULT);                                        \
                                                                                                    \
-  int lll_reduction(ZZ_mat<T> &b, ZZ_mat<T> &u, double delta = LLL_DEF_DELTA,                      \
-                    double eta = LLL_DEF_ETA, LLLMethod method = LM_WRAPPER,                       \
-                    FloatType floatType = FT_DEFAULT, int precision = 0, int flags = LLL_DEFAULT); \
+  [[nodiscard]] int lll_reduction(ZZ_mat<T> &b, ZZ_mat<T> &u, double delta = LLL_DEF_DELTA,        \
+                                  double eta = LLL_DEF_ETA, LLLMethod method = LM_WRAPPER,         \
+                                  FloatType floatType = FT_DEFAULT, int precision = 0,             \
+                                  int flags = LLL_DEFAULT);                                        \
                                                                                                    \
-  int lll_reduction(ZZ_mat<T> &b, ZZ_mat<T> &u, ZZ_mat<T> &u_inv, double delta = LLL_DEF_DELTA,    \
-                    double eta = LLL_DEF_ETA, LLLMethod method = LM_WRAPPER,                       \
-                    FloatType floatType = FT_DEFAULT, int precision = 0, int flags = LLL_DEFAULT);
+  [[nodiscard]] int lll_reduction(ZZ_mat<T> &b, ZZ_mat<T> &u, ZZ_mat<T> &u_inv,                    \
+                                  double delta = LLL_DEF_DELTA, double eta = LLL_DEF_ETA,          \
+                                  LLLMethod method = LM_WRAPPER, FloatType floatType = FT_DEFAULT, \
+                                  int precision = 0, int flags = LLL_DEFAULT);
 
 FPLLL_DECLARE_LLL(mpz_t)
 
@@ -159,20 +162,21 @@ FPLLL_DECLARE_LLL(long)
  * in order to force the compiler to instantiate the functions.
  */
 #define FPLLL_DECLARE_HLLL(T)                                                                      \
-  int hlll_reduction(ZZ_mat<T> &b, double delta = LLL_DEF_DELTA, double eta = LLL_DEF_ETA,         \
-                     double theta = HLLL_DEF_THETA, double c = HLLL_DEF_C,                         \
-                     LLLMethod method = LM_WRAPPER, FloatType float_type = FT_DEFAULT,             \
-                     int precision = 0, int flags = LLL_DEFAULT, bool nolll = false);              \
-  int hlll_reduction(ZZ_mat<T> &b, ZZ_mat<T> &u, double delta = LLL_DEF_DELTA,                     \
-                     double eta = LLL_DEF_ETA, double theta = HLLL_DEF_THETA,                      \
-                     double c = HLLL_DEF_C, LLLMethod method = LM_WRAPPER,                         \
-                     FloatType float_type = FT_DEFAULT, int precision = 0,                         \
-                     int flags = LLL_DEFAULT, bool nolll = false);                                 \
-  int hlll_reduction(ZZ_mat<T> &b, ZZ_mat<T> &u, ZZ_mat<T> &u_inv, double delta = LLL_DEF_DELTA,   \
-                     double eta = LLL_DEF_ETA, double theta = HLLL_DEF_THETA,                      \
-                     double c = HLLL_DEF_C, LLLMethod method = LM_WRAPPER,                         \
-                     FloatType float_type = FT_DEFAULT, int precision = 0,                         \
-                     int flags = LLL_DEFAULT, bool nolll = false);
+  [[nodiscard]] int hlll_reduction(ZZ_mat<T> &b, double delta = LLL_DEF_DELTA,                     \
+                                   double eta = LLL_DEF_ETA, double theta = HLLL_DEF_THETA,        \
+                                   double c = HLLL_DEF_C, LLLMethod method = LM_WRAPPER,           \
+                                   FloatType float_type = FT_DEFAULT, int precision = 0,           \
+                                   int flags = LLL_DEFAULT, bool nolll = false);                   \
+  [[nodiscard]] int hlll_reduction(ZZ_mat<T> &b, ZZ_mat<T> &u, double delta = LLL_DEF_DELTA,       \
+                                   double eta = LLL_DEF_ETA, double theta = HLLL_DEF_THETA,        \
+                                   double c = HLLL_DEF_C, LLLMethod method = LM_WRAPPER,           \
+                                   FloatType float_type = FT_DEFAULT, int precision = 0,           \
+                                   int flags = LLL_DEFAULT, bool nolll = false);                   \
+  [[nodiscard]] int hlll_reduction(                                                                \
+      ZZ_mat<T> &b, ZZ_mat<T> &u, ZZ_mat<T> &u_inv, double delta = LLL_DEF_DELTA,                  \
+      double eta = LLL_DEF_ETA, double theta = HLLL_DEF_THETA, double c = HLLL_DEF_C,              \
+      LLLMethod method = LM_WRAPPER, FloatType float_type = FT_DEFAULT, int precision = 0,         \
+      int flags = LLL_DEFAULT, bool nolll = false);
 
 FPLLL_DECLARE_HLLL(mpz_t)
 

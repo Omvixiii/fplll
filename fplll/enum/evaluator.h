@@ -177,7 +177,7 @@ public:
   virtual ~FastEvaluator() {}
 
   virtual void eval_sol(const vector<FT> &new_sol_coord, const enumf &new_partial_dist,
-                        enumf &max_dist)
+                        enumf &max_dist) override
   {
     FT dist = new_partial_dist;
     dist.mul_2si(dist, normExp);
@@ -186,7 +186,8 @@ public:
     this->process_sol(dist, new_sol_coord, max_dist);
   }
 
-  virtual void eval_sub_sol(int offset, const vector<FT> &new_sub_sol_coord, const enumf &sub_dist)
+  virtual void eval_sub_sol(int offset, const vector<FT> &new_sub_sol_coord,
+                            const enumf &sub_dist) override
   {
     FT dist = sub_dist;
     dist.mul_2si(dist, normExp);
@@ -244,7 +245,7 @@ public:
   virtual ~CallbackEvaluator() {}
 
   virtual void eval_sol(const vector<FT> &new_sol_coord, const enumf &new_partial_dist,
-                        enumf &max_dist)
+                        enumf &max_dist) override
   {
     assert(new_sol_coord.size() <= FPLLL_MAX_ENUM_DIM);
     for (size_t i = 0; i < new_sol_coord.size(); i++)
@@ -322,11 +323,11 @@ public:
   }
   virtual ~FastErrorBoundedEvaluator() {}
 
-  virtual bool get_max_error(FP_NR<mpfr_t> &max_error, const FP_NR<mpfr_t> &sol_dist);
+  virtual bool get_max_error(FP_NR<mpfr_t> &max_error, const FP_NR<mpfr_t> &sol_dist) override;
   virtual void eval_sol(const vector<FP_NR<mpfr_t>> &new_sol_coord, const enumf &new_partial_dist,
-                        enumf &max_dist);
+                        enumf &max_dist) override;
   virtual void eval_sub_sol(int offset, const vector<FP_NR<mpfr_t>> &new_sub_sol_coord,
-                            const enumf &sub_dist);
+                            const enumf &sub_dist) override;
 };
 
 /**
@@ -352,13 +353,13 @@ public:
   /**
    * Sets max_error to 0: the result is guaranteed.
    */
-  virtual bool get_max_error(FP_NR<mpfr_t> &max_error, const FP_NR<mpfr_t> &sol_dist);
+  virtual bool get_max_error(FP_NR<mpfr_t> &max_error, const FP_NR<mpfr_t> &sol_dist) override;
 
   virtual void eval_sol(const vector<FP_NR<mpfr_t>> &new_sol_coord, const enumf &new_partial_dist,
-                        enumf &max_dist);
+                        enumf &max_dist) override;
 
   virtual void eval_sub_sol(int offset, const vector<FP_NR<mpfr_t>> &new_sub_sol_coord,
-                            const enumf &sub_dist);
+                            const enumf &sub_dist) override;
 
   Z_NR<mpz_t> int_max_dist;  // Exact norm of the last vector
 

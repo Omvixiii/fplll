@@ -9,7 +9,8 @@ template <class FT> int test_enum(size_t d)
   Z_NR<mpz_t> q;
   q = 7681;
   A.gen_qary(50, q);
-  lll_reduction(A);
+  if (lll_reduction(A) != RED_SUCCESS)
+    return -1;
   ZZ_mat<mpz_t> U;
   MatGSO<Z_NR<mpz_t>, FP_NR<FT>> M(A, U, U, 0);
   M.update_gso();

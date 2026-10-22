@@ -354,8 +354,8 @@ private:
  * @return
  *    the status of the reduction (see defs.h for more information on the status)
  */
-int bkz_reduction(ZZ_mat<mpz_t> *B, ZZ_mat<mpz_t> *U, const BKZParam &param,
-                  FloatType float_type = FT_DEFAULT, int precision = 0);
+[[nodiscard]] int bkz_reduction(ZZ_mat<mpz_t> *B, ZZ_mat<mpz_t> *U, const BKZParam &param,
+                                FloatType float_type = FT_DEFAULT, int precision = 0);
 
 /**
  * @brief Performs block reduction without transformation matrix.
@@ -377,8 +377,8 @@ int bkz_reduction(ZZ_mat<mpz_t> *B, ZZ_mat<mpz_t> *U, const BKZParam &param,
  * @return
  *    the status of the reduction (see defs.h for more information on the status)
  */
-int bkz_reduction(ZZ_mat<mpz_t> &b, int block_size, int flags = BKZ_DEFAULT,
-                  FloatType float_type = FT_DEFAULT, int precision = 0);
+[[nodiscard]] int bkz_reduction(ZZ_mat<mpz_t> &b, int block_size, int flags = BKZ_DEFAULT,
+                                FloatType float_type = FT_DEFAULT, int precision = 0);
 
 /**
  * @brief Performs block reduction with transformation matrix.
@@ -402,8 +402,9 @@ int bkz_reduction(ZZ_mat<mpz_t> &b, int block_size, int flags = BKZ_DEFAULT,
  * @return
  *    the status of the reduction (see defs.h for more information on the status)
  */
-int bkz_reduction(ZZ_mat<mpz_t> &b, ZZ_mat<mpz_t> &u, int block_size, int flags = BKZ_DEFAULT,
-                  FloatType float_type = FT_DEFAULT, int precision = 0);
+[[nodiscard]] int bkz_reduction(ZZ_mat<mpz_t> &b, ZZ_mat<mpz_t> &u, int block_size,
+                                int flags = BKZ_DEFAULT, FloatType float_type = FT_DEFAULT,
+                                int precision = 0);
 
 /**
  * @brief Performs HKZ reduction.
@@ -423,8 +424,8 @@ int bkz_reduction(ZZ_mat<mpz_t> &b, ZZ_mat<mpz_t> &u, int block_size, int flags 
  * @return
  *    the status of the reduction (see defs.h for more information on the status)
  */
-int hkz_reduction(ZZ_mat<mpz_t> &b, int flags = HKZ_DEFAULT, FloatType float_type = FT_DEFAULT,
-                  int precision = 0);
+[[nodiscard]] int hkz_reduction(ZZ_mat<mpz_t> &b, int flags = HKZ_DEFAULT,
+                                FloatType float_type = FT_DEFAULT, int precision = 0);
 
 FPLLL_END_NAMESPACE
 

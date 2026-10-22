@@ -92,47 +92,47 @@ public:
   }
 
 public:
-  virtual inline long get_max_exp_of_b();
-  virtual inline bool b_row_is_zero(int i);
-  virtual inline int get_cols_of_b() const;
-  virtual inline int get_rows_of_b() const;
-  virtual inline void negate_row_of_b(int i);
+  virtual inline long get_max_exp_of_b() override;
+  virtual inline bool b_row_is_zero(int i) override;
+  virtual inline int get_cols_of_b() const override;
+  virtual inline int get_rows_of_b() const override;
+  virtual inline void negate_row_of_b(int i) override;
 
-  virtual inline void create_rows(int n_new_rows);
-  virtual inline void remove_last_rows(int n_removed_rows);
+  virtual inline void create_rows(int n_new_rows) override;
+  virtual inline void remove_last_rows(int n_removed_rows) override;
 
-  virtual void move_row(int old_r, int new_r);
+  virtual void move_row(int old_r, int new_r) override;
 
-  virtual void row_addmul_we(int i, int j, const FT &x, long expo_add);
+  virtual void row_addmul_we(int i, int j, const FT &x, long expo_add) override;
 
   // b[i] += b[j] / b[i] -= b[j] (i > j)
-  virtual void row_add(int i, int j);
-  virtual void row_sub(int i, int j);
+  virtual void row_add(int i, int j) override;
+  virtual void row_sub(int i, int j) override;
 
-  virtual inline ZT &sqnorm_coordinates(ZT &sqnorm, vector<ZT> coordinates);
+  virtual inline ZT &sqnorm_coordinates(ZT &sqnorm, vector<ZT> coordinates) override;
 
-  virtual inline FT &get_gram(FT &f, int i, int j);
+  virtual inline FT &get_gram(FT &f, int i, int j) override;
 
-  virtual inline ZT &get_int_gram(ZT &z, int i, int j);
+  virtual inline ZT &get_int_gram(ZT &z, int i, int j) override;
 
   // b[i] <-> b[j] (i < j)
-  virtual void row_swap(int i, int j);
+  virtual void row_swap(int i, int j) override;
 
 private:
   /* Allocates matrices and arrays whose size depends on d (all but tmp_col_expo).
    When enable_int_gram=false, initializes bf. */
-  virtual void size_increased();
+  virtual void size_increased() override;
 
-  virtual void discover_row();
+  virtual void discover_row() override;
 
   /* Upates the i-th row of bf. It does not invalidate anything, so the caller
      must take into account that it might change row_expo. */
-  virtual void update_bf(int i);
+  virtual void update_bf(int i) override;
   /* Marks g(i, j) for all j <= i (but NOT for j > i) */
-  virtual void invalidate_gram_row(int i);
+  virtual void invalidate_gram_row(int i) override;
 
   // b[i] <- b[i] + x * b[j] (i > j)
-  virtual void row_addmul_si(int i, int j, long x);
+  virtual void row_addmul_si(int i, int j, long x) override;
   // b[i] <- b[i] + (2^expo * x) * b[j] (i > j)
 
   virtual void row_addmul_si_2exp(int i, int j, long x, long expo);

@@ -60,18 +60,18 @@ inline constexpr double DEF_GSO_PREC_EPSILON = 0.03;
  *
  *   |mu~_(i,j) - mu_(i,j)| <= d * rho ^ (i + 1) * 2 ^ (4 - prec)
  */
-int gso_min_prec(double &rho, int d, double delta, double eta,
-                 double epsilon = DEF_GSO_PREC_EPSILON);
+[[nodiscard]] int gso_min_prec(double &rho, int d, double delta, double eta,
+                               double epsilon = DEF_GSO_PREC_EPSILON);
 
 /**
  * Returns the minimum precision for the proved version of LLL.
  */
-int l2_min_prec(int d, double delta, double eta, double epsilon);
+[[nodiscard]] int l2_min_prec(int d, double delta, double eta, double epsilon);
 
 /**
  * Returns the minimum precision for the proved version of HLLL.
  */
-int hlll_min_prec(int d_i, int n_i, double delta, double eta, double theta, double c);
+[[nodiscard]] int hlll_min_prec(int d_i, int n_i, double delta, double eta, double theta, double c);
 
 /**
  * Computes the volume of a d-dimensional hypersphere of radius 1.

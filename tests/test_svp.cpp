@@ -317,7 +317,8 @@ int test_rank_defect()
   A[3][1]         = 55;
   A[3][2]         = -194;
   A[3][3]         = -20;
-  lll_reduction(A);
+  if (lll_reduction(A) != RED_SUCCESS)
+    return -1;
   vector<Z_NR<mpz_t>> sol_coord;
   return shortest_vector(A, sol_coord);
 }

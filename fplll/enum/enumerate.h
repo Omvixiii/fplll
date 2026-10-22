@@ -70,9 +70,9 @@ private:
   void do_enumerate();
 
   void set_bounds();
-  void reset(enumf cur_dist, int cur_depth);
-  virtual void process_solution(enumf newmaxdist);
-  virtual void process_subsolution(int offset, enumf newdist);
+  void reset(enumf cur_dist, int cur_depth) override;
+  virtual void process_solution(enumf newmaxdist) override;
+  virtual void process_subsolution(int offset, enumf newdist) override;
 };
 
 template <typename ZT, typename FT> class Enumeration
