@@ -153,7 +153,7 @@ template <> inline bool FP_NR<double>::is_zero() const { return data == 0; }
 
 template <> inline int FP_NR<double>::is_nan() const { return data != data; }
 
-template <> inline int FP_NR<double>::is_finite() const { return isfinite(data); }
+template <> inline int FP_NR<double>::is_finite() const { return std::isfinite(data); }
 
 /* arithmetic */
 template <>
