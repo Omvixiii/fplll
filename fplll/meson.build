@@ -131,6 +131,7 @@ if host_machine.system() != 'windows'
   pc_extra_cflags += '-pthread'
   pc_private_libs += '-pthread'
 endif
+pc_private_libs += qd_linked_privately
 # Private link flags (external enumeration, libatomic, dependency paths) are
 # derived automatically from the library's dependency closure.
 pkgconfig.generate(

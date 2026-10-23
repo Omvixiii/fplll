@@ -262,7 +262,8 @@ directory was configured. Install Doxygen and wipe and reconfigure the
 directory, or configure a new one.
 
 **QD fails to configure.** `-Dqd=enabled` requires a QD installation
-discoverable through pkg-config; install QD, or leave it disabled
+discoverable through `qd.pc` or, failing that, through `libqd` and
+`qd/dd_real.h` in the compiler search paths; install QD, or leave it disabled
 (`-Dqd=disabled`, the default) or automatic (`-Dqd=auto`).
 
 **Meson is too old, or the compiler is rejected.** Meson 1.8 or newer and a

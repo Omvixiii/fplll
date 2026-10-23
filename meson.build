@@ -65,8 +65,26 @@ if host_machine.system() == 'darwin'
   endif
 endif
 
-qd_dep = dependency('qd', required: get_option('qd'))
-with_qd = qd_dep.found()
+# QD ships a pkg-config file upstream, but several distributions only install
+# the library and headers; fall back to a plain compiler/linker lookup then.
+qd_option = get_option('qd')
+qd_dep = []
+qd_linked_privately = []
+with_qd = false
+if qd_option.allowed()
+  qd_dep = dependency('qd', required: false)
+  if not qd_dep.found()
+    qd_library = cpp.find_library('qd', required: false)
+    if qd_library.found() and cpp.has_header('qd/dd_real.h')
+      qd_dep = declare_dependency(dependencies: qd_library)
+      qd_linked_privately = ['-lqd']
+    endif
+  endif
+  with_qd = qd_dep.found()
+  if qd_option.enabled() and not with_qd
+    error('QD was requested (-Dqd=enabled) but neither qd.pc nor libqd with qd/dd_real.h was found')
+  endif
+endif
 if with_qd
   public_deps += qd_dep
 endif
