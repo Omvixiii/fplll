@@ -188,7 +188,7 @@ because the library target has the same name.
 
 ## Testing
 
-The suite contains 16 tests and the `llldiff` diagnostic tool.
+The suite contains 22 tests (21 numerical tests and the CLI regression test) and the `llldiff` diagnostic tool.
 Standard Meson filters apply: select a suite with `--suite fplll`, an
 individual test by name, or raise timeouts with `-t 300`. `llldiff` compares two
 reduction outputs and is not installed.
