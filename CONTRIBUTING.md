@@ -44,9 +44,9 @@ meson test -C build-release --print-errorlogs
 ```
 
 A strict-warnings configuration is available as
-`-Dwarning_level=3 -Dwerror=true`; CI runs it as an advisory job, and it is
-expected to report pre-existing diagnostics until the core warning baseline is
-cleaned up. Do not use it as a hard submission gate yet.
+`-Dwarning_level=3 -Dwerror=true`. It is advisory: it is expected to report
+pre-existing diagnostics until the core warning baseline is cleaned up, so do
+not use it as a hard submission gate yet.
 
 Changes to installation, packaging, or the build system should also pass
 `meson dist -C build-release`; `meson dist` requires a clean Git checkout, so

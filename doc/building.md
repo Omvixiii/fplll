@@ -61,9 +61,8 @@ accepted), `--prefix`, `-Dwarning_level=3 -Dwerror=true` (or
 standard but rejects older ones.
 
 Strict warnings are available with `-Dwarning_level=3 -Dwerror=true`. The
-sources still contain pre-existing diagnostics, so CI runs this configuration
-as an advisory job; it is expected to fail until the warning baseline is
-cleaned up.
+sources still contain pre-existing diagnostics, so this configuration is
+advisory: it is expected to fail until the warning baseline is cleaned up.
 
 ```sh
 meson setup build --default-library=static   # or shared; both is the default
@@ -139,14 +138,9 @@ building; installing the same build with a different prefix later is
 unsupported. To change it, reconfigure and rebuild (for example with
 `meson setup --wipe build --prefix /new/prefix`), then reinstall.
 
-CI and release validation check a staged install at `_install`:
-
-```sh
-python3 scripts/check_install_manifest.py --prefix _install \
-  --forbid-installed-cpp --forbid-private-fragments
-python3 scripts/check_headers.py --include-dir _install/include \
-  --compiler c++ --std c++23
-```
+Validate a staged install before packaging; the
+[local validation](#local-validation) section lists the manifest and header
+checks.
 
 ## Downstream use
 
@@ -234,6 +228,54 @@ Meson creates `build/meson-dist/fplll-6.0.0.tar.xz` from a clean Git checkout
 and, by default, configures, builds, and tests the extracted archive itself;
 `--no-tests` skips that validation. The release version comes from `project(..., version: '6.0.0')` in
 the root `meson.build`; the ABI version (10.0.0) is maintained independently.
+
+## Local validation
+
+Builds, tests, installs and release archives are validated locally: run the
+same Meson commands before submitting changes or tagging a release. A full
+pre-release pass:
+
+```sh
+# optimized build and numerical suite
+meson setup build-release --buildtype=release --prefix="$PWD/_install"
+meson compile -C build-release
+meson test -C build-release --print-errorlogs
+
+# static and shared library configurations
+for library in static shared; do
+  meson setup "build-$library" --buildtype=release --default-library="$library"
+  meson compile -C "build-$library"
+  meson test -C "build-$library" --print-errorlogs
+done
+
+# sanitizers (slower, so raise the 300 s test budget)
+meson setup build-asan --buildtype=debug \
+  -Db_sanitize=address,undefined -Db_lundef=false
+meson compile -C build-asan
+meson test -C build-asan --print-errorlogs -t 5
+
+# install, then check the manifest, headers and a pkg-config consumer
+meson install -C build-release
+python3 scripts/check_install_manifest.py --prefix _install \
+  --forbid-installed-cpp --forbid-private-fragments
+python3 scripts/check_headers.py --include-dir _install/include \
+  --compiler c++ --std c++23
+PKG_CONFIG_PATH="$PWD/_install/lib/pkgconfig" \
+  meson setup build-consumer tests/consumer --buildtype=release
+meson compile -C build-consumer
+./build-consumer/consumer > /dev/null
+
+# release archive; builds and tests the extracted tree
+meson dist -C build-release
+
+# formatting
+meson compile -C build-release lint
+```
+
+Commit before running `meson dist`; it requires a clean Git checkout.
+Strict warnings (`-Dwarning_level=3 -Dwerror=true`) are advisory as described
+[above](#build-options), and coverage has its own
+[local workflow](#code-coverage).
 
 ## Clean and uninstall
 

@@ -25,7 +25,10 @@ API, and replaces the generated pruner tables with runtime computation.  See
   use pkg-config or Meson's `dependency('fplll')`.
 - Replace CPack source archives and the distcheck workflow with `meson dist`,
   which builds and tests the generated archive.
-- Migrate CI, container builds and contributor instructions to Meson.
+- Remove the GitHub Actions workflow; builds, tests, installs and release
+  archives are validated locally with the Meson commands documented in the
+  build guide.
+- Migrate the container build and contributor instructions to Meson.
 - Consolidate historical release notes here; keep local migration notes out of
   version control and source packages.
 
