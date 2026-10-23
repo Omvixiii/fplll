@@ -12,7 +12,7 @@ public API. This guide lists the changes that need action when upgrading.
 - The shared-library SONAME is now 10; the library version is 10.0.0 and the
   macOS compatibility/current version is 11.0.0. Rebuild all consumers against
   the installed library.
-- The build system is Meson 1.8 or newer with Ninja. The intermediate CMake
+- The build system is Meson 1.11 or newer with Ninja. The intermediate CMake
   interface is removed; downstream projects discover fplll through pkg-config
   or Meson's `dependency('fplll')` instead of a CMake package config.
 
@@ -143,7 +143,7 @@ See the [build guide](building.md) for the full Meson command set.
 
 ## Migration checklist
 
-1. Move to Meson 1.8 or newer with Ninja and a C++23 compiler; replace the
+1. Move to Meson 1.11 or newer with Ninja and a C++23 compiler; replace the
    removed CMake options using the mapping above.
 2. Replace removed command-line switches (`-f dpe`, `-z double`).
 3. Rebuild against SONAME 10 and switch downstream discovery to pkg-config or

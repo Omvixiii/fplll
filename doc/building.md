@@ -7,7 +7,7 @@ own sibling directory, and all build products stay inside those directories.
 
 ## Requirements
 
-- Meson 1.8 or newer and Ninja.
+- Meson 1.11 or newer and Ninja.
 - A C++23 compiler: GCC 14, Clang 18 (libstdc++ 14 or libc++ 18), AppleClang 16
   or newer. C++23 is mandatory and cannot be downgraded.
 - GMP 4.2 or newer, MPFR 2.3 or newer, and pkg-config.
@@ -154,7 +154,7 @@ advisory: it is expected to fail until the warning baseline is cleaned up.
 | Option | Default | Purpose |
 | --- | --- | --- |
 | `-Dqd=enabled/disabled/auto` | `disabled` | QD arithmetic; `enabled` fails if QD is missing |
-| `-Dmax_enum_dim=N` | `256` | maximum enumeration dimension (positive integer) |
+| `-Dmax_enum_dim=N` | `256` | maximum enumeration dimension (integer from 1 to 1024) |
 | `-Dmax_parallel_enum_dim=N` | `120` | maximum parallel enumeration dimension; `0` disables it, valid values are `20` to `160` in steps of ten, and it must stay below `max_enum_dim` |
 | `-Dtests=true/false` | `true` | build and register the tests (top-level builds only) |
 
@@ -169,9 +169,9 @@ Built-in Meson options replace project-specific switches: `--buildtype`,
 `--default-library` (`both` by default; `shared` and `static` are also
 accepted), `--prefix`, `-Dwarning_level=3 -Dwerror=true` (or
 `--warnlevel=3 --werror`), `-Db_sanitize`, `-Db_coverage`, `-Dc_args`,
-`-Dcpp_args`, and `-Dcpp_std`. C++23 is mandatory; `-Dcpp_std` accepts a newer
-standard but rejects older ones. Inspect a configured directory with
-`meson configure build`.
+`-Dcpp_args`, and `-Dcpp_std`. C++23 is mandatory; `-Dcpp_std` may name a newer
+standard, while older modes are rejected by the public headers at compile time.
+Inspect a configured directory with `meson configure build`.
 
 ## Build output layout
 
@@ -200,7 +200,7 @@ reduction outputs and is not installed.
 ## Installing
 
 The final prefix is compiled into the library (the default strategy path is
-`$prefix/$datadir/fplll/strategies`), so choose it when configuring:
+`$prefix/$datadir/strategies`), so choose it when configuring:
 
 ```sh
 meson setup build-release --buildtype=release --prefix "$HOME/.local"
@@ -223,7 +223,7 @@ prefix. Installed layout, relative to the prefix:
 | `include/fplll/nr/*.h`, `*.inl`; `include/fplll/pruner/pruner.h`, `pruner_simplex.inl` | number, matrix, and pruning headers |
 | `lib/libfplll.so.10.0.0` (Linux) or `lib/libfplll.10.dylib` (macOS), plus `lib/libfplll.a` | shared library with SONAME 10 and the static library |
 | `lib/pkgconfig/fplll.pc` | pkg-config metadata |
-| `share/fplll/strategies/default.json` | default BKZ strategies |
+| `share/strategies/default.json` | default BKZ strategies |
 
 On macOS the shared library's compatibility and current versions are 11.0.0.
 The installed tools use relative runtime library lookup, including under
@@ -312,14 +312,10 @@ same Meson commands before submitting changes or tagging a release.
    `UBSAN_OPTIONS=halt_on_error=1 meson test -C build-asan --print-errorlogs -t 5`.
 4. Static and shared library configurations: configure each as
    `build-<library>/` with `--default-library=<library>`, then compile and test.
-5. Install and validate the staged tree:
+5. Install the staged tree:
 
    ```sh
    meson install -C build-release
-   python3 scripts/check_install_manifest.py --prefix _install \
-     --forbid-installed-cpp --forbid-private-fragments
-   python3 scripts/check_headers.py --include-dir _install/include \
-     --compiler c++ --std c++23
    ```
 
 6. Release archive: commit first, then `meson dist -C build-release`; it
@@ -376,6 +372,6 @@ a distro package (for example `nlohmann-json3-dev` on Debian/Ubuntu) or
 pre-populate `subprojects/nlohmann_json-3.12.0/`; the error message names
 `nlohmann_json`.
 
-**Meson is too old, or the compiler is rejected.** Meson 1.8 or newer and a
+**Meson is too old, or the compiler is rejected.** Meson 1.11 or newer and a
 C++23 compiler (GCC 14, Clang 18, AppleClang 16, or newer) are required; C++23
 cannot be downgraded.

@@ -1,36 +1,30 @@
 project(
-  'fplll', 'cpp',
+  'fplll',
+  'cpp',
   version: '6.0.0',
   license: 'LGPL-2.1-or-later',
   license_files: 'LICENSE',
-  meson_version: '>=1.8.0',
+  meson_version: '>=1.11.0',
   default_options: [
+    # C++23 is the project baseline.
     'cpp_std=c++23',
     'default_library=both',
   ],
 )
 
+# --- Versions and paths ----------------------------------------------------
 # The product version and the libtool-style ABI version are independent.
 fplll_soversion = '10'
 fplll_libversion = '10.0.0'
 fplll_darwin_versions = ['11.0.0', '11.0.0']
-strategy_dir = get_option('prefix') / get_option('datadir') / 'fplll' / 'strategies'
 version_parts = meson.project_version().split('.')
+strategy_dir = get_option('prefix') / get_option('datadir') / 'strategies'
 
 cpp = meson.get_compiler('cpp')
 fs = import('fs')
 
-# C++23 is the project baseline. Reject an explicit downgrade early instead of
-# letting the compiler fail deep inside the headers.
-if get_option('cpp_std') in [
-  'none', 'c++98', 'gnu++98', 'c++03', 'gnu++03', 'c++11', 'gnu++11',
-  'c++14', 'gnu++14', 'c++17', 'gnu++17', 'c++20', 'gnu++20',
-]
-  error('fplll requires C++23 or newer; got cpp_std=' + get_option('cpp_std'))
-endif
-
-# warning_level=3 adds -Wall -Wextra -Wpedantic; the project has always paired
-# those with the extra checks below when strict warnings are requested.
+# --- Toolchain -------------------------------------------------------------
+# warning_level=3 adds -Wall -Wextra -Wpedantic; pair it with the extra checks.
 if get_option('warning_level') in ['3', 'everything']
   add_project_arguments(
     cpp.get_supported_arguments(['-Wshadow', '-Wnon-virtual-dtor', '-Woverloaded-virtual']),
@@ -38,16 +32,10 @@ if get_option('warning_level') in ['3', 'everything']
   )
 endif
 
-# --- Option validation -----------------------------------------------------
+# --- Options ---------------------------------------------------------------
 max_enum_dim = get_option('max_enum_dim')
-if max_enum_dim < 1
-  error('max_enum_dim must be a positive integer')
-endif
-# Enumeration node counters are fixed-size arrays of this length.
-if max_enum_dim > 1024
-  error('max_enum_dim must not exceed 1024')
-endif
 max_parallel_enum_dim = get_option('max_parallel_enum_dim').to_int()
+
 if max_parallel_enum_dim >= max_enum_dim
   error('max_enum_dim must exceed max_parallel_enum_dim')
 endif
@@ -57,9 +45,8 @@ threads_dep = dependency('threads')
 gmp_dep = dependency('gmp', version: '>=4.2', method: 'pkg-config')
 mpfr_dep = dependency('mpfr', version: '>=2.3', method: 'pkg-config')
 
-# nlohmann/json parses the BKZ strategy files. It is header-only and no longer
-# vendored: a compatible system installation is preferred, and otherwise the
-# pinned wrap in subprojects/ is fetched during configuration.
+# Header-only JSON support: prefer a system copy,
+# otherwise fetch the pinned wrap in subprojects/ during configuration.
 nlohmann_json_dep = dependency(
   'nlohmann_json',
   version: '>=3.12.0',
@@ -71,8 +58,7 @@ public_deps = [gmp_dep, mpfr_dep, threads_dep]
 private_deps = [nlohmann_json_dep]
 pc_public_libs = [threads_dep]
 
-# Homebrew's mpfr.pc lists -lgmp without gmp's -L flag. Keep the gmp library
-# directory on the link line on macOS so that -lgmp resolves.
+# Homebrew's mpfr.pc lists -lgmp without gmp's -L flag.
 if host_machine.system() == 'darwin'
   gmp_libdir = gmp_dep.get_variable(pkgconfig: 'libdir', default_value: '')
   if gmp_libdir != ''
@@ -80,8 +66,8 @@ if host_machine.system() == 'darwin'
   endif
 endif
 
-# QD ships a pkg-config file upstream, but several distributions only install
-# the library and headers; fall back to a plain compiler/linker lookup then.
+# QD ships a pkg-config file upstream; fall back to a plain lookup when a
+# distribution only installs the library and headers.
 qd_option = get_option('qd')
 qd_dep = []
 qd_via_pkgconfig = false
@@ -97,35 +83,17 @@ if qd_option.allowed()
   endif
   with_qd = qd_dep.found()
   if qd_option.enabled() and not with_qd
-    error('QD was requested (-Dqd=enabled) but neither qd.pc nor libqd with qd/dd_real.h was found')
+    error(
+      'QD was requested (-Dqd=enabled) but neither qd.pc nor libqd with qd/dd_real.h was found',
+    )
   endif
-endif
-if with_qd
-  public_deps += qd_dep
-  if not qd_via_pkgconfig
-    # QD operations also appear in installed inline/template definitions.
-    pc_public_libs += qd_dep
+  if with_qd
+    public_deps += qd_dep
+    if not qd_via_pkgconfig
+      # QD operations also appear in installed inline/template definitions.
+      pc_public_libs += qd_dep
+    endif
   endif
-endif
-
-# std::atomic needs libatomic only on some targets (for example 32-bit x86).
-# Probe first so the installed pkg-config metadata stays minimal.
-atomic_dep = []
-atomic_source = '''#include <atomic>
-#include <cstdint>
-int main() {
-  std::atomic<int64_t> value{};
-  return static_cast<int>(value.fetch_add(1));
-}
-'''
-if not cpp.links(atomic_source, name: 'std::atomic without libatomic')
-  atomic_dep = cpp.find_library('atomic', required: false)
-  if not atomic_dep.found() or not cpp.links(
-      atomic_source, dependencies: atomic_dep, name: 'std::atomic with libatomic')
-    error('cannot link std::atomic with or without libatomic')
-  endif
-  public_deps += atomic_dep
-  pc_public_libs += atomic_dep
 endif
 
 # --- Optional external enumeration library --------------------------------
@@ -142,7 +110,9 @@ if extenum_dep.found()
   extenum_cpp_args += ['-DFPLLL_EXTENUM_FUNC=fplll_extenum_enumerate']
 endif
 
-# Installed tools find the library relative to the configured final prefix.
+# --- Install paths ---------------------------------------------------------
+# Tools resolve libdir relative to their own directory; an absolute libdir is
+# used verbatim. Windows has no RPATH equivalent.
 tool_install_rpath = ''
 if host_machine.system() != 'windows'
   install_libdir = get_option('libdir')
@@ -158,36 +128,23 @@ if host_machine.system() != 'windows'
   endif
 endif
 
-# Public headers live in include/fplll/, implementation in src/. The build
-# tree mirrors that split so <fplll/...> resolves through one -I entry.
+# --- Build targets ---------------------------------------------------------
+# Public headers live in include/fplll/, implementation in src/; the build tree
+# mirrors that split so <fplll/...> resolves through one -I entry.
 public_inc = include_directories('include')
 subdir('include/fplll')
 subdir('src')
 subdir('tools')
 
-# Meson rewrites Darwin install names to absolute paths. Preserve the relative
-# lookup encoded by install_rpath so staged installations remain runnable.
-if host_machine.system() == 'darwin' and get_option('default_library') != 'static'
-  installed_shared_lib = fplll_lib
-  if get_option('default_library') == 'both'
-    installed_shared_lib = fplll_lib.get_shared_lib()
-  endif
-  meson.add_install_script(
-    import('python').find_installation(),
-    files('meson/fix_darwin_install.py'),
-    get_option('libdir'), get_option('bindir'), fs.name(installed_shared_lib.full_path()),
-    find_program('install_name_tool').full_path(), find_program('codesign').full_path(),
-    install_tag: 'runtime',
-  )
-endif
+# --- Install ---------------------------------------------------------------
 
 install_data(
   'strategies/default.json',
-  install_dir: get_option('datadir') / 'fplll' / 'strategies',
+  install_dir: get_option('datadir') / 'strategies',
 )
 
-# The public include tree is exactly what gets installed; the only generated
-# member (fplll_config.h) is installed by include/fplll/meson.build.
+# The include tree is installed as-is; fplll_config.h comes from
+# include/fplll/meson.build.
 install_subdir(
   'include/fplll',
   install_dir: get_option('includedir'),
@@ -195,6 +152,7 @@ install_subdir(
 )
 install_headers('include/fplll.h')
 
+# --- Tests and documentation ----------------------------------------------
 if not meson.is_subproject()
   if get_option('tests')
     subdir('tests')
@@ -202,14 +160,18 @@ if not meson.is_subproject()
   subdir('doc')
 endif
 
-summary({
-  'Build type': get_option('buildtype'),
-  'Default library': get_option('default_library'),
-  'Install prefix': get_option('prefix'),
-  'nlohmann/json': nlohmann_json_dep.version(),
-  'QD support': with_qd,
-  'External enumeration': extenum_dep.found(),
-  'Max enumeration dimension': max_enum_dim,
-  'Max parallel enumeration dimension': max_parallel_enum_dim,
-  'Tests': not meson.is_subproject() and get_option('tests'),
-}, section: 'fplll')
+# --- Summary ---------------------------------------------------------------
+summary(
+  {
+    'Build type': get_option('buildtype'),
+    'Default library': get_option('default_library'),
+    'Install prefix': get_option('prefix'),
+    'nlohmann/json': nlohmann_json_dep.version(),
+    'QD support': with_qd,
+    'External enumeration': extenum_dep.found(),
+    'Max enumeration dimension': max_enum_dim,
+    'Max parallel enumeration dimension': max_parallel_enum_dim,
+    'Tests': not meson.is_subproject() and get_option('tests'),
+  },
+  section: 'fplll',
+)

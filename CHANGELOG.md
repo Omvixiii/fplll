@@ -49,7 +49,7 @@ API, and replaces the generated pruner tables with runtime computation.  See
 
 ### Build and development
 
-- Use Meson 1.8 or newer with Ninja as the sole build toolchain; remove the
+- Use Meson 1.11 or newer with Ninja as the sole build toolchain; remove the
   intermediate CMake build and the legacy Autotools files.
 - Require C++23 for the library, installed headers, tools and tests.
 - Remove the MPIR backend, the recursive-enumeration build switch and the

@@ -8,7 +8,7 @@ shortest-vector enumeration, and closest-vector enumeration. See the
 ## Build from source
 
 fplll is built with Meson and Ninja; Meson is the only build interface. Install
-Meson 1.8 or newer, Ninja, a C++23-capable compiler, GMP 4.2 or newer, MPFR 2.3
+Meson 1.11 or newer, Ninja, a C++23-capable compiler, GMP 4.2 or newer, MPFR 2.3
 or newer, and pkg-config, then from the repository root:
 
 ```sh

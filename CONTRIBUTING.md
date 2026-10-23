@@ -20,7 +20,7 @@ Now clone your git repo where my-github-name is your account name on GitHub:
 git clone git@github.com:my-github-name/fplll.git
 ```
 
-Install Meson 1.8 or newer, Ninja, a C++23-capable compiler, GMP and MPFR
+Install Meson 1.11 or newer, Ninja, a C++23-capable compiler, GMP and MPFR
 development packages, and pkg-config. Install Meson with
 `uv tool install meson` or `pipx install meson`. nlohmann/json 3.12 or newer
 is required as well; a system package is optional because Meson downloads
