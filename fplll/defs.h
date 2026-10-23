@@ -57,8 +57,6 @@
 #include <mpfr.h>
 
 #if defined(__sun) || defined(__CYGWIN__)
-#include <ieeefp.h>
-extern "C" long double ldexpl(long double x, int exp);
 #ifndef NAN
 #define NAN __builtin_nanf("")
 #endif

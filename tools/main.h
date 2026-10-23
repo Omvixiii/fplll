@@ -18,7 +18,11 @@
 #ifndef FPLLL_MAIN_H
 #define FPLLL_MAIN_H
 
+#include <cassert>
+#include <cerrno>
 #include <charconv>
+#include <cmath>
+#include <cstdlib>
 #include <cstring>
 #include <fplll/fplll.h>
 #include <system_error>
@@ -39,6 +43,18 @@ template <class T> T parse_option(const char *text, const char *option)
   const char *end                     = text + std::strlen(text);
   const std::from_chars_result result = std::from_chars(text, end, value);
   if (result.ec != std::errc() || result.ptr != end)
+    ABORT_MSG("invalid value for " << option << ": '" << text << "'");
+  return value;
+}
+
+/* Floating-point std::from_chars is missing from older libc++ releases; the
+   tools run in the "C" locale unless the caller changes it. */
+template <> inline double parse_option<double>(const char *text, const char *option)
+{
+  char *end   = nullptr;
+  errno       = 0;
+  const double value = std::strtod(text, &end);
+  if (end == text || *end != '\0')
     ABORT_MSG("invalid value for " << option << ": '" << text << "'");
   return value;
 }

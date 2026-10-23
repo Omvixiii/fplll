@@ -52,7 +52,7 @@ template <> inline void FP_NR<dd_real>::set_mpfr(mpfr_t r, mp_rnd_t rnd)
 
 template <> inline long FP_NR<dd_real>::get_si() const { return to_int(data); }
 
-template <> inline long FP_NR<dd_real>::exponent() const { return ilogb(::to_double(data)) + 1; }
+template <> inline long FP_NR<dd_real>::exponent() const { return std::ilogb(::to_double(data)) + 1; }
 
 template <> inline long FP_NR<dd_real>::get_si_exp_we(long &expo, long expo_add) const
 {

@@ -43,7 +43,7 @@ inline long compute_long_exponent(long data)
 template <> inline long Z_NR<long>::exponent() const
 {
   int int_expo;
-  double f_norm = frexp(static_cast<double>(data), &int_expo);
+  double f_norm = std::frexp(static_cast<double>(data), &int_expo);
   if (data > MAX_LONG_FAST && fabs(f_norm) == 0.5)
     return compute_long_exponent(data);
   else

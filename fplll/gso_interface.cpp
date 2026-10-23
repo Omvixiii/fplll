@@ -264,8 +264,8 @@ void adjust_radius_to_gh_bound(FT &max_dist, long max_dist_expo, int block_size,
                                double gh_factor)
 {
   double t = (double)block_size / 2.0 + 1;
-  t        = lgamma(t);
-  t        = pow(M_E, t * 2.0 / (double)block_size);
+  t        = std::lgamma(t);
+  t        = std::pow(std::numbers::e, t * 2.0 / (double)block_size);
   t        = t / std::numbers::pi;
   FT f     = t;
   f        = f * root_det;

@@ -138,9 +138,9 @@ struct lattice_enum_t
   {
   }
 
-  inline int myround(double a) { return (int)(round(a)); }
-  inline int myround(float a) { return (int)(roundf(a)); }
-  inline int myround(long double a) { return (int)(roundl(a)); }
+  inline int myround(double a) { return (int)(std::round(a)); }
+  inline int myround(float a) { return (int)(std::round(a)); }
+  inline int myround(long double a) { return (int)(std::round(a)); }
 
   inline void _thread_local_update()
   {
@@ -172,7 +172,7 @@ struct lattice_enum_t
     if (_r[i] > _r[i - 1])
       _r[i - 1] = _r[i];
     float_type ci = _sigT[i][i];
-    float_type yi = round(ci);
+    float_type yi = std::round(ci);
     int xi        = (int)(yi);
     yi            = ci - yi;
     float_type li = _l[i + 1] + (yi * yi * risq[i]);
@@ -238,7 +238,7 @@ struct lattice_enum_t
   {
     static const int i = 0;
     float_type ci      = _sigT[i][i];
-    float_type yi      = round(ci);
+    float_type yi      = std::round(ci);
     int xi             = (int)(yi);
     yi                 = ci - yi;
     float_type li      = _l[i + 1] + (yi * yi * risq[i]);
@@ -329,7 +329,7 @@ struct lattice_enum_t
       _r[i - 1] = _r[i];
 
     float_type ci = _sigT[i][i];
-    float_type yi = round(ci);
+    float_type yi = std::round(ci);
     int xi        = (int)(yi);
     yi            = ci - yi;
     float_type li = _l[i + 1] + (yi * yi * risq[i]);

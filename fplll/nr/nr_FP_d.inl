@@ -44,7 +44,7 @@ template <> inline void FP_NR<double>::set_mpfr(mpfr_t r, mp_rnd_t rnd)
 
 template <> inline long FP_NR<double>::get_si() const { return static_cast<long>(data); }
 
-template <> inline long FP_NR<double>::exponent() const { return ilogb(data) + 1; }
+template <> inline long FP_NR<double>::exponent() const { return std::ilogb(data) + 1; }
 
 template <> inline long FP_NR<double>::get_si_exp_we(long &expo, long expo_add) const
 {
@@ -52,7 +52,7 @@ template <> inline long FP_NR<double>::get_si_exp_we(long &expo, long expo_add) 
     expo = 0;
   else
     expo = max(exponent() + expo_add - numeric_limits<long>::digits, 0L);
-  return static_cast<long>(ldexp(data, expo_add - expo));
+  return static_cast<long>(std::ldexp(data, expo_add - expo));
 }
 
 template <> inline long FP_NR<double>::get_si_exp(long &expo) const
@@ -103,21 +103,15 @@ template <> inline FP_NR<double> &FP_NR<double>::operator=(double d)
 
 template <> inline FP_NR<double> &FP_NR<double>::operator=(const char *s)
 {
-  const char *end   = s + std::strlen(s);
-  double parsed     = 0.0;
-  const auto result = std::from_chars(s, end, parsed);
-  if (result.ec == std::errc::result_out_of_range && result.ptr == end)
-  {
-    // from_chars leaves the result unchanged on range errors. Preserve IEEE
-    // overflow and underflow without using a locale-dependent parser.
-    mpfr_t wide;
-    mpfr_init2(wide, PREC_DOUBLE);
-    mpfr_set_str(wide, s, 10, MPFR_RNDN);
-    data = mpfr_get_d(wide, MPFR_RNDN);
-    mpfr_clear(wide);
-    return *this;
-  }
-  data = (result.ec == std::errc() && result.ptr == end) ? parsed : 0.0;
+  // MPFR parsing is locale-independent and works with standard libraries
+  // that do not provide floating-point std::from_chars (older libc++).
+  mpfr_t parsed;
+  mpfr_init2(parsed, PREC_DOUBLE);
+  if (mpfr_set_str(parsed, s, 10, MPFR_RNDN) != 0)
+    data = 0.0;
+  else
+    data = mpfr_get_d(parsed, MPFR_RNDN);
+  mpfr_clear(parsed);
   return *this;
 }
 
@@ -182,7 +176,7 @@ inline void FP_NR<double>::mul_d(const FP_NR<double> &b, const double c, mp_rnd_
 
 template <> inline void FP_NR<double>::mul_2si(const FP_NR<double> &b, long c)
 {
-  data = ldexp(b.data, static_cast<int>(c));
+  data = std::ldexp(b.data, static_cast<int>(c));
 }
 
 template <>
@@ -238,7 +232,7 @@ template <> inline void FP_NR<double>::abs(const FP_NR<double> &b)
     data = -data;
 }
 
-template <> inline void FP_NR<double>::rnd(const FP_NR<double> &b) { data = rint(b.data); }
+template <> inline void FP_NR<double>::rnd(const FP_NR<double> &b) { data = std::rint(b.data); }
 
 template <> inline void FP_NR<double>::rnd_we(const FP_NR<double> &b, long expo_add)
 {
@@ -246,7 +240,7 @@ template <> inline void FP_NR<double>::rnd_we(const FP_NR<double> &b, long expo_
   if (b.exponent() + expo_add >= numeric_limits<double>::digits)
     data = b.data;
   else
-    data = ldexp(::rint(ldexp(b.data, expo_add)), -expo_add);
+    data = std::ldexp(::rint(std::ldexp(b.data, expo_add)), -expo_add);
 }
 
 template <> inline void FP_NR<double>::floor(const FP_NR<double> &b) { data = ::floor(b.data); }

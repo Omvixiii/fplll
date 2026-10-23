@@ -43,6 +43,10 @@ max_enum_dim = get_option('max_enum_dim')
 if max_enum_dim < 1
   error('max_enum_dim must be a positive integer')
 endif
+# Enumeration node counters are fixed-size arrays of this length.
+if max_enum_dim > 1024
+  error('max_enum_dim must not exceed 1024')
+endif
 max_parallel_enum_dim = get_option('max_parallel_enum_dim').to_int()
 if max_parallel_enum_dim >= max_enum_dim
   error('max_enum_dim must exceed max_parallel_enum_dim')

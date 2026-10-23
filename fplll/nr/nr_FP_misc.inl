@@ -124,7 +124,7 @@ template <>
 inline void FP_NR<double>::get_z_exp_we(Z_NR<long> &a, long &expo, long expo_add) const
 {
   expo = 0;
-  a    = static_cast<long>(ldexp(data, expo_add));
+  a    = static_cast<long>(std::ldexp(data, expo_add));
 }
 #endif
 
@@ -134,7 +134,7 @@ template <>
 inline void FP_NR<double>::get_z_exp_we(Z_NR<mpz_t> &a, long &expo, long expo_add) const
 {
   expo = max(exponent() + expo_add - numeric_limits<double>::digits, 0L);
-  mpz_set_d(a.get_data(), ldexp(data, expo_add - expo));
+  mpz_set_d(a.get_data(), std::ldexp(data, expo_add - expo));
 }
 
 /** get_z_exp_we (from double to Z_NR<class Z>) */
@@ -153,7 +153,7 @@ template <>
 inline void FP_NR<long double>::get_z_exp_we(Z_NR<long> &a, long &expo, long expo_add) const
 {
   expo = 0;
-  a    = static_cast<long>(ldexpl(data, expo_add));
+  a    = static_cast<long>(std::ldexp(data, expo_add));
 }
 #endif
 
@@ -165,8 +165,8 @@ inline void FP_NR<long double>::get_z_exp_we(Z_NR<mpz_t> &a, long &expo, long ex
   expo = max(exponent() + expo_add - numeric_limits<long double>::digits, 0L);
   /* If expo > 0, then
      expo_add - expo = numeric_limits<long double>::digits - exponent()
-     which implies that ldexpl(data, expo_add - expo) is an integer */
-  LDConvHelper::mpz_set_ld(a.get_data(), trunc(ldexpl(data, expo_add - expo)));
+     which implies that std::ldexp(data, expo_add - expo) is an integer */
+  LDConvHelper::mpz_set_ld(a.get_data(), std::trunc(std::ldexp(data, expo_add - expo)));
 }
 
 /** get_z_exp_we (from long double to Z_NR<class Z>) */

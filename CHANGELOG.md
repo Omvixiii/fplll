@@ -8,6 +8,29 @@ makes the library silent by default, modernizes the option enums and strategy
 API, and replaces the generated pruner tables with runtime computation.  See
 [the 6.0 migration guide](doc/migration-6.0.md).
 
+### Fixed
+
+- Invalid command-line input and configuration files are rejected instead of
+  crashing on out-of-bounds indices: lattice-generator parameters, BKZ
+  strategy tables, the strategy JSON schema, GSO dump paths and numeric
+  option ranges.
+- HLLL no longer reports success for failed reductions, handles one-row
+  bases and uses eta (not delta) for its weak size-reduction bound; BKZ
+  skips bases without non-zero rows.
+- The global GMP random state is mutex-protected, initialized safely and no
+  longer reseeded in the middle of a stream; concurrent reductions are safe
+  but the random stream is no longer reproducible when randomization is used
+  from several threads.
+- The thread pool tracks outstanding tasks and propagates job exceptions
+  through `wait_work()`/`wait_sleep()` instead of terminating the process.
+- `dump_mu_d` appends to its output vector; `FPLLL_CHECK`/`FPLLL_ABORT` are
+  usable from consumer code outside namespace `fplll`.
+- Portability: `std::`-qualified math in the optional long-double and QD
+  backends, MPFR-based string-to-double parsing (no floating-point
+  `std::from_chars`), `std::numbers::e` instead of `M_E`, `_MSVC_LANG` for
+  the C++23 check, 64-bit enumeration node counters and a 1024 limit for
+  `max_enum_dim`.
+
 ### Build and development
 
 - Use Meson 1.8 or newer with Ninja as the sole build toolchain; remove the

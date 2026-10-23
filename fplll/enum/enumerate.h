@@ -49,7 +49,7 @@ public:
   {
     if (level == -1)
     {
-      return std::accumulate(nodes.cbegin(), nodes.cend(), 0);
+      return std::accumulate(nodes.cbegin(), nodes.cend(), 0ull);
     }
     return nodes[level];
   }
@@ -113,7 +113,7 @@ public:
   inline uint64_t get_nodes(const int level = -1) const
   {
     if (level == -1)
-      return std::accumulate(_nodes.begin(), _nodes.end(), 0);
+      return std::accumulate(_nodes.begin(), _nodes.end(), 0ull);
     return _nodes[level];
   }
 

@@ -126,7 +126,7 @@ See [API documentation](https://fplll.github.io/fplll/annotated.html) and [tests
 
 ### Multicore support
 
-This library does not currently use multiple cores and running multiple threads working on the same object `IntegerMatrix`, `LLLReduction`, `MatGSO` etc. is not supported.  Running multiple threads working on *different* objects, however, is supported. That is, there are no global variables and it is safe to e.g. reduce several lattices in parallel in the same process.
+This library does not currently use multiple cores and running multiple threads working on the same object `IntegerMatrix`, `LLLReduction`, `MatGSO` etc. is not supported.  Running multiple threads working on *different* objects, however, is supported. That is, there are no task-specific global variables and it is safe to e.g. reduce several lattices in parallel in the same process.  Note that some process-wide state is shared: the GMP random state used by BKZ rerandomization and the matrix generators (mutex-protected, so calls are safe but their interleaving determines the random stream), the MPFR default precision (thread-local only if MPFR was built thread-safe), and the log sink set with `fplll::set_log_stream` (the installed stream must outlive its use and concurrent writes must be synchronized by the caller).
 
 As an exception to the above, fplll has an implementation of parallel lattice point enumeration.
 To enable this implementation, make sure you compile with the maximum parallel enumeration dimension greater than 0. Note that increasing this value will increase the compile-time due to the use of templates.

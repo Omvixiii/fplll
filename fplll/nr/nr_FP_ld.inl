@@ -50,7 +50,7 @@ template <> inline long FP_NR<long double>::get_si() const { return static_cast<
 
 template <> inline long FP_NR<long double>::exponent() const
 {
-  return static_cast<long>(ilogbl(data) + 1);
+  return static_cast<long>(std::ilogb(data) + 1);
 }
 
 template <> inline long FP_NR<long double>::get_si_exp_we(long &expo, long expo_add) const
@@ -59,7 +59,7 @@ template <> inline long FP_NR<long double>::get_si_exp_we(long &expo, long expo_
     expo = 0;
   else
     expo = max(exponent() + expo_add - numeric_limits<long>::digits, 0L);
-  return static_cast<long>(ldexpl(data, expo_add - expo));
+  return static_cast<long>(std::ldexp(data, expo_add - expo));
 }
 
 template <> inline long FP_NR<long double>::get_si_exp(long &expo) const
@@ -186,7 +186,7 @@ inline void FP_NR<long double>::mul_d(const FP_NR<long double> &b, const double 
 
 template <> inline void FP_NR<long double>::mul_2si(const FP_NR<long double> &b, long c)
 {
-  data = ldexpl(b.data, static_cast<int>(c));
+  data = std::ldexp(b.data, static_cast<int>(c));
 }
 
 template <>
@@ -213,29 +213,29 @@ inline void FP_NR<long double>::submul(const FP_NR<long double> &b, const FP_NR<
 template <>
 inline void FP_NR<long double>::pow_si(const FP_NR<long double> &a, long b, mp_rnd_t /*rnd*/)
 {
-  data = powl(a.data, static_cast<long double>(b));
+  data = std::pow(a.data, static_cast<long double>(b));
 }
 
 template <>
 inline void FP_NR<long double>::exponential(const FP_NR<long double> &a, mp_rnd_t /*rnd*/)
 {
-  data = expl(a.data);
+  data = std::exp(a.data);
 }
 
 template <> inline void FP_NR<long double>::log(const FP_NR<long double> &a, mp_rnd_t /*rnd*/)
 {
-  data = logl(a.data);
+  data = std::log(a.data);
 }
 
 template <> inline void FP_NR<long double>::sqrt(const FP_NR<long double> &s, mp_rnd_t /*rnd*/)
 {
-  data = sqrtl(s.data);
+  data = std::sqrt(s.data);
 }
 
 template <>
 inline void FP_NR<long double>::root(const FP_NR<long double> &a, unsigned int k, mp_rnd_t /*rnd*/)
 {
-  data = powl(a.data, 1 / (static_cast<double>(k)));
+  data = std::pow(a.data, 1 / (static_cast<double>(k)));
 }
 
 template <> inline void FP_NR<long double>::neg(const FP_NR<long double> &b) { data = -b.data; }
@@ -249,7 +249,7 @@ template <> inline void FP_NR<long double>::abs(const FP_NR<long double> &b)
 
 template <> inline void FP_NR<long double>::rnd(const FP_NR<long double> &b)
 {
-  data = rintl(b.data);
+  data = std::rint(b.data);
 }
 
 template <> inline void FP_NR<long double>::rnd_we(const FP_NR<long double> &b, long expo_add)
@@ -258,17 +258,17 @@ template <> inline void FP_NR<long double>::rnd_we(const FP_NR<long double> &b, 
   if (b.exponent() + expo_add >= numeric_limits<long double>::digits)
     data = b.data;
   else
-    data = ldexpl(rintl(ldexpl(b.data, expo_add)), -expo_add);
+    data = std::ldexp(std::rint(std::ldexp(b.data, expo_add)), -expo_add);
 }
 
 template <> inline void FP_NR<long double>::floor(const FP_NR<long double> &b)
 {
-  data = floorl(b.data);
+  data = std::floor(b.data);
 }
 
 template <> inline void FP_NR<long double>::ceil(const FP_NR<long double> &b)
 {
-  data = ceill(b.data);
+  data = std::ceil(b.data);
 }
 
 template <> inline void FP_NR<long double>::set_nan() { data = NAN; }
@@ -279,7 +279,7 @@ template <>
 inline void FP_NR<long double>::hypot(const FP_NR<long double> &a, const FP_NR<long double> &b,
                                       mp_rnd_t /*rnd*/)
 {
-  data = hypotl(a.data, b.data);
+  data = std::hypot(a.data, b.data);
 }
 
 #endif  // End FPLLL_WITH_LONG_DOUBLE

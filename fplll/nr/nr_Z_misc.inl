@@ -17,7 +17,7 @@ FPLLL_BEGIN_NAMESPACE
 template <> template <> inline void Z_NR<long>::get_f_exp(FP_NR<double> &f, long &expo)
 {
   int int_expo;
-  f.get_data() = frexp(static_cast<double>(data), &int_expo);
+  f.get_data() = std::frexp(static_cast<double>(data), &int_expo);
   expo         = int_expo;
 }
 
@@ -25,7 +25,7 @@ template <> template <> inline void Z_NR<long>::get_f_exp(FP_NR<double> &f, long
 template <> template <> inline void Z_NR<long>::get_f_exp(FP_NR<long double> &f, long &expo)
 {
   int int_expo;
-  f.get_data() = frexpl(static_cast<long double>(data), &int_expo);
+  f.get_data() = std::frexp(static_cast<long double>(data), &int_expo);
   expo         = int_expo;
 }
 #endif
@@ -34,13 +34,13 @@ template <> template <> inline void Z_NR<long>::get_f_exp(FP_NR<long double> &f,
 template <> template <> inline void Z_NR<long>::get_f_exp(FP_NR<dd_real> &f, long &expo)
 {
   int int_expo;
-  f.get_data() = frexp(static_cast<double>(data), &int_expo);
+  f.get_data() = std::frexp(static_cast<double>(data), &int_expo);
   expo         = int_expo;
 }
 template <> template <> inline void Z_NR<long>::get_f_exp(FP_NR<qd_real> &f, long &expo)
 {
   int int_expo;
-  f.get_data() = frexp(static_cast<double>(data), &int_expo);
+  f.get_data() = std::frexp(static_cast<double>(data), &int_expo);
   expo         = int_expo;
 }
 #endif
