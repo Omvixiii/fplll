@@ -1,5 +1,4 @@
-#include "../fplll.h"
-
+#include <fplll/fplll.h>
 FPLLL_BEGIN_NAMESPACE
 
 /**

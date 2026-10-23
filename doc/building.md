@@ -98,9 +98,9 @@ Language tooling follows the canonical directory, so it is configured once:
 - `.clang-tidy` is the clang-tidy configuration; apply it with
   `clang-tidy -p build path/to/file.cpp`.
 - `.clang-format` is the formatting authority; run `clang-format` directly on
-  the files you change. The vendored header `src/fplll/io/thread_pool.hpp` keeps
+  the files you change. The vendored header `include/fplll/io/thread_pool.hpp` keeps
   its upstream formatting.
-- `build/src/fplll/fplll_config.h` and the generated enumeration sources are
+- `build/include/fplll/fplll_config.h` and the generated enumeration sources are
   resolved through the compilation database; no manual include paths needed.
 
 VS Code with the clangd extension only needs the clang-tidy toggle (`.vscode/`
@@ -173,10 +173,10 @@ standard but rejects older ones. Inspect a configured directory with
 
 | Output | Location relative to the build directory |
 | --- | --- |
-| Libraries | `src/fplll/libfplll.{dylib,so*,a}` |
+| Libraries | `src/libfplll.{dylib,so*,a}` |
 | Tools | `tools/fplll`, `tools/latticegen`, plus `tools/fplll_dbg` and `tools/latticegen_dbg` |
 | Tests | `tests/test_*`, `tests/llldiff` |
-| Generated files | `src/fplll/fplll_config.h`, `src/fplll/enumlib_dim.<dim>.cpp` |
+| Generated files | `include/fplll/fplll_config.h`, `src/enumlib_dim.<dim>.cpp` |
 | Compilation database | `compile_commands.json` |
 | API documentation | `doc/html/index.html` |
 | Logs | `meson-logs/testlog.txt`, `meson-logs/install-log.txt` |

@@ -1,6 +1,6 @@
 
-#include "bkz_param.h"
-#include "nr/nr.h"
+#include <fplll/bkz_param.h>
+#include <fplll/nr/nr.h>
 #include <cstdio>
 #include <nlohmann/json.hpp>
 

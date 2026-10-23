@@ -1,8 +1,7 @@
 #ifndef FPLLL_DETAIL_PRECISION_H
 #define FPLLL_DETAIL_PRECISION_H
 
-#include "../nr/nr.h"
-
+#include <fplll/nr/nr.h>
 FPLLL_BEGIN_NAMESPACE
 
 /** Restores the previous MPFR default precision when leaving a scope. */

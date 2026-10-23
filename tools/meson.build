@@ -18,7 +18,7 @@ latticegen_tool = executable(
 fplll_dbg = executable(
   'fplll_dbg',
   'main.cpp',
-  include_directories: fplll_inc,
+  include_directories: public_inc,
   dependencies: public_deps,
   link_with: fpllld_lib,
   cpp_args: ['-DDEBUG'],
@@ -28,7 +28,7 @@ fplll_dbg = executable(
 latticegen_dbg = executable(
   'latticegen_dbg',
   'latticegen.cpp',
-  include_directories: fplll_inc,
+  include_directories: public_inc,
   dependencies: public_deps,
   link_with: fpllld_lib,
   cpp_args: ['-DDEBUG'],

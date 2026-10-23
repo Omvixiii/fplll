@@ -18,8 +18,7 @@
 
 /* Template source file */
 
-#include "gso_interface.h"
-
+#include <fplll/gso_interface.h>
 #include <numbers>
 
 FPLLL_BEGIN_NAMESPACE

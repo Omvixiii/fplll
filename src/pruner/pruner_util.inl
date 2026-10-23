@@ -1,5 +1,4 @@
-#include "../fplll.h"
-
+#include <fplll/fplll.h>
 FPLLL_BEGIN_NAMESPACE
 
 template <class FT> void Pruner<FT>::print_coefficients(const vector<double> &b)

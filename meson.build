@@ -189,7 +189,11 @@ if host_machine.system() != 'windows'
   endif
 endif
 
-subdir('src/fplll')
+# Public headers live in include/fplll/, implementation in src/. The build
+# tree mirrors that split so <fplll/...> resolves through one -I entry.
+public_inc = include_directories('include')
+subdir('include/fplll')
+subdir('src')
 subdir('tools')
 
 # Meson rewrites Darwin install names to absolute paths. Preserve the relative
@@ -212,6 +216,15 @@ install_data(
   'strategies/default.json',
   install_dir: get_option('datadir') / 'fplll' / 'strategies',
 )
+
+# The public include tree is exactly what gets installed; the only generated
+# member (fplll_config.h) is installed by include/fplll/meson.build.
+install_subdir(
+  'include/fplll',
+  install_dir: get_option('includedir'),
+  exclude_files: ['meson.build'],
+)
+install_headers('include/fplll.h')
 
 if not meson.is_subproject()
   if get_option('tests')

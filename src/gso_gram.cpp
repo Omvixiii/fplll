@@ -18,8 +18,7 @@
 
 /* Template source file */
 
-#include "gso_gram.h"
-
+#include <fplll/gso_gram.h>
 FPLLL_BEGIN_NAMESPACE
 
 template <class ZT, class FT> void MatGSOGram<ZT, FT>::discover_row()

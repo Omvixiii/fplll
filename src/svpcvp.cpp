@@ -15,12 +15,11 @@
    You should have received a copy of the GNU Lesser General Public License
    along with fplll. If not, see <http://www.gnu.org/licenses/>. */
 
-#include "svpcvp.h"
+#include <fplll/svpcvp.h>
 #include "detail/precision.h"
-#include "enum/enumerate.h"
-#include "gso.h"
-#include "util.h"
-
+#include <fplll/enum/enumerate.h>
+#include <fplll/gso.h>
+#include <fplll/util.h>
 FPLLL_BEGIN_NAMESPACE
 
 /* Shortest vector problem

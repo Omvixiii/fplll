@@ -17,10 +17,9 @@
 
 /* Template source file */
 
-#include "lll.h"
+#include <fplll/lll.h>
 #include "detail/cpu_time.h"
-#include "util.h"
-
+#include <fplll/util.h>
 FPLLL_BEGIN_NAMESPACE
 
 static inline bool is_power_of_2(int i) { return (i & (i - 1)) == 0; }

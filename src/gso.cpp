@@ -17,8 +17,7 @@
 
 /* Template source file */
 
-#include "gso.h"
-
+#include <fplll/gso.h>
 FPLLL_BEGIN_NAMESPACE
 
 template <class ZT, class FT> void MatGSO<ZT, FT>::update_bf(int i)

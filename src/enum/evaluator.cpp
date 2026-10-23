@@ -13,8 +13,7 @@
    You should have received a copy of the GNU Lesser General Public License
    along with fplll. If not, see <http://www.gnu.org/licenses/>. */
 
-#include "evaluator.h"
-
+#include <fplll/enum/evaluator.h>
 FPLLL_BEGIN_NAMESPACE
 
 void ErrorBoundedEvaluator::init_delta_def(int prec, double rho, bool withRoundingToEnumf)

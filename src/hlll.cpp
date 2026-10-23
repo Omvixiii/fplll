@@ -18,10 +18,9 @@
 
 /* Template source file */
 
-#include "hlll.h"
+#include <fplll/hlll.h>
 #include "detail/cpu_time.h"
-#include "util.h"
-
+#include <fplll/util.h>
 FPLLL_BEGIN_NAMESPACE
 
 template <class ZT, class FT> bool HLLLReduction<ZT, FT>::hlll()

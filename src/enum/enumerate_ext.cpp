@@ -14,9 +14,8 @@
    You should have received a copy of the GNU Lesser General Public License
    along with fplll. If not, see <http://www.gnu.org/licenses/>. */
 
-#include "enumerate_ext.h"
-#include "../defs.h"
-
+#include <fplll/enum/enumerate_ext.h>
+#include <fplll/defs.h>
 #if FPLLL_MAX_PARALLEL_ENUM_DIM != 0
 #include "../enum-parallel/enumlib.h"
 #endif

@@ -18,8 +18,7 @@
 
 /* Template source file */
 
-#include "householder.h"
-
+#include <fplll/householder.h>
 FPLLL_BEGIN_NAMESPACE
 
 // TODO: maybe add a variable available on DEBUG to verify in update_R(i, false) was done

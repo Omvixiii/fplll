@@ -1,5 +1,4 @@
-#include "../fplll.h"
-
+#include <fplll/fplll.h>
 FPLLL_BEGIN_NAMESPACE
 
 #define NUM_OPTIMIZATION_TOURS 3

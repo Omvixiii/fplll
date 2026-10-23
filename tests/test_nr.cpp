@@ -14,7 +14,7 @@
    along with fplll. If not, see <http://www.gnu.org/licenses/>. */
 
 #include <cstring>
-#include <fplll/detail/precision.h>
+#include "../src/detail/precision.h"
 #include <fplll/fplll.h>
 #include <stdexcept>
 

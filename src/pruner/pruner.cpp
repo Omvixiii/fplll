@@ -13,10 +13,9 @@
   You should have received a copy of the GNU Lesser General Public License
   along with fplll. If not, see <http://www.gnu.org/licenses/>. */
 
-#include "pruner.h"
+#include <fplll/pruner/pruner.h>
 #include "../detail/precision.h"
-#include "../fplll.h"
-
+#include <fplll/fplll.h>
 // Implementation-include components; these are not separate translation units.
 #include "pruner_cost.inl"
 #include "pruner_optimize.inl"

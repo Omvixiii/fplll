@@ -15,12 +15,12 @@
    You should have received a copy of the GNU Lesser General Public License
    along with fplll. If not, see <http://www.gnu.org/licenses/>. */
 
-#include "wrapper.h"
+#include <fplll/wrapper.h>
 #include "detail/precision.h"
 
-#include "hlll.h"
-#include "lll.h"
-#include "util.h"
+#include <fplll/hlll.h>
+#include <fplll/lll.h>
+#include <fplll/util.h>
 #include <type_traits>
 
 FPLLL_BEGIN_NAMESPACE

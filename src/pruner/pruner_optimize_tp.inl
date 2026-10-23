@@ -1,5 +1,4 @@
-#include "../fplll.h"
-
+#include <fplll/fplll.h>
 FPLLL_BEGIN_NAMESPACE
 
 #define OPTIMIZE_PROB_MINSTEP 1e-4

@@ -18,12 +18,12 @@
 #include "detail/precision.h"
 #include <iomanip>
 
-#include "bkz.h"
-#include "bkz_param.h"
+#include <fplll/bkz.h>
+#include <fplll/bkz_param.h>
 #include "detail/cpu_time.h"
-#include "enum/enumerate.h"
-#include "util.h"
-#include "wrapper.h"
+#include <fplll/enum/enumerate.h>
+#include <fplll/util.h>
+#include <fplll/wrapper.h>
 #include <iomanip>
 
 FPLLL_BEGIN_NAMESPACE
