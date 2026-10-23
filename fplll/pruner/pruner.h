@@ -1017,7 +1017,7 @@ template <class FT> inline bool Pruner<FT>::enforce(/*io*/ vec &b, /*opt i*/ con
   bool status = false;
 
   // the last coefficient being 1
-  if ((b[dn - 1] < .999) & (j != dn - 1))
+  if ((b[dn - 1] < .999) && (j != dn - 1))
   {
     status    = 1;
     b[dn - 1] = 1.;

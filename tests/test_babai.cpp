@@ -45,7 +45,11 @@ int test_intrel(long n, long bits, bool shouldfail = false, int seed = 0)
 
   vector<Z_NR<ZT>> v = vector<Z_NR<ZT>>(t);
 
-  lll_reduction(B);
+  if (lll_reduction(B) != RED_SUCCESS)
+  {
+    std::cerr << "LLL reduction failed" << '\n';
+    return 1;
+  }
 
   MatGSO<Z_NR<ZT>, FP_NR<FT>> M(B, U, UT, GSO_DEFAULT);
   M.update_gso();

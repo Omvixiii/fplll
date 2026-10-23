@@ -10,8 +10,8 @@ template <class FT> void Pruner<FT>::optimize_coefficients_incr_prob(/*io*/ vect
   int dn = pr.size();
   int tours;
   double normalized;
-  FT old_c0, old_c1, old_prob, old_cfs;
-  vec b(dn), old_b(dn), old_b2(dn);
+  FT old_prob;
+  vec b(dn), old_b(dn);
   vector<double> detailed_cost(dn);
   vector<double> weight(dn);
   bool not_changed;
@@ -30,7 +30,7 @@ template <class FT> void Pruner<FT>::optimize_coefficients_incr_prob(/*io*/ vect
     if (old_prob >= target)
       break;
 
-    old_cfs    = single_enum_cost(b, &(detailed_cost));
+    single_enum_cost(b, &(detailed_cost));
     normalized = 0.0;
     for (int i = 0; i < dn; i++)
     {
@@ -76,8 +76,8 @@ template <class FT> void Pruner<FT>::optimize_coefficients_decr_prob(/*io*/ vect
   int dn = pr.size();
   int tours;
   double normalized;
-  FT old_c0, old_c1, old_prob, old_cfs;
-  vec b(dn), old_b(dn), old_b2(dn);
+  FT old_prob;
+  vec b(dn), old_b(dn);
   vector<double> detailed_cost(dn);
   vector<double> weight(dn);
   bool not_changed;
@@ -95,7 +95,7 @@ template <class FT> void Pruner<FT>::optimize_coefficients_decr_prob(/*io*/ vect
     if (old_prob <= target)
       break;
 
-    old_cfs    = single_enum_cost(b, &(detailed_cost));
+    single_enum_cost(b, &(detailed_cost));
     normalized = 0.0;
     for (int i = 0; i < dn; i++)
     {
@@ -143,21 +143,15 @@ template <class FT>
 void Pruner<FT>::optimize_coefficients_local_adjust_prob(/*io*/ vector<double> &pr)
 {
   int dn = pr.size();
-  int tours;
   FT prob, ratio;
-  vec b(dn), old_b(dn), old_b2(dn);
-  vector<double> detailed_cost(dn);
-  vector<double> weight(dn);
+  vec b(dn), old_b(dn);
   bool not_changed;
 
   load_coefficients(b, pr);
 
   // incr b until achieve target
-  tours = 0;
   while (1)
   {
-    tours++;
-
     prob  = measure_metric(b);
     ratio = prob / target;
 

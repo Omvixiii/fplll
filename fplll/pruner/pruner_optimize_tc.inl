@@ -386,7 +386,7 @@ template <class FT> void Pruner<FT>::greedy(evec &b)
         4 * j * (n - j) / (n * n * n);  // Make the tree width as a parabola, with maximum at n/2
     nodes = 1. + 1e10 * preproc_cost;
 
-    while ((nodes > goal_factor * preproc_cost) & (b[i] > .001))
+    while ((nodes > goal_factor * preproc_cost) && (b[i] > .001))
     {
       b[i] *= .98;
       for (int k = 0; k < i; ++k)
