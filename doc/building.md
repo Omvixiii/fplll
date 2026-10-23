@@ -1,44 +1,149 @@
 # Building fplll
 
-fplll is built with [Meson](https://mesonbuild.com) and Ninja. Run commands
-from the repository root.
+fplll is built with [Meson](https://mesonbuild.com) and Ninja, and Meson is the
+only build interface: run `meson` directly from the repository root. `build/`
+is the canonical developer build directory; every other configuration gets its
+own sibling directory, and all build products stay inside those directories.
 
 ## Requirements
 
 - Meson 1.8 or newer and Ninja.
-- A C++23 compiler. The validated floor is GCC 14, Clang 18 (libstdc++ 14 or
-  libc++ 18) and AppleClang 16; C++23 is mandatory and cannot be downgraded.
-- GMP 4.2 or newer and MPFR 2.3 or newer, found through pkg-config, plus
-  pkg-config itself.
+- A C++23 compiler: GCC 14, Clang 18 (libstdc++ 14 or libc++ 18), AppleClang 16
+  or newer. C++23 is mandatory and cannot be downgraded.
+- GMP 4.2 or newer, MPFR 2.3 or newer, and pkg-config.
 - Optional: QD (quad-double arithmetic), Doxygen (API documentation), and
   gcovr or lcov/genhtml (code coverage).
 
-Install Meson with `uv tool install meson` (`uvx meson` runs it ephemerally)
-or `pipx install meson`.
+Install Meson with `uv tool install meson` (`uvx meson` runs it ephemerally) or
+`pipx install meson`.
+
+On macOS, if the selected compiler cannot locate SDK headers or libc++,
+set the SDK path in the shell used for configuration:
+
+```sh
+export SDKROOT="$(xcrun --show-sdk-path)"
+```
 
 ## First build
 
 ```sh
-meson setup build
+meson setup build --buildtype=debugoptimized
 meson compile -C build
 meson test -C build --print-errorlogs
 ```
 
-The default configuration builds shared and static libraries, enables the
-tests, and uses Meson's default build type. For an optimized installation,
-choose the final prefix at configure time:
+The setup step runs once per build directory; after that the loop is
+`meson compile -C build` and `meson test -C build`. `debugoptimized` keeps
+debug symbols while the numerical suite stays fast. The tools are
+`build/tools/fplll` and `build/tools/latticegen`; `meson devenv -C build` opens
+a shell with them on `PATH`.
+
+## The build directory
+
+| Directory | Role |
+| --- | --- |
+| `build/` | developer build; Meson writes `build/compile_commands.json` here for editors |
+| `build-release/` | optimized build for validation, installation and packaging |
+| `build-asan/` | AddressSanitizer and UndefinedBehaviorSanitizer build |
+| `build-<name>/` | further one-off configurations (coverage, static or shared, benchmarks) |
+| `_install/` | staging prefix for install validation |
+
+Rules that keep the tree predictable:
+
+- `build/` is the only build directory editor tooling reads. Meson rewrites
+  `build/compile_commands.json` on every configure; see
+  [editor and tooling setup](#editor-and-tooling-setup).
+- Configurations are siblings, never nested: use `build-release/`, not
+  `build/release/`.
+- One directory per configuration. Reconfigure in place with
+  `meson configure -Doption=value build`; use a new directory when switching
+  compilers, and `meson setup --wipe build` to reset a directory.
+- All build directories are ignored by Git, so `git status` stays clean.
+
+## Development loop
 
 ```sh
-meson setup build-release --buildtype=release --prefix "$HOME/.local"
-meson compile -C build-release
-meson test -C build-release --print-errorlogs
-meson install -C build-release
+meson compile -C build                   # incremental build
+meson test -C build --print-errorlogs    # full suite
+meson test -C build test_lll             # single test; --list for all tests
+meson compile -C build format            # apply clang-format in place
+meson compile -C build lint              # check formatting without modifying files
+meson compile -C build doc               # API documentation, if Doxygen was found
+meson compile -C build dbg               # DEBUG-enabled fplll_dbg and latticegen_dbg
+meson compile -C build --clean           # remove build outputs, keep configuration
 ```
 
-With the default `build` directory, the command-line tools are
-`build/tools/fplll` and `build/tools/latticegen`.
-A build directory keeps its compiler, options, and prefix; use one directory
-per configuration.
+Meson reconfigures automatically when `meson.build` or an option changes, so
+the loop is edit -> compile -> test with no manual configure step. Results are
+logged to `build/meson-logs/testlog.txt`. Tests write only into
+`build/tests/`; fixtures under `tests/lattices/` and `strategies/` are
+read-only inputs.
+
+Optional compiler cache: install `ccache` or `sccache`; Meson detects it on the
+next `meson setup`.
+
+## Editor and tooling setup
+
+Language tooling follows the canonical directory, so it is configured once:
+
+- `.clangd` points clangd at `build/`, so indexing, navigation and diagnostics
+  use the exact flags of the developer build. Run `meson setup build ...` once
+  after cloning, and again after `meson setup --wipe build`.
+- `.clang-tidy` is the clang-tidy configuration; apply it with
+  `clang-tidy -p build path/to/file.cpp`.
+- `.clang-format` is the formatting authority; `format` and `lint` skip the
+  vendored headers under `fplll/io/`.
+- `build/fplll/fplll_config.h` and the generated enumeration sources are
+  resolved through the compilation database; no manual include paths needed.
+
+VS Code with the clangd extension only needs the clang-tidy toggle (`.vscode/`
+is not tracked, so this is a local setting):
+
+```json
+{
+  "clangd.arguments": ["--background-index", "--clang-tidy", "--header-insertion=never"]
+}
+```
+
+If clangd reports missing headers or unknown flags, `build/compile_commands.json`
+is absent or stale: run `meson setup build ...` and restart the language server.
+The database follows the developer build, never `build-release/` or
+`build-asan/`.
+
+## Configurations
+
+A configuration is one directory plus one `meson setup` command. The recurring
+ones:
+
+```sh
+# optimized validation build
+meson setup build-release --buildtype=release
+meson compile -C build-release
+meson test -C build-release --print-errorlogs
+
+# AddressSanitizer + UndefinedBehaviorSanitizer (slower; raise the timeout)
+meson setup build-asan --buildtype=debug \
+  -Db_sanitize=address,undefined -Db_lundef=false
+meson compile -C build-asan
+UBSAN_OPTIONS=halt_on_error=1 meson test -C build-asan --print-errorlogs -t 5
+
+# code coverage
+meson setup build-coverage --buildtype=debug -Db_coverage=true
+meson compile -C build-coverage
+meson test -C build-coverage --print-errorlogs
+ninja -C build-coverage coverage
+
+# single library flavour
+meson setup build-static --buildtype=release --default-library=static
+meson setup build-shared --buildtype=release --default-library=shared
+
+# benchmarks
+meson setup build-bench --buildtype=release -Dbenchmarks=true
+```
+
+Strict warnings are available with `-Dwarning_level=3 -Dwerror=true`. The
+sources still contain pre-existing diagnostics, so this configuration is
+advisory: it is expected to fail until the warning baseline is cleaned up.
 
 ## Build options
 
@@ -58,19 +163,8 @@ Built-in Meson options replace project-specific switches: `--buildtype`,
 accepted), `--prefix`, `-Dwarning_level=3 -Dwerror=true` (or
 `--warnlevel=3 --werror`), `-Db_sanitize`, `-Db_coverage`, `-Dc_args`,
 `-Dcpp_args`, and `-Dcpp_std`. C++23 is mandatory; `-Dcpp_std` accepts a newer
-standard but rejects older ones.
-
-Strict warnings are available with `-Dwarning_level=3 -Dwerror=true`. The
-sources still contain pre-existing diagnostics, so this configuration is
-advisory: it is expected to fail until the warning baseline is cleaned up.
-
-```sh
-meson setup build --default-library=static   # or shared; both is the default
-```
-
-Change an option after configuring with `meson configure -Doption=value build`,
-or recreate the build directory with `meson setup --wipe build`. Use a new
-directory when switching compilers.
+standard but rejects older ones. Inspect a configured directory with
+`meson configure build`.
 
 ## Build output layout
 
@@ -81,41 +175,38 @@ directory when switching compilers.
 | Tests | `tests/test_*`, `tests/llldiff` |
 | Benchmark | `bench/fplll_bench` |
 | Generated files | `fplll/fplll_config.h`, `fplll/enumlib_dim.<dim>.cpp` |
+| Compilation database | `compile_commands.json` |
 | API documentation | `doc/html/index.html` |
 | Logs | `meson-logs/testlog.txt`, `meson-logs/install-log.txt` |
 | Source archive | `meson-dist/fplll-6.0.0.tar.xz` |
 
-All build products stay inside the build directory.
+To build a single target, use its unambiguous Meson specification, for example
+`meson compile -C build tools/fplll:executable`; plain `fplll` is ambiguous
+because the library target has the same name.
 
 ## Testing
 
-The suite contains 15 numerical tests and the `llldiff` diagnostic tool:
+The suite contains 16 tests and the `llldiff` diagnostic tool.
+Standard Meson filters apply: select a suite with `--suite fplll`, an
+individual test by name, or raise timeouts with `-t 300`. `llldiff` compares two
+reduction outputs and is not installed.
+
+## Installing
+
+The final prefix is compiled into the library (the default strategy path is
+`$prefix/$datadir/fplll/strategies`), so choose it when configuring:
 
 ```sh
-meson compile -C build
-meson test -C build --print-errorlogs
-```
-
-Standard Meson filters apply: select a suite with `--suite`, an individual test
-by name (for example `meson test -C build test_lll`), or raise timeouts with
-`-t 300`. Results are logged to `build/meson-logs/testlog.txt`.
-
-Fixtures under `tests/lattices/` and `strategies/` are read-only inputs. Tests
-write only into their build-tree working directory, `build/tests/`; do not run
-the test executables from the source tree. `llldiff` compares two reduction
-outputs and is not installed.
-
-## Installation
-
-```sh
-meson install -C build
-meson install -C build --destdir /abs/stage
+meson setup build-release --buildtype=release --prefix "$HOME/.local"
+meson compile -C build-release
+meson test -C build-release --print-errorlogs
+meson install -C build-release
 ```
 
 `meson install` copies the libraries, the two command-line tools, public
-headers, pkg-config metadata, and the default strategy data into the configured
-prefix. `--destdir` stages the same layout for package managers without
-changing the compiled final prefix. Installed layout, relative to the prefix:
+headers, pkg-config metadata, and the default strategy data. `--destdir` stages
+the same layout for package managers without changing the compiled final
+prefix. Installed layout, relative to the prefix:
 
 | Path | Contents |
 | --- | --- |
@@ -129,23 +220,29 @@ changing the compiled final prefix. Installed layout, relative to the prefix:
 | `share/fplll/strategies/default.json` | default BKZ strategies |
 
 On macOS the shared library's compatibility and current versions are 11.0.0.
-Public headers are installed from the source tree; there is no separate
-`include` directory in the repository.
+The installed tools use relative runtime library lookup, including under
+`DESTDIR`; staged BKZ runs still need an explicit staged strategy file because
+the default strategy path retains the final prefix. Public headers are installed from the source tree; there is no separate
+`include/` directory in the repository. Installing the same build with a
+different prefix later is unsupported: reconfigure and rebuild instead.
 
-The default strategy path is compiled into `bkz_param.cpp` as
-`$prefix/$datadir/fplll/strategies`. Configure the final `--prefix` before
-building; installing the same build with a different prefix later is
-unsupported. To change it, reconfigure and rebuild (for example with
-`meson setup --wipe build --prefix /new/prefix`), then reinstall.
+## Source packages
 
-Validate a staged install before packaging; the
-[local validation](#local-validation) section lists the manifest and header
-checks.
+```sh
+meson dist -C build-release
+```
+
+Meson creates `build-release/meson-dist/fplll-6.0.0.tar.xz` from a clean Git
+checkout and, by default, configures, builds, and tests the extracted archive
+itself; `--no-tests` skips that validation. `--allow-dirty` suppresses the dirty-tree
+error but still archives the last commit, excluding all uncommitted changes. The release version comes from
+`project(..., version: '6.0.0')` in the root `meson.build`; the ABI version
+(10.0.0) is maintained independently.
 
 ## Downstream use
 
-pkg-config is the installed interface for downstream projects. Add the
-prefix's `lib/pkgconfig` to `PKG_CONFIG_PATH` and query the module:
+pkg-config is the installed interface. Add the prefix's `lib/pkgconfig` to
+`PKG_CONFIG_PATH` and query the module:
 
 ```sh
 export PKG_CONFIG_PATH="$HOME/.local/lib/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
@@ -153,13 +250,12 @@ pkg-config --cflags --libs fplll
 pkg-config --static --cflags --libs fplll
 ```
 
-The module requires `gmp` and `mpfr`, and `qd` when QD is enabled; `--static`
-adds the private libraries. Include the public API as
+The module requires `gmp` and `mpfr`. QD builds require `qd` when `qd.pc`
+is available; compiler-discovered QD is exported as a public link dependency
+instead. `--static` adds the private libraries. Include the public API as
 `#include <fplll/fplll.h>`; the historical `<fplll.h>` entry point remains as a
-forwarding header.
-
-Meson consumers discover the installed module through pkg-config and must
-request C++23 themselves:
+forwarding header. Meson consumers discover the module through pkg-config and
+must request C++23 themselves:
 
 ```meson
 project('consumer', 'cpp', default_options: ['cpp_std=c++23'])
@@ -168,131 +264,86 @@ fplll_dep = dependency('fplll')
 executable('consumer', 'main.cpp', dependencies: fplll_dep)
 ```
 
-Set `PKG_CONFIG_PATH` to the prefix's `lib/pkgconfig` directory before running
-`meson setup build`. The C++ standard is not carried by pkg-config, so direct
-compilation must select C++23 as well.
+Set `PKG_CONFIG_PATH` before `meson setup`; pkg-config does not carry the C++
+standard, so direct compilation must select C++23 as well.
 
-## Sanitizers
+## API documentation
 
-```sh
-meson setup build-asan --buildtype=debug \
-  -Db_sanitize=address,undefined -Db_lundef=false
-meson compile -C build-asan
-meson test -C build-asan --print-errorlogs
-```
-
-`-Db_lundef=false` keeps the sanitizer-instrumented shared libraries linkable.
-
-## Code coverage
+With Doxygen installed when the build directory is configured:
 
 ```sh
-meson setup build --buildtype=debug -Db_coverage=true
-meson compile -C build
-meson test -C build --print-errorlogs
-ninja -C build coverage
+meson compile -C build doc     # writes build/doc/html/index.html
 ```
 
-Coverage requires `gcovr` or `lcov`/`genhtml`. The HTML report
-is written under `build/meson-logs/coveragereport/`. `coverage` is Meson's
-built-in target, run through the Ninja backend. Use a dedicated directory such
-as `build-coverage` when other configurations share the tree.
-
-## Development targets
-
-```sh
-meson compile -C build dbg       # fplll_dbg and latticegen_dbg
-meson compile -C build variants  # fplllv and fpllld variant libraries
-meson compile -C build format    # apply clang-format in place
-meson compile -C build lint      # check formatting without changing files
-meson compile -C build doc       # API documentation, if Doxygen was found
-```
-
-`dbg` builds the `DEBUG`-enabled tools. `variants` builds `fplllv` and
-`fpllld`, optional variant libraries that are not built by default and never
-installed. To build a single target, use its unambiguous Meson specification,
-for example `meson compile -C build tools/fplll:executable`; plain `fplll` is
-ambiguous because the library target has the same name. `format` and
-`lint` use the repository `.clang-format` and skip the bundled third-party
-headers `fplll/io/json.hpp` and `fplll/io/thread_pool.hpp`; the targets are
-available when Python 3 and `clang-format` are found at configure time, and
-`lint` is non-mutating. `doc` writes HTML to `build/doc/html/`, requires
-Doxygen at configure time, and generates its Doxygen configuration with Meson.
-
-## Source packages
-
-```sh
-meson dist -C build
-```
-
-Meson creates `build/meson-dist/fplll-6.0.0.tar.xz` from a clean Git checkout
-and, by default, configures, builds, and tests the extracted archive itself;
-`--no-tests` skips that validation. The release version comes from `project(..., version: '6.0.0')` in
-the root `meson.build`; the ABI version (10.0.0) is maintained independently.
+Doxygen was not found for the current `build/` directory if the target is
+missing: install Doxygen and recreate the directory
+(`meson setup --wipe build ...`). Library sources, the README, changelog, and
+usage, build, and contribution guides are documentation inputs; build
+configuration headers and local notes are excluded. Never generate
+documentation into the source tree.
 
 ## Local validation
 
 Builds, tests, installs and release archives are validated locally: run the
-same Meson commands before submitting changes or tagging a release. A full
-pre-release pass:
+same Meson commands before submitting changes or tagging a release.
 
-```sh
-# optimized build and numerical suite
-meson setup build-release --buildtype=release --prefix="$PWD/_install"
-meson compile -C build-release
-meson test -C build-release --print-errorlogs
+1. Developer build: `meson test -C build --print-errorlogs` and
+   `meson compile -C build lint`.
+2. Optimized build with a staging prefix, then its test suite and lint:
+   `meson setup build-release --buildtype=release --prefix="$PWD/_install"`,
+   `meson compile -C build-release`,
+   `meson test -C build-release --print-errorlogs`,
+   `meson compile -C build-release lint`.
+3. Sanitizer build: the [configuration](#configurations) above, with
+   `UBSAN_OPTIONS=halt_on_error=1 meson test -C build-asan --print-errorlogs -t 5`.
+4. Static and shared library configurations: configure each as
+   `build-<library>/` with `--default-library=<library>`, then compile and test.
+5. Install and validate the staged tree:
 
-# static and shared library configurations
-for library in static shared; do
-  meson setup "build-$library" --buildtype=release --default-library="$library"
-  meson compile -C "build-$library"
-  meson test -C "build-$library" --print-errorlogs
-done
+   ```sh
+   meson install -C build-release
+   python3 scripts/check_install_manifest.py --prefix _install \
+     --forbid-installed-cpp --forbid-private-fragments
+   export PKG_CONFIG_PATH="$PWD/_install/lib/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
+   python3 scripts/check_headers.py --include-dir _install/include \
+     --compiler c++ --std c++23
+   meson setup build-consumer tests/consumer --buildtype=release
+   meson test -C build-consumer --print-errorlogs
+   ```
 
-# sanitizers (slower, so raise the 300 s test budget)
-meson setup build-asan --buildtype=debug \
-  -Db_sanitize=address,undefined -Db_lundef=false
-meson compile -C build-asan
-meson test -C build-asan --print-errorlogs -t 5
+   Replace `lib/pkgconfig` with the configured `libdir` plus `/pkgconfig`
+   for a multiarch or `lib64` installation. The consumer checks both shared
+   and static linking; configure fplll with the default `both` for this step.
 
-# install, then check the manifest, headers and a pkg-config consumer
-meson install -C build-release
-python3 scripts/check_install_manifest.py --prefix _install \
-  --forbid-installed-cpp --forbid-private-fragments
-python3 scripts/check_headers.py --include-dir _install/include \
-  --compiler c++ --std c++23
-PKG_CONFIG_PATH="$PWD/_install/lib/pkgconfig" \
-  meson setup build-consumer tests/consumer --buildtype=release
-meson compile -C build-consumer
-./build-consumer/consumer > /dev/null
+6. Release archive: commit first, then `meson dist -C build-release`; it
+   requires a clean Git checkout and builds and tests the extracted tree.
 
-# release archive; builds and tests the extracted tree
-meson dist -C build-release
-
-# formatting
-meson compile -C build-release lint
-```
-
-Commit before running `meson dist`; it requires a clean Git checkout.
 Strict warnings (`-Dwarning_level=3 -Dwerror=true`) are advisory as described
-[above](#build-options), and coverage has its own
-[local workflow](#code-coverage).
+[above](#configurations).
 
 ## Clean and uninstall
 
 ```sh
 meson compile -C build --clean     # remove build outputs, keep configuration
+meson setup --wipe build           # recreate build/ from scratch
 ninja -C build uninstall           # remove files from the last install
-meson setup --wipe build           # recreate the build directory
 ```
 
 `--clean` keeps the configuration, so the next build does not need to
 reconfigure. `uninstall` is Meson's built-in target, run through the Ninja
 backend; it removes the files recorded by the most recent `meson install` from
-that build directory, without deleting build outputs. Reconfigure or wipe the
-build directory when changing options or the prefix instead of installing over
-an existing tree.
+that build directory, without deleting build outputs.
 
 ## Troubleshooting
+
+**`ld: library 'c++' not found`, or `<algorithm> file not found` on macOS.**
+The selected compiler may need an explicit SDK path. Set
+`export SDKROOT="$(xcrun --show-sdk-path)"` in the build shell (or IDE)
+before running `meson setup`. AppleClang can normally locate its SDK itself.
+
+**clangd reports missing includes or unknown flags.** `build/compile_commands.json`
+is missing or stale. Run `meson setup build ...`, then restart the language
+server.
 
 **pkg-config cannot find GMP or MPFR.** Install the development packages (for
 example `libgmp-dev` and `libmpfr-dev` on Debian/Ubuntu, `gmp` and `mpfr` with
@@ -300,9 +351,8 @@ Homebrew) and check that `pkg-config --modversion gmp mpfr` works. For
 dependencies in a nonstandard prefix, set `PKG_CONFIG_PATH` before configuring.
 
 **The installed tools cannot load the strategies.** The default strategy
-directory is compiled in from the prefix chosen at configure time; installing
-the same build with a different prefix is unsupported. Reconfigure and rebuild
-to change it.
+directory is compiled in from the prefix chosen at configure time; reconfigure
+and rebuild to change it.
 
 **The `doc` target does not exist.** Doxygen was not found when the build
 directory was configured. Install Doxygen and wipe and reconfigure the
@@ -310,7 +360,7 @@ directory, or configure a new one.
 
 **QD fails to configure.** `-Dqd=enabled` requires a QD installation
 discoverable through `qd.pc` or, failing that, through `libqd` and
-`qd/dd_real.h` in the compiler search paths; install QD, or leave it disabled
+`qd/dd_real.h` and `qd/qd_real.h` in the compiler search paths; install QD, or leave it disabled
 (`-Dqd=disabled`, the default) or automatic (`-Dqd=auto`).
 
 **Meson is too old, or the compiler is rejected.** Meson 1.8 or newer and a

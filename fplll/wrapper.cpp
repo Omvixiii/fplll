@@ -671,7 +671,7 @@ int lll_reduction_z(ZZ_mat<ZT> &b, ZZ_mat<ZT> &u, ZZ_mat<ZT> &u_inv, double delt
   }
   else
   {
-    if (sel_ft <= FT_MPFR)
+    if (FT_DEFAULT <= sel_ft && sel_ft <= FT_MPFR)
     {
       // it's a valid choice but we don't have support for it
       FPLLL_ABORT("Compiled without support for LLL reduction with "
@@ -910,7 +910,7 @@ int hlll_reduction_z(ZZ_mat<ZT> &b, ZZ_mat<ZT> &u, ZZ_mat<ZT> &u_inv, double del
   }
   else
   {
-    if (sel_ft <= FT_MPFR)
+    if (FT_DEFAULT <= sel_ft && sel_ft <= FT_MPFR)
     {
       // it's a valid choice but we don't have support for it
       FPLLL_ABORT("Compiled without support for LLL reduction with "

@@ -13,6 +13,7 @@ import argparse
 import os
 import pathlib
 import platform
+import shlex
 import shutil
 import subprocess
 import sys
@@ -24,16 +25,16 @@ KNOWN_NON_STANDALONE = set()
 
 def pkg_config_cflags():
     if shutil.which("pkg-config") is None:
-        return []
+        raise RuntimeError("pkg-config is required to validate installed headers")
     result = subprocess.run(
-        ["pkg-config", "--cflags", "gmp", "mpfr"],
+        ["pkg-config", "--cflags", "fplll"],
         capture_output=True,
         text=True,
         check=False,
     )
     if result.returncode != 0:
-        return []
-    return result.stdout.split()
+        raise RuntimeError("cannot find fplll.pc; set PKG_CONFIG_PATH to its install directory")
+    return shlex.split(result.stdout)
 
 
 def darwin_sysroot():
@@ -74,7 +75,11 @@ def main():
 
     base_flags = [f"-std={args.std}", "-fsyntax-only", "-I", str(include_dir)]
     base_flags += darwin_sysroot()
-    base_flags += pkg_config_cflags()
+    try:
+        base_flags += pkg_config_cflags()
+    except RuntimeError as error:
+        print(f"error: {error}", file=sys.stderr)
+        return 2
     base_flags += args.extra_cflag
 
     failures = []
@@ -87,7 +92,7 @@ def main():
                 continue
             source = pathlib.Path(workdir) / "check.cpp"
             source.write_text(f"#include <{relative}>\n")
-            command = [args.compiler, *base_flags, str(source)]
+            command = [*shlex.split(args.compiler), *base_flags, str(source)]
             if args.verbose:
                 print("compiling:", " ".join(command))
             result = subprocess.run(command, capture_output=True, text=True, check=False)

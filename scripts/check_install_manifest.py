@@ -77,9 +77,9 @@ def main():
                 errors.append(f"installed private fragment: {entry}")
 
     headers = [entry for entry in installed if entry.startswith("include/")]
-    libraries = [entry for entry in installed if entry.startswith("lib/libfplll")]
+    libraries = [entry for entry in installed if pathlib.PurePosixPath(entry).name.startswith("libfplll")]
     if not libraries:
-        errors.append("no libfplll library found under lib/")
+        errors.append("no libfplll library found in the installation")
     # pkg-config is the downstream consumption interface in the 6.0 layout.
     if not any(entry.endswith("pkgconfig/fplll.pc") for entry in installed):
         errors.append("missing pkg-config metadata: fplll.pc")

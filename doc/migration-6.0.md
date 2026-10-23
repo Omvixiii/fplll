@@ -79,9 +79,9 @@ headers directly must select C++23 themselves.
 | `-DCMAKE_BUILD_TYPE=Release` | `--buildtype=release` |
 | `-DCMAKE_INSTALL_PREFIX=...` | `--prefix ...` |
 | `-DBUILD_SHARED_LIBS=ON` | `--default-library=shared` (default `both`) |
-| `-DCMAKE_CXX_COMPILER_LAUNCHER=ccache` | `CXX="ccache c++" meson setup build` |
+| `-DCMAKE_CXX_COMPILER_LAUNCHER=ccache` | automatic: Meson uses ccache or sccache when installed |
 | `-DCMAKE_CXX_FLAGS=...` | `-Dcpp_args=...` |
-| `-DCMAKE_EXPORT_COMPILE_COMMANDS=ON` | always written as `build/compile_commands.json` |
+| `-DCMAKE_EXPORT_COMPILE_COMMANDS=ON` | always written in the build directory (`build/compile_commands.json` for the developer build) |
 | `find_package(fplll CONFIG)` | pkg-config or `dependency('fplll')` |
 | `cmake --build ... --target package_source`, `distcheck` | `meson dist` |
 | `cmake --build ... --target format`, `lint`, `doc` | `meson compile -C build format`, `lint`, `doc` |
@@ -132,7 +132,8 @@ See the [build guide](building.md) for the full Meson command set.
   clock. `RandGenInt` is thread-safe.
 - Command-line numeric options and `Z_NR<long>`/`FP_NR<double>` string parsing
   use `std::from_chars` and reject malformed values instead of silently
-  accepting them.
+  accepting them. Double overflow and underflow retain their IEEE infinity
+  and signed-zero results through a locale-independent MPFR fallback.
 - Pruner contexts are computed at first use with GMP/MPFR instead of being
   parsed from generated 4,100-line tables; numeric behaviour and
   `PRUNER_MAX_N` are unchanged.

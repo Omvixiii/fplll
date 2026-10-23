@@ -53,8 +53,7 @@ fplll_sources = files(
   'pruner/pruner.cpp',
 ) + parallel_enum_sources
 
-# The compiled-in default strategy path should follow CMAKE_INSTALL_PREFIX-style
-# configuration, so only this translation unit is recompiled on a prefix change.
+# Only this translation unit needs rebuilding when the configured prefix changes.
 strategy_define_args = [
   '-DFPLLL_DEFAULT_STRATEGY_PATH="' + strategy_dir + '"',
   '-DFPLLL_DEFAULT_STRATEGY="' + strategy_dir / 'default.json' + '"',
@@ -66,6 +65,7 @@ bkz_param_object = static_library(
   dependencies: public_deps + private_deps,
   cpp_args: strategy_define_args,
   pic: true,
+  build_by_default: false,
   install: false,
 )
 
@@ -87,11 +87,16 @@ fplll_dep = declare_dependency(
   include_directories: fplll_inc,
   dependencies: public_deps,
 )
-meson.override_dependency('fplll', fplll_dep)
+if get_option('default_library') == 'both'
+  meson.override_dependency('fplll', fplll_dep.as_shared(), static: false)
+  meson.override_dependency('fplll', fplll_dep.as_static(), static: true)
+else
+  meson.override_dependency('fplll', fplll_dep)
+endif
 
 # --- Optional variant libraries for packagers -----------------------------
-# These are never built by default and never installed; they enable fplll's
-# DEBUG macro and are independent of the compiler buildtype.
+# These are never built by default and never installed. Only fpllld enables
+# fplll's DEBUG macro, independently of the compiler buildtype.
 variant_sources = fplll_sources + files('bkz_param.cpp')
 fplllv_lib = library(
   'fplllv',
@@ -125,14 +130,7 @@ pc_requires = [mpfr_dep, gmp_dep]
 if with_qd and qd_via_pkgconfig
   pc_requires += qd_dep
 endif
-pc_extra_cflags = []
-pc_private_libs = []
-if host_machine.system() != 'windows'
-  pc_extra_cflags += '-pthread'
-  pc_private_libs += '-pthread'
-endif
-pc_private_libs += qd_linked_privately
-# Private link flags (external enumeration, libatomic, dependency paths) are
+# Private link flags (external enumeration and dependency paths) are
 # derived automatically from the library's dependency closure.
 pkgconfig.generate(
   fplll_lib,
@@ -141,8 +139,7 @@ pkgconfig.generate(
   description: 'Lattice algorithms using floating-point arithmetic',
   version: meson.project_version(),
   requires: pc_requires,
-  extra_cflags: pc_extra_cflags,
-  libraries_private: pc_private_libs,
+  libraries: pc_public_libs,
   install_dir: get_option('libdir') / 'pkgconfig',
 )
 

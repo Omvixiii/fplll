@@ -50,11 +50,12 @@ endif
 
 # --- Dependencies ----------------------------------------------------------
 threads_dep = dependency('threads')
-gmp_dep = dependency('gmp', version: '>=4.2')
-mpfr_dep = dependency('mpfr', version: '>=2.3')
+gmp_dep = dependency('gmp', version: '>=4.2', method: 'pkg-config')
+mpfr_dep = dependency('mpfr', version: '>=2.3', method: 'pkg-config')
 
 public_deps = [gmp_dep, mpfr_dep, threads_dep]
 private_deps = []
+pc_public_libs = [threads_dep]
 
 # Homebrew's mpfr.pc lists -lgmp without gmp's -L flag. Keep the gmp library
 # directory on the link line on macOS so that -lgmp resolves.
@@ -69,17 +70,15 @@ endif
 # the library and headers; fall back to a plain compiler/linker lookup then.
 qd_option = get_option('qd')
 qd_dep = []
-qd_linked_privately = []
 qd_via_pkgconfig = false
 with_qd = false
 if qd_option.allowed()
-  qd_dep = dependency('qd', required: false)
+  qd_dep = dependency('qd', method: 'pkg-config', required: false)
   qd_via_pkgconfig = qd_dep.found()
   if not qd_dep.found()
     qd_library = cpp.find_library('qd', required: false)
-    if qd_library.found() and cpp.has_header('qd/dd_real.h')
-      qd_dep = declare_dependency(dependencies: qd_library)
-      qd_linked_privately = ['-lqd']
+    if qd_library.found() and cpp.has_header('qd/dd_real.h') and cpp.has_header('qd/qd_real.h')
+      qd_dep = qd_library
     endif
   endif
   with_qd = qd_dep.found()
@@ -89,6 +88,10 @@ if qd_option.allowed()
 endif
 if with_qd
   public_deps += qd_dep
+  if not qd_via_pkgconfig
+    # QD operations also appear in installed inline/template definitions.
+    pc_public_libs += qd_dep
+  endif
 endif
 
 # std::atomic needs libatomic only on some targets (for example 32-bit x86).
@@ -103,10 +106,12 @@ int main() {
 '''
 if not cpp.links(atomic_source, name: 'std::atomic without libatomic')
   atomic_dep = cpp.find_library('atomic', required: false)
-  if atomic_dep.length() == 0
+  if not atomic_dep.found() or not cpp.links(
+      atomic_source, dependencies: atomic_dep, name: 'std::atomic with libatomic')
     error('cannot link std::atomic with or without libatomic')
   endif
-  private_deps += atomic_dep
+  public_deps += atomic_dep
+  pc_public_libs += atomic_dep
 endif
 
 # --- Optional external enumeration library --------------------------------
@@ -116,22 +121,24 @@ with_extenum = extenum_library != ''
 extenum_dep = []
 if with_extenum
   if extenum_function == ''
-    extenum_function = fs.name(extenum_library)
+    extenum_function = fs.name(extenum_library).split('.')[0]
     if extenum_function.startswith('lib')
-      extenum_function = extenum_function.substring(4)
+      extenum_function = extenum_function.substring(3)
     endif
-    foreach suffix : ['.so', '.dylib', '.a']
-      if extenum_function.endswith(suffix)
-        extenum_function = extenum_function.substring(0, extenum_function.length() - suffix.length())
-      endif
-    endforeach
+  endif
+  if extenum_function == '' or extenum_function != extenum_function.underscorify() or extenum_function.substring(0, 1) in ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
+    error('extenum_function must be a C++ identifier')
   endif
   if fs.is_absolute(extenum_library) or extenum_library.contains('/')
+    extenum_library = meson.project_source_root() / extenum_library
+    if not fs.is_file(extenum_library)
+      error('external enumeration library not found: ' + extenum_library)
+    endif
     extenum_dep = [declare_dependency(link_args: [extenum_library])]
   else
     hint_dirs = []
     if get_option('extenum_dir') != ''
-      hint_dirs += get_option('extenum_dir')
+      hint_dirs += meson.project_source_root() / get_option('extenum_dir')
     endif
     extenum_dep = [cpp.find_library(extenum_library, dirs: hint_dirs, required: true)]
   endif
@@ -170,6 +177,22 @@ endif
 
 subdir('fplll')
 subdir('tools')
+
+# Meson rewrites Darwin install names to absolute paths. Preserve the relative
+# lookup encoded by install_rpath so staged installations remain runnable.
+if host_machine.system() == 'darwin' and get_option('default_library') != 'static'
+  installed_shared_lib = fplll_lib
+  if get_option('default_library') == 'both'
+    installed_shared_lib = fplll_lib.get_shared_lib()
+  endif
+  meson.add_install_script(
+    import('python').find_installation(),
+    files('meson/fix_darwin_install.py'),
+    get_option('libdir'), get_option('bindir'), fs.name(installed_shared_lib.full_path()),
+    find_program('install_name_tool').full_path(), find_program('codesign').full_path(),
+    install_tag: 'runtime',
+  )
+endif
 
 install_data(
   'strategies/default.json',

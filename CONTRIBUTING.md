@@ -22,17 +22,19 @@ git clone git@github.com:my-github-name/fplll.git
 
 Install Meson 1.8 or newer, Ninja, a C++23-capable compiler, GMP and MPFR
 development packages, and pkg-config. Install Meson with
-`uv tool install meson` or `pipx install meson`. Configure, build, and run the
-tests:
+`uv tool install meson` or `pipx install meson`. If a macOS compiler cannot find SDK headers or libc++, set
+`export SDKROOT="$(xcrun --show-sdk-path)"` before configuring. Configure, build, and run the tests:
 
 ```sh
-meson setup build
+meson setup build --buildtype=debugoptimized
 meson compile -C build
 meson test -C build --print-errorlogs
 ```
 
-The default configuration builds both libraries and registers the test suite.
-Use a separate build directory for each configuration; see the
+`build/` is the canonical developer build directory, and its
+`build/compile_commands.json` feeds clangd and clang-tidy; see
+[editor and tooling setup](doc/building.md#editor-and-tooling-setup). Use a
+separate `build-<name>/` directory for every other configuration; see the
 [build guide](doc/building.md) for options, diagnostics, and output locations.
 
 For an optimized validation build:
@@ -116,12 +118,12 @@ We want your submission. But we also want to provide a stable experience for our
 
 ### Run the tests
 
-Before you submit a pull request, configure, build, and run the tests:
+Before you submit a pull request, run the test suite and the formatting check:
 
 ```sh
-meson setup build
 meson compile -C build
 meson test -C build --print-errorlogs
+meson compile -C build lint
 ```
 
 Use an optimized build directory to validate release behaviour. Changes to
@@ -201,21 +203,14 @@ void formatted_code_again;
 
 ### Faster compilation
 
-Meson rebuilds incrementally. Install ccache and configure with an explicit
-compiler wrapper:
-
-```sh
-CXX="ccache c++" meson setup build
-```
-
-The compiler wrapper is recorded at configure time; use a new build directory
-(or `meson setup --wipe build`) when changing it. Keep one build directory per
-configuration (debug, release, sanitizers) instead of reconfiguring one
-directory back and forth, and use `-Dtests=false -Dbenchmarks=false` in a
-throwaway directory for quick compile-only checks. Lowering
-`-Dmax_parallel_enum_dim` (for example to `20`) compiles fewer enumeration
-specializations; this changes the configured capability, so keep the default
-`120` for release validation. See the
+Meson rebuilds incrementally. Install `ccache` or `sccache` and Meson picks it
+up automatically the next time a build directory is configured; no compiler
+wrapper is needed. Keep one build directory per configuration (developer,
+release, sanitizers) instead of reconfiguring one directory back and forth, and
+use `-Dtests=false -Dbenchmarks=false` in a throwaway directory for quick
+compile-only checks. Lowering `-Dmax_parallel_enum_dim` (for example to `20`)
+compiles fewer enumeration specializations; this changes the configured
+capability, so keep the default `120` for release validation. See the
 [build guide](doc/building.md#build-options) for all options.
 
 ### Attribution

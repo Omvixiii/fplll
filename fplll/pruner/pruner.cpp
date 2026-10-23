@@ -154,7 +154,7 @@ int run_pruner(ZZ_mat<mpz_t> &B, FloatType float_type, int precision, int prune_
   }
   else
   {
-    if (sel_ft <= FT_MPFR)
+    if (FT_DEFAULT <= sel_ft && sel_ft <= FT_MPFR)
     {
       FPLLL_ABORT("Compiled without support for run_pruner() with "
                   << FLOAT_TYPE_STR[enum_index(sel_ft)]);
@@ -193,15 +193,15 @@ template <class FT> void Pruner<FT>::set_tabulated_consts()
   {
     if (i > 0)
       mpz_mul_ui(factorial, factorial, static_cast<unsigned long>(i));
-    char *decimal          = mpz_get_str(nullptr, 10, factorial);
-    tabulated_factorial[i] = decimal;
-    std::free(decimal);
+    std::string decimal(mpz_sizeinbase(factorial, 10) + 2, '\0');
+    mpz_get_str(decimal.data(), 10, factorial);
+    tabulated_factorial[i] = decimal.c_str();
   }
   mpz_clear(factorial);
 
   // Volume of the unit ball in dimension i: pi^(i/2) / Gamma(i/2 + 1).
-  mpfr_t pi, exponent, value, gamma, tmp;
-  mpfr_inits2(256, pi, exponent, value, gamma, tmp, static_cast<mpfr_ptr>(nullptr));
+  mpfr_t pi, value, gamma, tmp;
+  mpfr_inits2(256, pi, value, gamma, tmp, static_cast<mpfr_ptr>(nullptr));
   mpfr_const_pi(pi, MPFR_RNDN);
   for (int i = 0; i < PRUNER_MAX_N; ++i)
   {
@@ -212,16 +212,9 @@ template <class FT> void Pruner<FT>::set_tabulated_consts()
     mpfr_gamma(gamma, tmp, MPFR_RNDN);
     mpfr_div(value, value, gamma, MPFR_RNDN);
 
-    mpfr_exp_t decimal_exponent = 0;
-    char *mantissa              = mpfr_get_str(nullptr, &decimal_exponent, 10, 0, value, MPFR_RNDN);
-    std::string text            = "0.";
-    text += mantissa;
-    text += "e";
-    text += std::to_string(decimal_exponent);
-    tabulated_ball_vol[i] = text.c_str();
-    mpfr_free_str(mantissa);
+    tabulated_ball_vol[i].set_mpfr(value);
   }
-  mpfr_clears(pi, exponent, value, gamma, tmp, static_cast<mpfr_ptr>(nullptr));
+  mpfr_clears(pi, value, gamma, tmp, static_cast<mpfr_ptr>(nullptr));
   mpfr_free_cache();
 
   tabulated_values_imported = 1;

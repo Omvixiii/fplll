@@ -1,6 +1,10 @@
 # Build and install trees
-/build*/
+/build/
+/build-*/
 /_install/
+
+# Stray compilation database (Meson writes it inside the build directory)
+/compile_commands.json
 
 # Local working notes and editor configuration
 /notes/

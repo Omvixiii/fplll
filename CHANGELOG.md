@@ -17,6 +17,9 @@ API, and replaces the generated pruner tables with runtime computation.  See
 - Remove the MPIR backend, the recursive-enumeration build switch and the
   `ZZ_mat<double>` integer backend.
 - Replace build presets with Meson options and independent build directories.
+- Make `build/` the canonical Meson developer build directory and point clangd
+  at its compilation database; every other configuration uses a sibling
+  `build-<name>/` directory.
 - Generate configuration headers and enumeration sources in the build tree;
   keep libraries, executables and test working directories there as well.
 - Provide shared and static libraries (`both` by default), optional debug and

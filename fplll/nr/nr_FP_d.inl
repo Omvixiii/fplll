@@ -106,7 +106,18 @@ template <> inline FP_NR<double> &FP_NR<double>::operator=(const char *s)
   const char *end   = s + std::strlen(s);
   double parsed     = 0.0;
   const auto result = std::from_chars(s, end, parsed);
-  data              = (result.ec == std::errc() && result.ptr == end) ? parsed : 0.0;
+  if (result.ec == std::errc::result_out_of_range && result.ptr == end)
+  {
+    // from_chars leaves the result unchanged on range errors. Preserve IEEE
+    // overflow and underflow without using a locale-dependent parser.
+    mpfr_t wide;
+    mpfr_init2(wide, PREC_DOUBLE);
+    mpfr_set_str(wide, s, 10, MPFR_RNDN);
+    data = mpfr_get_d(wide, MPFR_RNDN);
+    mpfr_clear(wide);
+    return *this;
+  }
+  data = (result.ec == std::errc() && result.ptr == end) ? parsed : 0.0;
   return *this;
 }
 

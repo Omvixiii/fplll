@@ -6,6 +6,7 @@ test_names = [
   'test_svp',
   'test_bkz',
   'test_pruner',
+  'test_pruner_memory',
   'test_gso',
   'test_lll_gram',
   'test_hlll',

@@ -117,6 +117,19 @@ template <class FT> int test_root()
   return status;
 }
 
+int test_double_range_parsing()
+{
+  FP_NR<double> positive = "1e309", negative = "-1e309", tiny = "-1e-400", invalid = "1e309junk";
+  if (!std::isinf(positive.get_d()) || positive.get_d() < 0 || !std::isinf(negative.get_d()) ||
+      negative.get_d() > 0 || tiny.get_d() != 0.0 || !std::signbit(tiny.get_d()) ||
+      invalid.get_d() != 0.0)
+  {
+    cerr << "test_nr failed: double range parsing\n";
+    return 1;
+  }
+  return 0;
+}
+
 int test_integer_parsing()
 {
   Z_NR<long> value;
@@ -170,6 +183,7 @@ int main()
 
   int status = 0;
   status |= test_integer_parsing();
+  status |= test_double_range_parsing();
   status |= test_scoped_precision();
   status |= test_arithmetic<FP_NR<double>>();
 #ifdef FPLLL_WITH_LONG_DOUBLE
