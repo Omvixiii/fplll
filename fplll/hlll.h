@@ -142,7 +142,7 @@ template <class ZT, class FT> inline void HLLLReduction<ZT, FT>::compute_dR(int 
 template <class ZT, class FT> inline void HLLLReduction<ZT, FT>::compute_eR(int k)
 {
   m.get_R(eR[k], k, k);
-  eR[k].mul(delta, eR[k]);  // eR[k] = eta * R(k, k)
+  eR[k].mul(eta, eR[k]);  // eR[k] = eta * R(k, k)
 }
 
 template <class ZT, class FT> inline bool HLLLReduction<ZT, FT>::set_status(int new_status)

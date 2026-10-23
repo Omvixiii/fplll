@@ -177,7 +177,8 @@ int hlll_min_prec(int d_i, int n_i, double delta_d, double eta_d, double theta_d
   ftmp1 = 4.0 * ftmp2 / (1.0 + eta) * ftmp3;
   // ftmp0 = max(1 + |1 - eta - theta| * alpha / ((eta + theta) * (-1 + sqrt(3/2))),
   //             4 * sqrt(6) / (1 + eta) * sqrt(1 + d * eta^2))
-  ftmp0.max_f(ftmp1);
+  if (ftmp1 > ftmp0)
+    ftmp0 = ftmp1;
   // c0 = max(...) * n * sqrt(d)
   c0 = ftmp0 * n * ftmp4;
 

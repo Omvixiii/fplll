@@ -200,6 +200,11 @@ template <> inline void Z_NR<mpz_t>::swap(Z_NR<mpz_t> &a) { mpz_swap(data, a.dat
 /** random numbers */
 template <> inline void Z_NR<mpz_t>::randb(int bits)
 {
+  if (bits < 0)
+  {
+    FPLLL_ABORT("randb: number of bits must be non-negative");
+    return;
+  }
   mpz_urandomb(data, RandGen::get_gmp_state(), bits);
   if (bits > 32)
   {

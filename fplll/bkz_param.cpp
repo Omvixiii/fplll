@@ -61,6 +61,10 @@ const std::string &default_strategy()
 
 const PruningParams &Strategy::get_pruning(double radius, double gh) const
 {
+  static const PruningParams fallback;
+  if (pruning_parameters.empty())
+    return fallback;
+
   double gh_factor    = radius / gh;
   double closest_dist = pow(2, 80);
   auto best           = pruning_parameters.begin();
@@ -93,13 +97,25 @@ vector<Strategy> load_strategies_json(std::string_view filename)
     fs >> js;
   }
 
+  if (!js.is_array())
+    throw std::invalid_argument("strategy file '" + std::string(filename) +
+                                "' must contain a JSON array");
+
   vector<Strategy> strategies;
 
   for (auto it = js.begin(); it != js.end(); ++it)
   {
-    const json &j_strat     = *it;
-    const size_t block_size = j_strat["block_size"];
-    FPLLL_DEBUG_CHECK(block_size < 4096);  // some arbitrary upper limit
+    const json &j_strat = *it;
+    if (!j_strat.is_object())
+      throw std::invalid_argument("strategy entries must be JSON objects");
+
+    const auto block_it = j_strat.find("block_size");
+    if (block_it == j_strat.end() || !block_it->is_number_integer())
+      throw std::invalid_argument("strategy entry without an integer 'block_size'");
+    const long long block_size_signed = block_it->get<long long>();
+    if (block_size_signed < 0 || block_size_signed > 4096)
+      throw std::invalid_argument("strategy block_size out of range (0..4096)");
+    const size_t block_size = static_cast<size_t>(block_size_signed);
 
     // ensure to add this strategy in the right place
     while (strategies.size() <= block_size)
@@ -112,38 +128,62 @@ vector<Strategy> load_strategies_json(std::string_view filename)
 
     if (j_strat.find("preprocessing_block_sizes") != j_strat.end())
     {
-      for (auto p_it = j_strat["preprocessing_block_sizes"].begin();
-           p_it != j_strat["preprocessing_block_sizes"].end(); ++p_it)
+      const json &preprocessing = j_strat["preprocessing_block_sizes"];
+      if (!preprocessing.is_array())
+        throw std::invalid_argument("'preprocessing_block_sizes' must be an array");
+      for (auto p_it = preprocessing.begin(); p_it != preprocessing.end(); ++p_it)
       {
-        if ((*p_it).is_number())
+        long long pre_block = -1;
+        if (p_it->is_number_integer())
         {
-          strategy.preprocessing_block_sizes.emplace_back((*p_it).get<int>());
+          pre_block = p_it->get<long long>();
+        }
+        else if (p_it->is_object())
+        {
+          const auto pre_it = p_it->find("block_size");
+          if (pre_it == p_it->end() || !pre_it->is_number_integer())
+            throw std::invalid_argument(
+                "'preprocessing_block_sizes' entry without an integer block_size");
+          pre_block = pre_it->get<long long>();
         }
         else
         {
-          strategy.preprocessing_block_sizes.emplace_back((*p_it)["block_size"]);
+          throw std::invalid_argument("invalid 'preprocessing_block_sizes' entry");
         }
+        if (pre_block < 0 || pre_block > 4096)
+          throw std::invalid_argument("preprocessing block size out of range (0..4096)");
+        strategy.preprocessing_block_sizes.emplace_back(static_cast<size_t>(pre_block));
       }
     }
 
     if (j_strat.find("pruning_parameters") != j_strat.end())
     {
-      for (auto p_it = j_strat["pruning_parameters"].begin();
-           p_it != j_strat["pruning_parameters"].end(); ++p_it)
+      const json &pruning_parameters = j_strat["pruning_parameters"];
+      if (!pruning_parameters.is_array())
+        throw std::invalid_argument("'pruning_parameters' must be an array");
+      for (auto p_it = pruning_parameters.begin(); p_it != pruning_parameters.end(); ++p_it)
       {
         const json &j_prun = *p_it;
+        if (!j_prun.is_array() || j_prun.size() < 3 || !j_prun[0].is_number() ||
+            !j_prun[1].is_array() || !j_prun[2].is_number())
+        {
+          throw std::invalid_argument(
+              "pruning entries must start with [gh_factor, coefficients, expectation]");
+        }
         PruningParams pruning;
-        pruning.gh_factor = j_prun[0];
+        pruning.gh_factor = j_prun[0].get<double>();
 
         for (auto c_it = j_prun[1].begin(); c_it != j_prun[1].end(); ++c_it)
         {
-          double c = (*c_it);
-          pruning.coefficients.emplace_back(c);
+          if (!c_it->is_number())
+            throw std::invalid_argument("pruning coefficients must be numbers");
+          pruning.coefficients.emplace_back(c_it->get<double>());
         }
-        pruning.expectation = j_prun[2];
+        pruning.expectation = j_prun[2].get<double>();
+        if (!(pruning.expectation > 0.0 && pruning.expectation <= 1.0))
+          throw std::invalid_argument("pruning expectation must be in (0, 1]");
         // TODO: don't hardcode success probability as metric
         pruning.metric = PRUNER_METRIC_PROBABILITY_OF_SHORTEST;
-        FPLLL_DEBUG_CHECK(pruning.expectation > 0.0 && pruning.expectation <= 1.0);
 
         strategy.pruning_parameters.emplace_back(pruning);
       }

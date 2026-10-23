@@ -18,6 +18,9 @@
 #include "main.h"
 #include <fplll/fplll_config.h>
 
+#include <cmath>
+#include <exception>
+
 template <class ZT> int lll(Options &o, ZZ_mat<ZT> &b)
 {
   // Stupid initialization of u and u_inv to be not empty.
@@ -99,6 +102,7 @@ template <class ZT> int bkz(Options &, ZZ_mat<ZT> &) { ABORT_MSG("mpz required f
 template <> int bkz(Options &o, ZZ_mat<mpz_t> &b)
 {
   CHECK(o.block_size > 0, "Option -b is missing");
+  CHECK(o.block_size >= 2, "Option -b must be at least 2");
   vector<Strategy> strategies;
   if (!o.bkz_strategy_file.empty())
   {
@@ -396,14 +400,18 @@ template <> int prune(Options &o, ZZ_mat<mpz_t> &b)
 
 template <class ZT> int run_action(Options &o)
 {
-  istream *is;
+  ifstream input;
+  istream *is = &cin;
   ZZ_mat<ZT> m;
   vector<Z_NR<ZT>> target;
 
   if (o.input_file)
-    is = new ifstream(o.input_file);
-  else
-    is = &cin;
+  {
+    input.open(o.input_file);
+    if (!input.is_open())
+      ABORT_MSG("cannot open input file '" << o.input_file << "'");
+    is = &input;
+  }
 
   *is >> m;
   if (o.action == ACTION_CVP)
@@ -412,8 +420,6 @@ template <class ZT> int run_action(Options &o)
   }
   if (!*is)
     ABORT_MSG("invalid input");
-  if (o.input_file)
-    delete is;
 
   int result = 0;
   switch (o.action)
@@ -743,9 +749,26 @@ void read_options(int argc, char **argv, Options &o)
       o.input_file = argv[ac];
     }
   }
+
+  if (!std::isfinite(o.delta) || o.delta <= 0.25 || o.delta >= 1.0)
+    ABORT_MSG("Option -d/-delta must be a finite value in (0.25, 1)");
+  if (!std::isfinite(o.eta) || o.eta <= 0.5 || o.eta >= 1.0)
+    ABORT_MSG("Option -e/-eta must be a finite value in (0.5, 1)");
+  if (!std::isfinite(o.theta) || o.theta <= 0.0 || o.theta >= 1.0)
+    ABORT_MSG("Option -t/-theta must be a finite value in (0, 1)");
+  if (!std::isfinite(o.c) || o.c <= 0.0)
+    ABORT_MSG("Option -c/-r must be a positive finite number");
+  if (o.precision < 0)
+    ABORT_MSG("Option -p must be a non-negative integer");
+  if (!std::isfinite(o.bkz_max_time) || o.bkz_max_time < 0.0)
+    ABORT_MSG("Option -bkzmaxtime must be a non-negative finite number");
+  if (!std::isfinite(o.bkz_gh_factor) || o.bkz_gh_factor <= 0.0)
+    ABORT_MSG("Option -bkzghbound must be a positive finite number");
+  if (o.bkz_max_loops < 0)
+    ABORT_MSG("Option -bkzmaxloops must be non-negative");
 }
 
-int main(int argc, char **argv)
+int run_main(int argc, char **argv)
 {
   int result;
   Options o;
@@ -766,4 +789,17 @@ int main(int argc, char **argv)
     ABORT_MSG("compiled without support for this integer type");
   }
   return result;
+}
+
+int main(int argc, char **argv)
+{
+  try
+  {
+    return run_main(argc, argv);
+  }
+  catch (const std::exception &error)
+  {
+    std::cerr << "fplll: " << error.what() << '\n';
+    return 1;
+  }
 }

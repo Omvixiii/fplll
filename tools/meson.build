@@ -1,4 +1,4 @@
-executable(
+fplll_tool = executable(
   'fplll',
   'main.cpp',
   dependencies: fplll_dep,
@@ -6,7 +6,7 @@ executable(
   install_rpath: tool_install_rpath,
 )
 
-executable(
+latticegen_tool = executable(
   'latticegen',
   'latticegen.cpp',
   dependencies: fplll_dep,

@@ -18,6 +18,10 @@
 #include <fplll/fplll_config.h>
 #include <fplll/nr/matrix.h>
 
+#include <climits>
+#include <cmath>
+#include <exception>
+
 #include "main.h"
 
 using namespace fplll;
@@ -55,7 +59,7 @@ void fatal_error(const char *message)
   exit(1);
 }
 
-int main(int argc, char *argv[])
+int run_latticegen(int argc, char *argv[])
 {
   int iArg = 1;
 
@@ -91,6 +95,11 @@ int main(int argc, char *argv[])
   int d          = parse_option<int>(argv[iArg + 1], "option");
   iArg += 2;
 
+  if (d < 1)
+    fatal_error("dimension must be a positive integer");
+  if (d > INT_MAX / 2)
+    fatal_error("dimension is too large");
+
   ZZ_mat<mpz_t> m;
 
   // initialization+filling of the matrix
@@ -101,6 +110,8 @@ int main(int argc, char *argv[])
     if (argc - iArg < 1)
       fatal_error("method 'r' requires 2 arguments");
     int b = parse_option<int>(argv[iArg], "option");
+    if (b <= 0)
+      fatal_error("parameter b must be at least 1");
     m.resize(d, d + 1);
     m.gen_intrel(b);
     break;
@@ -111,6 +122,8 @@ int main(int argc, char *argv[])
       fatal_error("method 's' requires 3 arguments");
     int b  = parse_option<int>(argv[iArg], "option");
     int b2 = parse_option<int>(argv[iArg + 1], "option");
+    if (b <= 0 || b2 <= 0)
+      fatal_error("parameters b and b2 must be at least 1");
     m.resize(d + 1, d + 1);
     m.gen_simdioph(b, b2);
     break;
@@ -120,6 +133,8 @@ int main(int argc, char *argv[])
     if (argc - iArg < 1)
       fatal_error("method 'u' requires 2 arguments");
     int b = parse_option<int>(argv[iArg], "option");
+    if (b <= 0)
+      fatal_error("parameter b must be at least 1");
     m.resize(d, d);
     m.gen_uniform(b);
     break;
@@ -196,6 +211,8 @@ int main(int argc, char *argv[])
       fatal_error("method 'q' requires 4 arguments");
     int k  = parse_option<int>(argv[iArg], "option");
     char c = argv[iArg + 2][0];
+    if (k < 0 || k > d)
+      fatal_error("parameter k must be between 0 and the dimension");
     m.resize(d, d);
     switch (c)
     {
@@ -237,6 +254,8 @@ int main(int argc, char *argv[])
     if (argc - iArg < 1)
       fatal_error("method 't' requires 2 arguments");
     double alpha = parse_option<double>(argv[iArg], "option");
+    if (!std::isfinite(alpha) || alpha <= 0)
+      fatal_error("parameter f must be a positive finite number");
     m.resize(d, d);
     m.gen_trg(alpha);
     break;
@@ -265,4 +284,17 @@ int main(int argc, char *argv[])
   }
   cout << m << '\n';
   return 0;
+}
+
+int main(int argc, char *argv[])
+{
+  try
+  {
+    return run_latticegen(argc, argv);
+  }
+  catch (const std::exception &error)
+  {
+    cerr << "latticegen: " << error.what() << '\n';
+    return 1;
+  }
 }

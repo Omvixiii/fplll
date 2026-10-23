@@ -283,6 +283,11 @@ public:
   */
   static inline void gen_q(int bits, Z_NR<ZT> &q)
   {
+    if (bits < 1)
+    {
+      FPLLL_ABORT("gen_q: bits must be positive");
+      return;
+    }
     Z_NR<ZT> pow2;
     pow2 = 1;
     pow2.mul_2si(pow2, bits - 1);

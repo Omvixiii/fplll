@@ -407,7 +407,7 @@ template <class F> bool Wrapper::call_hlll(LLLMethod method, int precision)
   MatHouseholder<Z_NR<mpz_t>, FT> m(b, u, u_inv, householder_flags);
   HLLLReduction<Z_NR<mpz_t>, FT> hlll_obj(m, delta, eta, theta, c, flags);
   hlll_obj.hlll();
-  int status = hlll_obj.get_status();
+  this->status = hlll_obj.get_status();
 
   if (flags & LLL_VERBOSE)
   {
@@ -416,10 +416,7 @@ template <class F> bool Wrapper::call_hlll(LLLMethod method, int precision)
                  << '\n';
   }
 
-  if (status == RED_SUCCESS)
-    return true;
-  else
-    return false;
+  return this->status == RED_SUCCESS;
 }
 
 /**
@@ -455,7 +452,7 @@ template <class F> bool Wrapper::proved_hlll(int precision)
 bool Wrapper::hlll()
 {
   if (b.get_rows() == 0 || b.get_cols() == 0)
-    return RED_SUCCESS;
+    return true;
 
   int last_prec      = numeric_limits<double>::digits;
   bool hlll_complete = false;
@@ -484,11 +481,10 @@ bool Wrapper::hlll()
 
   /* loop */
   if (!hlll_complete)
-    hlll_complete = hlll_proved_loop(last_prec);
+    (void)hlll_proved_loop(last_prec);
 
-  hlll_complete = last_hlll();
-
-  return hlll_complete == RED_SUCCESS;
+  // The final call must be proved.
+  return last_hlll();
 }
 
 /**
@@ -718,9 +714,11 @@ int hlll_reduction_wrapper(ZZ_mat<mpz_t> &b, ZZ_mat<mpz_t> &u, ZZ_mat<mpz_t> &u_
               "The floating point type cannot be specified with the wrapper method");
   FPLLL_CHECK(precision == 0, "The precision cannot be specified with the wrapper method");
   Wrapper wrapper(b, u, u_inv, delta, eta, theta, c, flags);
-  wrapper.hlll();
+  const bool complete = wrapper.hlll();
   zeros_first(b, u, u_inv);
-  return wrapper.status;
+  if (complete)
+    return RED_SUCCESS;
+  return wrapper.status != RED_SUCCESS ? wrapper.status : RED_HLLL_FAILURE;
 }
 
 template <class ZT, class FT>

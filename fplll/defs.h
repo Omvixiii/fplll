@@ -77,15 +77,17 @@ void set_log_stream(std::ostream *stream);
     ::fplll::log_stream() << x << '\n';                                                            \
   }
 #define FPLLL_ABORT(x)                                                                             \
+  do                                                                                               \
   {                                                                                                \
-    cerr << "fplll: " << x << '\n';                                                                \
-    abort();                                                                                       \
-  }
+    std::cerr << "fplll: " << x << '\n';                                                           \
+    std::abort();                                                                                  \
+  } while (false)
 #define FPLLL_CHECK(x, y)                                                                          \
+  do                                                                                               \
   {                                                                                                \
     if (!(x))                                                                                      \
       FPLLL_ABORT(y);                                                                              \
-  }
+  } while (false)
 
 #ifdef DEBUG
 #include <cassert>

@@ -233,6 +233,11 @@ template <class ZT> inline void ZZ_mat<ZT>::gen_intrel(int bits)
     FPLLL_ABORT("gen_intrel called on an ill-formed matrix");
     return;
   }
+  if (bits <= 0)
+  {
+    FPLLL_ABORT("gen_intrel: bits must be positive");
+    return;
+  }
   int i, j;
   for (i = 0; i < r; i++)
   {
@@ -254,6 +259,11 @@ template <class ZT> inline void ZZ_mat<ZT>::gen_simdioph(int bits, int bits2)
   if (c != r)
   {
     FPLLL_ABORT("gen_simdioph called on an ill-formed matrix");
+    return;
+  }
+  if (bits <= 0 || bits2 <= 0)
+  {
+    FPLLL_ABORT("gen_simdioph: bits must be positive");
     return;
   }
   int i, j;
@@ -278,6 +288,11 @@ template <class ZT> inline void ZZ_mat<ZT>::gen_uniform(int bits)
   if (c != r)
   {
     FPLLL_ABORT("gen_uniform called on an ill-formed matrix");
+    return;
+  }
+  if (bits <= 0)
+  {
+    FPLLL_ABORT("gen_uniform: bits must be positive");
     return;
   }
   for (int i = 0; i < r; i++)
@@ -408,7 +423,7 @@ template <class ZT> inline void ZZ_mat<ZT>::gen_qary(int k, const Z_NR<ZT> &q)
 {
   int i, j;
   int d = r;
-  if (c != r || k > r)
+  if (c != r || k < 0 || k > r)
   {
     FPLLL_ABORT("gen_qary called on an ill-formed matrix");
     return;
@@ -447,10 +462,21 @@ template <class ZT> inline void ZZ_mat<ZT>::gen_trg(double alpha)
     FPLLL_ABORT("gen_trg called on an ill-formed matrix");
     return;
   }
+  if (!std::isfinite(alpha) || alpha <= 0)
+  {
+    FPLLL_ABORT("gen_trg: alpha must be positive and finite");
+    return;
+  }
 
   for (i = 0; i < d; i++)
   {
-    bits = (int)pow((double)(2 * d - i), alpha);
+    const double bits_f = pow(static_cast<double>(2 * d - i), alpha);
+    if (!std::isfinite(bits_f) || bits_f > static_cast<double>(INT_MAX))
+    {
+      FPLLL_ABORT("gen_trg: coefficient exponent is out of range");
+      return;
+    }
+    bits = static_cast<int>(bits_f);
     ztmp = 1;
     ztmp.mul_2si(ztmp, bits);
     ztmp.sub(ztmp, zone);

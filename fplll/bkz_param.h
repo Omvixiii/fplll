@@ -132,6 +132,14 @@ public:
         strategies.emplace_back(Strategy::EmptyStrategy(b));
       }
     }
+
+    if (strategies.size() <= static_cast<std::size_t>(block_size))
+    {
+      throw std::invalid_argument(
+          "BKZ strategy table does not provide an entry for block size " +
+          std::to_string(block_size) + " (largest available: " +
+          std::to_string(strategies.size() - 1) + ")");
+    }
   };
 
   /** Block size used for enumeration **/

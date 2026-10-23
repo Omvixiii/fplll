@@ -541,6 +541,10 @@ template <class ZT, class FT> bool BKZReduction<ZT, FT>::bkz()
   if (param.block_size < 2)
     return set_status(RED_SUCCESS);
 
+  // An all-zero basis has no rows left to reduce; hkz() would index row -1.
+  if (num_rows < 2)
+    return set_status(RED_SUCCESS);
+
   int i = 0;
 
   BKZAutoAbort<ZT, FT> auto_abort(m, num_rows);
@@ -751,8 +755,8 @@ void BKZReduction<ZT, FT>::dump_gso(std::string_view filename, bool append, std:
   }
   catch (const ios_base::failure &e)
   {
-    log_stream() << "Cannot open " << filename << '\n';
-    throw;
+    log_stream() << "Cannot write " << filename << '\n';
+    throw std::runtime_error("cannot write GSO dump file '" + std::string(filename) + "'");
   }
 
   try
@@ -764,8 +768,8 @@ void BKZReduction<ZT, FT>::dump_gso(std::string_view filename, bool append, std:
   }
   catch (const ios_base::failure &e)
   {
-    log_stream() << "Cannot open " << filename << '\n';
-    throw;
+    log_stream() << "Cannot write " << filename << '\n';
+    throw std::runtime_error("cannot write GSO dump file '" + std::string(filename) + "'");
   }
 
   FT f, log_f;
@@ -794,11 +798,19 @@ void BKZReduction<ZT, FT>::dump_gso(std::string_view filename, bool append, std:
   }
   catch (const ios_base::failure &e)
   {
-    log_stream() << "Cannot open " << filename << '\n';
-    throw;
+    log_stream() << "Cannot write " << filename << '\n';
+    throw std::runtime_error("cannot write GSO dump file '" + std::string(filename) + "'");
   }
 
-  dump.close();
+  try
+  {
+    dump.close();
+  }
+  catch (const ios_base::failure &e)
+  {
+    log_stream() << "Cannot close " << filename << '\n';
+    throw std::runtime_error("cannot close GSO dump file '" + std::string(filename) + "'");
+  }
 }
 
 template <class ZT, class FT> bool BKZAutoAbort<ZT, FT>::test_abort(double scale, int maxNoDec)

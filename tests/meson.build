@@ -15,6 +15,9 @@ test_names = [
   'test_counter',
   'test_babai',
   'test_ceil',
+  'test_config',
+  'test_public_macros',
+  'test_regressions',
 ]
 
 executable(
@@ -37,3 +40,18 @@ foreach name : test_names
   )
   test(name, test_exe, workdir: test_workdir, timeout: 300)
 endforeach
+
+python3 = find_program('python3', required: false)
+if python3.found()
+  test(
+    'cli',
+    python3,
+    args: [
+      meson.current_source_dir() / 'test_cli.py',
+      fplll_tool.full_path(),
+      latticegen_tool.full_path(),
+    ],
+    workdir: test_workdir,
+    timeout: 120,
+  )
+endif

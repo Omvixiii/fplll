@@ -38,6 +38,10 @@ template <class ZT, class FT> bool HLLLReduction<ZT, FT>::hlll()
   // True if the corresponding vector is weak size-reduced
   bool status_sr = true;
 
+  // HLLL works on pairs of rows; a single-row basis is already reduced.
+  if (m.get_d() < 2)
+    return set_status(RED_SUCCESS);
+
   if (verbose)
   {
     // Print the parameters of the computation

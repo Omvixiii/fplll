@@ -393,7 +393,7 @@ public:
    */
 
   inline void dump_mu_d(double *mu, int offset = 0, int block_size = -1);
-  inline void dump_mu_d(vector<double> mu, int offset = 0, int block_size = -1);
+  inline void dump_mu_d(vector<double> &mu, int offset = 0, int block_size = -1);
 
   /**
    * Dump r vector to parameter `r`.
@@ -808,7 +808,7 @@ inline void MatGSOInterface<ZT, FT>::dump_mu_d(double *mu, int offset, int block
 }
 
 template <class ZT, class FT>
-inline void MatGSOInterface<ZT, FT>::dump_mu_d(vector<double> mu, int offset, int block_size)
+inline void MatGSOInterface<ZT, FT>::dump_mu_d(vector<double> &mu, int offset, int block_size)
 {
   FT e;
   if (block_size <= 0)
