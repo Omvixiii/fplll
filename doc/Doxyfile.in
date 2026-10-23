@@ -7,7 +7,7 @@ OUTPUT_DIRECTORY       = @OUTPUT_DIRECTORY@
 OUTPUT_LANGUAGE        = English
 QUIET                  = YES
 WARNINGS               = YES
-INPUT                  = @SOURCE_ROOT@/fplll \
+INPUT                  = @SOURCE_ROOT@/src/fplll \
                          @SOURCE_ROOT@/README.md \
                          @SOURCE_ROOT@/CONTRIBUTING.md \
                          @SOURCE_ROOT@/CHANGELOG.md \

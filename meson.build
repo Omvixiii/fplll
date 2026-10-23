@@ -189,7 +189,7 @@ if host_machine.system() != 'windows'
   endif
 endif
 
-subdir('fplll')
+subdir('src/fplll')
 subdir('tools')
 
 # Meson rewrites Darwin install names to absolute paths. Preserve the relative

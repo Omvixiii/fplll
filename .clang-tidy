@@ -29,6 +29,6 @@ Checks: >
   misc-unused-parameters,
   misc-unused-using-decls
 WarningsAsErrors: ''
-HeaderFilterRegex: '^(fplll|tools|tests)/'
-ExcludeHeaderFilterRegex: '^fplll/io/thread_pool\.hpp$'
+HeaderFilterRegex: '^(src/fplll|tools|tests)/'
+ExcludeHeaderFilterRegex: '^src/fplll/io/thread_pool\.hpp$'
 FormatStyle: file

@@ -15,7 +15,7 @@ else
   configuration.set('FPLLL_EXTENUM_DEFINE', '/* External enumeration is disabled. */')
 endif
 fplll_config_h = configure_file(
-  input: '../meson/fplll_config.h.in',
+  input: '../../meson/fplll_config.h.in',
   output: 'fplll_config.h',
   configuration: configuration,
 )
@@ -26,7 +26,7 @@ if max_parallel_enum_dim > 0
   parallel_enum_sources += files('enum-parallel/enumlib.cpp')
   foreach dimension : range(20, max_parallel_enum_dim + 1, 10)
     parallel_enum_sources += configure_file(
-      input: '../meson/enumlib_dim.cpp.in',
+      input: '../../meson/enumlib_dim.cpp.in',
       output: 'enumlib_dim.@0@.cpp'.format(dimension),
       configuration: {'ENUMDIMENSION': dimension},
     )
@@ -203,4 +203,4 @@ install_headers(
   subdir: 'fplll/pruner',
 )
 install_data(fplll_config_h, install_dir: get_option('includedir') / 'fplll')
-install_data('../meson/fplll.h', install_dir: get_option('includedir'))
+install_data('../../meson/fplll.h', install_dir: get_option('includedir'))

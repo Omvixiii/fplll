@@ -188,7 +188,7 @@ clang-format --style=file --dry-run --Werror path/to/file.cpp  # check only
 ```
 
 Keep formatting changes separate from functional changes. The bundled
-third-party header `fplll/io/thread_pool.hpp` follows its upstream formatting
+third-party header `src/fplll/io/thread_pool.hpp` follows its upstream formatting
 and must not be reformatted; nlohmann/json is external and untouched by these
 rules.
 
