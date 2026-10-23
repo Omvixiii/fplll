@@ -1,0 +1,59 @@
+option(
+  'qd',
+  type: 'feature',
+  value: 'disabled',
+  description: 'Enable quad-double arithmetic through libqd',
+)
+
+option(
+  'max_enum_dim',
+  type: 'integer',
+  value: 256,
+  description: 'Maximum supported enumeration dimension',
+)
+
+option(
+  'max_parallel_enum_dim',
+  type: 'combo',
+  value: '120',
+  choices: [
+    '0', '20', '30', '40', '50', '60', '70', '80',
+    '90', '100', '110', '120', '130', '140', '150', '160',
+  ],
+  description: 'Maximum parallel enumeration dimension (0 disables parallel enumeration)',
+)
+
+option(
+  'extenum_dir',
+  type: 'string',
+  value: '',
+  description: 'Directory hint for the external enumeration library',
+)
+
+option(
+  'extenum_library',
+  type: 'string',
+  value: '',
+  description: 'External enumeration library name or absolute path',
+)
+
+option(
+  'extenum_function',
+  type: 'string',
+  value: '',
+  description: 'Exported external enumeration symbol (defaults to the library basename)',
+)
+
+option(
+  'tests',
+  type: 'boolean',
+  value: true,
+  description: 'Build and register the numerical tests',
+)
+
+option(
+  'benchmarks',
+  type: 'boolean',
+  value: false,
+  description: 'Build the fplll_bench microbenchmark',
+)
