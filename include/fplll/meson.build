@@ -11,11 +11,6 @@ configuration.set('FPLLL_VERSION', meson.project_version())
 configuration.set('FPLLL_WITH_QD', with_qd)
 configuration.set('FPLLL_MAX_ENUM_DIM', max_enum_dim)
 configuration.set('FPLLL_MAX_PARALLEL_ENUM_DIM', max_parallel_enum_dim)
-if with_extenum
-  configuration.set('FPLLL_EXTENUM_DEFINE', '#define FPLLL_EXTENUM_FUNC ' + extenum_function)
-else
-  configuration.set('FPLLL_EXTENUM_DEFINE', '/* External enumeration is disabled. */')
-endif
 fplll_config_h = configure_file(
   input: '../../meson/fplll_config.h.in',
   output: 'fplll_config.h',

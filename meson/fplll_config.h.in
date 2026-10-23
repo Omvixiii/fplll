@@ -3,7 +3,6 @@
 
 /* Feature macros retain their defined/undefined semantics for consumers. */
 #mesondefine FPLLL_WITH_QD
-@FPLLL_EXTENUM_DEFINE@
 
 #define FPLLL_MAJOR_VERSION @FPLLL_MAJOR_VERSION@
 #define FPLLL_MINOR_VERSION @FPLLL_MINOR_VERSION@

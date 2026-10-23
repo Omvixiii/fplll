@@ -156,10 +156,14 @@ advisory: it is expected to fail until the warning baseline is cleaned up.
 | `-Dqd=enabled/disabled/auto` | `disabled` | QD arithmetic; `enabled` fails if QD is missing |
 | `-Dmax_enum_dim=N` | `256` | maximum enumeration dimension (positive integer) |
 | `-Dmax_parallel_enum_dim=N` | `120` | maximum parallel enumeration dimension; `0` disables it, valid values are `20` to `160` in steps of ten, and it must stay below `max_enum_dim` |
-| `-Dextenum_dir=DIR` | empty | directory hint for an external enumeration library |
-| `-Dextenum_library=LIB` | empty | external enumeration library name or path |
-| `-Dextenum_function=SYM` | empty | exported enumeration symbol; defaults to the library basename |
 | `-Dtests=true/false` | `true` | build and register the tests (top-level builds only) |
+
+The optional external enumerator is imported as the Meson dependency
+`fplll_extenum`: install a `fplll_extenum.pc` on `PKG_CONFIG_PATH` (or provide
+a wrap) whose library exports `fplll_extenum_enumerate` with the
+`extenum_fc_enumerate` signature from `<fplll/enum/enumerate_ext_api.h>`.
+Without that dependency the built-in enumerator is used, and applications can
+always override the default at run time with `fplll::set_external_enumerator()`.
 
 Built-in Meson options replace project-specific switches: `--buildtype`,
 `--default-library` (`both` by default; `shared` and `static` are also

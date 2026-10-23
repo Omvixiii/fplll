@@ -25,7 +25,13 @@
 using fplll_extenum_enumf = double;
 #define FPLLL_EXTENUM_MAX_EXTENUM_DIM 1024
 
-/* function callback API for external enumeration library (extenum) */
+/* Function callback API for an external enumeration library (extenum).
+ *
+ * The library exports the function type below under the well-known name
+ * fplll_extenum_enumerate; fplll imports it as the Meson dependency
+ * "fplll_extenum" and installs it as the default external enumerator.
+ * Applications can always override the default at run time with
+ * fplll::set_external_enumerator(). */
 
 /**
  * Callback function given to external enumeration library.

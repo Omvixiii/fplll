@@ -129,48 +129,17 @@ if not cpp.links(atomic_source, name: 'std::atomic without libatomic')
 endif
 
 # --- Optional external enumeration library --------------------------------
-extenum_library = get_option('extenum_library')
-extenum_function = get_option('extenum_function')
-with_extenum = extenum_library != ''
-extenum_dep = []
-if with_extenum
-  if extenum_function == ''
-    extenum_function = fs.name(extenum_library).split('.')[0]
-    if extenum_function.startswith('lib')
-      extenum_function = extenum_function.substring(3)
-    endif
-  endif
-  if extenum_function == '' or extenum_function != extenum_function.underscorify() or extenum_function.substring(0, 1) in ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
-    error('extenum_function must be a C++ identifier')
-  endif
-  if fs.is_absolute(extenum_library) or extenum_library.contains('/')
-    extenum_library = meson.project_source_root() / extenum_library
-    if not fs.is_file(extenum_library)
-      error('external enumeration library not found: ' + extenum_library)
-    endif
-    extenum_dep = [declare_dependency(link_args: [extenum_library])]
-  else
-    hint_dirs = []
-    if get_option('extenum_dir') != ''
-      hint_dirs += meson.project_source_root() / get_option('extenum_dir')
-    endif
-    extenum_dep = [cpp.find_library(extenum_library, dirs: hint_dirs, required: true)]
-  endif
-  extenum_test = '''#include <fplll/enum/enumerate_ext_api.h>
-extern extenum_fc_enumerate @0@;
-int main() {
-  extenum_fc_enumerate * volatile function = &@0@;
-  return function == nullptr;
-}
-'''.format(extenum_function)
-  if not cpp.links(
-      extenum_test,
-      args: ['-I' + meson.project_source_root(), '-I' + meson.project_build_root()],
-      dependencies: extenum_dep + public_deps,
-      name: 'external enumeration symbol ' + extenum_function)
-    error('external enumeration symbol ' + extenum_function + ' was not found')
-  endif
+# An external enumerator is a library exporting a function with the
+# extenum_fc_enumerate signature under the well-known name
+# fplll_extenum_enumerate. Install it as a Meson dependency named
+# "fplll_extenum" (a fplll_extenum.pc on PKG_CONFIG_PATH or a wrap) to make it
+# the process-wide default; applications can still override the choice at run
+# time with set_external_enumerator().
+extenum_dep = dependency('fplll_extenum', required: false)
+extenum_cpp_args = []
+if extenum_dep.found()
   private_deps += extenum_dep
+  extenum_cpp_args += ['-DFPLLL_EXTENUM_FUNC=fplll_extenum_enumerate']
 endif
 
 # Installed tools find the library relative to the configured final prefix.
@@ -239,7 +208,7 @@ summary({
   'Install prefix': get_option('prefix'),
   'nlohmann/json': nlohmann_json_dep.version(),
   'QD support': with_qd,
-  'External enumeration': with_extenum,
+  'External enumeration': extenum_dep.found(),
   'Max enumeration dimension': max_enum_dim,
   'Max parallel enumeration dimension': max_parallel_enum_dim,
   'Tests': not meson.is_subproject() and get_option('tests'),

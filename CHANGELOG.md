@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased
+
+### Build
+
+- Discover the optional external enumeration library as the Meson dependency
+  `fplll_extenum` (a `fplll_extenum.pc` on `PKG_CONFIG_PATH`, or a wrap)
+  instead of the `extenum_dir`, `extenum_library` and `extenum_function`
+  project options. The library exports `fplll_extenum_enumerate` with the
+  `extenum_fc_enumerate` signature and becomes the default external
+  enumerator; without that dependency the built-in enumerator is used. The
+  configured symbol is no longer written to the installed `fplll_config.h`,
+  and `-Dextenum_*` is no longer accepted.
+
 ## 6.0 (2026-10-23)
 
 fplll 6.0 requires C++23 and a rebuild against SONAME 10.  It removes the

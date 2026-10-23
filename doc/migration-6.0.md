@@ -71,9 +71,7 @@ headers directly must select C++23 themselves.
 | `-DFPLLL_WITH_QD=ON` | `-Dqd=enabled` (or `auto`) |
 | `-DFPLLL_MAX_ENUM_DIM=N` | `-Dmax_enum_dim=N` |
 | `-DFPLLL_MAX_PARALLEL_ENUM_DIM=N` | `-Dmax_parallel_enum_dim=N` |
-| `-DFPLLL_EXTENUM_DIR=...` | `-Dextenum_dir=...` |
-| `-DFPLLL_EXTENUM_LIBRARY=...` | `-Dextenum_library=...` |
-| `-DFPLLL_EXTENUM_FUNCTION=...` | `-Dextenum_function=...` |
+| `-DFPLLL_EXTENUM_DIR/LIBRARY/FUNCTION=...` | no option; provide the `fplll_extenum` dependency (pkg-config or wrap) whose library exports `fplll_extenum_enumerate` |
 | `-DFPLLL_WARNINGS=ON`, `-DFPLLL_WARNINGS_AS_ERRORS=ON` | `-Dwarning_level=3 -Dwerror=true` |
 | `-DCMAKE_BUILD_TYPE=Release` | `--buildtype=release` |
 | `-DCMAKE_INSTALL_PREFIX=...` | `--prefix ...` |

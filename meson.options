@@ -24,27 +24,6 @@ option(
 )
 
 option(
-  'extenum_dir',
-  type: 'string',
-  value: '',
-  description: 'Directory hint for the external enumeration library',
-)
-
-option(
-  'extenum_library',
-  type: 'string',
-  value: '',
-  description: 'External enumeration library name or absolute path',
-)
-
-option(
-  'extenum_function',
-  type: 'string',
-  value: '',
-  description: 'Exported external enumeration symbol (defaults to the library basename)',
-)
-
-option(
   'tests',
   type: 'boolean',
   value: true,
