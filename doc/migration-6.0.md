@@ -91,7 +91,8 @@ headers directly must select C++23 themselves.
 The removed presets map to Meson options in separate build directories:
 `debug` to `--buildtype=debug`, `release` to `--buildtype=release`, `asan` to
 `-Db_sanitize=address,undefined -Db_lundef=false`, and `warnings` to
-`-Dwarning_level=3 -Dwerror=true`.
+`-Dwarning_level=3 -Dwerror=true` (advisory until the pre-existing warning
+baseline is cleaned up).
 
 See the [build guide](building.md) for the full Meson command set.
 

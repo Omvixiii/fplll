@@ -122,7 +122,7 @@ alias_target('variants', fplllv_lib, fpllld_lib)
 # --- pkg-config metadata --------------------------------------------------
 pkgconfig = import('pkgconfig')
 pc_requires = [mpfr_dep, gmp_dep]
-if with_qd
+if with_qd and qd_via_pkgconfig
   pc_requires += qd_dep
 endif
 pc_extra_cflags = []

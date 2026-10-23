@@ -60,6 +60,11 @@ accepted), `--prefix`, `-Dwarning_level=3 -Dwerror=true` (or
 `-Dcpp_args`, and `-Dcpp_std`. C++23 is mandatory; `-Dcpp_std` accepts a newer
 standard but rejects older ones.
 
+Strict warnings are available with `-Dwarning_level=3 -Dwerror=true`. The
+sources still contain pre-existing diagnostics, so CI runs this configuration
+as an advisory job; it is expected to fail until the warning baseline is
+cleaned up.
+
 ```sh
 meson setup build --default-library=static   # or shared; both is the default
 ```

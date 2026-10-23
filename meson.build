@@ -70,9 +70,11 @@ endif
 qd_option = get_option('qd')
 qd_dep = []
 qd_linked_privately = []
+qd_via_pkgconfig = false
 with_qd = false
 if qd_option.allowed()
   qd_dep = dependency('qd', required: false)
+  qd_via_pkgconfig = qd_dep.found()
   if not qd_dep.found()
     qd_library = cpp.find_library('qd', required: false)
     if qd_library.found() and cpp.has_header('qd/dd_real.h')
@@ -193,3 +195,15 @@ if not meson.is_subproject()
     message('clang-format or python3 not found; format and lint targets are unavailable')
   endif
 endif
+
+summary({
+  'Build type': get_option('buildtype'),
+  'Default library': get_option('default_library'),
+  'Install prefix': get_option('prefix'),
+  'QD support': with_qd,
+  'External enumeration': with_extenum,
+  'Max enumeration dimension': max_enum_dim,
+  'Max parallel enumeration dimension': max_parallel_enum_dim,
+  'Tests': not meson.is_subproject() and get_option('tests'),
+  'Benchmarks': not meson.is_subproject() and get_option('benchmarks'),
+}, section: 'fplll')
