@@ -245,7 +245,9 @@ The tracked `subprojects/nlohmann_json.wrap` is part of the archive, but the
 downloaded subproject source is not. Building the extracted archive therefore
 needs a system nlohmann/json package (3.12.0 or newer) or a wrap download,
 unless the archive was created with `--include-subprojects`, which vendors the
-subproject sources. Offline and distribution builds can add
+subproject sources. That option only includes subprojects configured in the
+build directory running `meson dist`, so cut the archive from a wrap-based
+build when it must be self-contained. Offline and distribution builds can add
 `-Dwrap_mode=nodownload` to `meson setup` (or `--wrap-mode=nodownload`) to
 turn a missing download into an explicit configure error.
 

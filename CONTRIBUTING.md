@@ -21,13 +21,13 @@ git clone git@github.com:my-github-name/fplll.git
 ```
 
 Install Meson 1.8 or newer, Ninja, a C++23-capable compiler, GMP and MPFR
-development packages, pkg-config, and nlohmann/json 3.12 or newer. Install
-Meson with `uv tool install meson` or `pipx install meson`. A suitable system
-nlohmann/json package is used when found; otherwise Meson downloads the
-pinned wrap during the first `meson setup`, which needs network access once
-(install e.g. `nlohmann-json3-dev` to avoid it). If a macOS compiler cannot
-find SDK headers or libc++, set `export SDKROOT="$(xcrun --show-sdk-path)"`
-before configuring. Configure, build, and run the tests:
+development packages, and pkg-config. Install Meson with
+`uv tool install meson` or `pipx install meson`. nlohmann/json 3.12 or newer
+is required as well; a system package is optional because Meson downloads
+the pinned wrap during the first `meson setup` when none is found, which
+needs network access once. If a macOS compiler cannot find SDK headers or
+libc++, set `export SDKROOT="$(xcrun --show-sdk-path)"` before configuring.
+Configure, build, and run the tests:
 
 ```sh
 meson setup build --buildtype=debugoptimized
