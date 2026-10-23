@@ -57,8 +57,18 @@ threads_dep = dependency('threads')
 gmp_dep = dependency('gmp', version: '>=4.2', method: 'pkg-config')
 mpfr_dep = dependency('mpfr', version: '>=2.3', method: 'pkg-config')
 
+# nlohmann/json parses the BKZ strategy files. It is header-only and no longer
+# vendored: a compatible system installation is preferred, and otherwise the
+# pinned wrap in subprojects/ is fetched during configuration.
+nlohmann_json_dep = dependency(
+  'nlohmann_json',
+  version: '>=3.12.0',
+  fallback: ['nlohmann_json', 'nlohmann_json_dep'],
+  include_type: 'system',
+)
+
 public_deps = [gmp_dep, mpfr_dep, threads_dep]
-private_deps = []
+private_deps = [nlohmann_json_dep]
 pc_public_libs = [threads_dep]
 
 # Homebrew's mpfr.pc lists -lgmp without gmp's -L flag. Keep the gmp library
@@ -214,6 +224,7 @@ summary({
   'Build type': get_option('buildtype'),
   'Default library': get_option('default_library'),
   'Install prefix': get_option('prefix'),
+  'nlohmann/json': nlohmann_json_dep.version(),
   'QD support': with_qd,
   'External enumeration': with_extenum,
   'Max enumeration dimension': max_enum_dim,

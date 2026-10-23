@@ -1,8 +1,8 @@
 
 #include "bkz_param.h"
-#include "io/json.hpp"
 #include "nr/nr.h"
 #include <cstdio>
+#include <nlohmann/json.hpp>
 
 using json = nlohmann::json;
 

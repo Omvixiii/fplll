@@ -21,9 +21,13 @@ git clone git@github.com:my-github-name/fplll.git
 ```
 
 Install Meson 1.8 or newer, Ninja, a C++23-capable compiler, GMP and MPFR
-development packages, and pkg-config. Install Meson with
-`uv tool install meson` or `pipx install meson`. If a macOS compiler cannot find SDK headers or libc++, set
-`export SDKROOT="$(xcrun --show-sdk-path)"` before configuring. Configure, build, and run the tests:
+development packages, pkg-config, and nlohmann/json 3.12 or newer. Install
+Meson with `uv tool install meson` or `pipx install meson`. A suitable system
+nlohmann/json package is used when found; otherwise Meson downloads the
+pinned wrap during the first `meson setup`, which needs network access once
+(install e.g. `nlohmann-json3-dev` to avoid it). If a macOS compiler cannot
+find SDK headers or libc++, set `export SDKROOT="$(xcrun --show-sdk-path)"`
+before configuring. Configure, build, and run the tests:
 
 ```sh
 meson setup build --buildtype=debugoptimized
@@ -184,8 +188,9 @@ clang-format --style=file --dry-run --Werror path/to/file.cpp  # check only
 ```
 
 Keep formatting changes separate from functional changes. The bundled
-third-party headers `fplll/io/json.hpp` and `fplll/io/thread_pool.hpp` follow
-their upstream formatting and must not be reformatted.
+third-party header `fplll/io/thread_pool.hpp` follows its upstream formatting
+and must not be reformatted; nlohmann/json is external and untouched by these
+rules.
 
 In order to improve readability, some situations might require manual formatting. Clang-format [includes a comment trigger](https://clang.llvm.org/docs/ClangFormatStyleOptions.html#disabling-formatting-on-a-piece-of-code) to _locally_ disable the formatting. The code between a comment `// clang-format off` or `/* clang-format off */` up to a comment `// clang-format on` or `/* clang-format on */` will not be formatted.
 

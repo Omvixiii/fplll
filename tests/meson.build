@@ -33,10 +33,15 @@ executable(
 # this build directory.
 test_workdir = meson.current_build_dir()
 foreach name : test_names
+  test_dependencies = [fplll_dep]
+  if name == 'test_bkz'
+    # test_bkz cross-checks GSO dumps by parsing them with nlohmann/json.
+    test_dependencies += [nlohmann_json_dep]
+  endif
   test_exe = executable(
     name,
     name + '.cpp',
-    dependencies: fplll_dep,
+    dependencies: test_dependencies,
     cpp_args: ['-DTESTDATADIR="' + meson.project_source_root() + '/"'],
     install: false,
   )

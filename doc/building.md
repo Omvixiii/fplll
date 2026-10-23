@@ -11,6 +11,9 @@ own sibling directory, and all build products stay inside those directories.
 - A C++23 compiler: GCC 14, Clang 18 (libstdc++ 14 or libc++ 18), AppleClang 16
   or newer. C++23 is mandatory and cannot be downgraded.
 - GMP 4.2 or newer, MPFR 2.3 or newer, and pkg-config.
+- nlohmann/json 3.12 or newer (header-only). Meson prefers a system package and
+  otherwise downloads the pinned `subprojects/nlohmann_json.wrap` during
+  `meson setup`.
 - Optional: QD (quad-double arithmetic), Doxygen (API documentation), and
   gcovr or lcov/genhtml (code coverage).
 
@@ -37,6 +40,10 @@ The setup step runs once per build directory; after that the loop is
 debug symbols while the numerical suite stays fast. The tools are
 `build/tools/fplll` and `build/tools/latticegen`; `meson devenv -C build` opens
 a shell with them on `PATH`.
+
+When no suitable system nlohmann/json is installed, the first `meson setup`
+downloads the pinned wrap into `subprojects/`, so it needs network access
+once; later configurations reuse the downloaded subproject.
 
 ## The build directory
 
@@ -91,8 +98,8 @@ Language tooling follows the canonical directory, so it is configured once:
 - `.clang-tidy` is the clang-tidy configuration; apply it with
   `clang-tidy -p build path/to/file.cpp`.
 - `.clang-format` is the formatting authority; run `clang-format` directly on
-  the files you change. The vendored headers under `fplll/io/` keep their
-  upstream formatting.
+  the files you change. The vendored header `fplll/io/thread_pool.hpp` keeps
+  its upstream formatting.
 - `build/fplll/fplll_config.h` and the generated enumeration sources are
   resolved through the compilation database; no manual include paths needed.
 
@@ -234,6 +241,14 @@ error but still archives the last commit, excluding all uncommitted changes. The
 `project(..., version: '6.0.0')` in the root `meson.build`; the ABI version
 (10.0.0) is maintained independently.
 
+The tracked `subprojects/nlohmann_json.wrap` is part of the archive, but the
+downloaded subproject source is not. Building the extracted archive therefore
+needs a system nlohmann/json package (3.12.0 or newer) or a wrap download,
+unless the archive was created with `--include-subprojects`, which vendors the
+subproject sources. Offline and distribution builds can add
+`-Dwrap_mode=nodownload` to `meson setup` (or `--wrap-mode=nodownload`) to
+turn a missing download into an explicit configure error.
+
 ## Downstream use
 
 pkg-config is the installed interface. Add the prefix's `lib/pkgconfig` to
@@ -348,6 +363,12 @@ directory, or configure a new one.
 discoverable through `qd.pc` or, failing that, through `libqd` and
 `qd/dd_real.h` and `qd/qd_real.h` in the compiler search paths; install QD, or leave it disabled
 (`-Dqd=disabled`, the default) or automatic (`-Dqd=auto`).
+
+**The nlohmann/json wrap cannot be downloaded.** Configure needs a system
+nlohmann/json 3.12.0 or newer, or network access for the pinned wrap. Install
+a distro package (for example `nlohmann-json3-dev` on Debian/Ubuntu) or
+pre-populate `subprojects/nlohmann_json-3.12.0/`; the error message names
+`nlohmann_json`.
 
 **Meson is too old, or the compiler is rejected.** Meson 1.8 or newer and a
 C++23 compiler (GCC 14, Clang 18, AppleClang 16, or newer) are required; C++23

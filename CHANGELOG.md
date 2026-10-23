@@ -41,6 +41,9 @@ API, and replaces the generated pruner tables with runtime computation.  See
 - Require C++23 for the library, installed headers, tools and tests.
 - Remove the MPIR backend, the recursive-enumeration build switch and the
   `ZZ_mat<double>` integer backend.
+- Remove the vendored nlohmann/json copy `fplll/io/json.hpp` and resolve JSON
+  support through Meson: prefer a system package (>= 3.12.0), otherwise
+  download the pinned `subprojects/nlohmann_json.wrap`.
 - Replace build presets with Meson options and independent build directories.
 - Make `build/` the canonical Meson developer build directory and point clangd
   at its compilation database; every other configuration uses a sibling

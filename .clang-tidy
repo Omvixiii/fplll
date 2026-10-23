@@ -30,5 +30,5 @@ Checks: >
   misc-unused-using-decls
 WarningsAsErrors: ''
 HeaderFilterRegex: '^(fplll|tools|tests)/'
-ExcludeHeaderFilterRegex: '^fplll/io/(json|thread_pool)\.hpp$'
+ExcludeHeaderFilterRegex: '^fplll/io/thread_pool\.hpp$'
 FormatStyle: file

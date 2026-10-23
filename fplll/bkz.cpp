@@ -734,7 +734,7 @@ template <class ZT, class FT> bool BKZReduction<ZT, FT>::set_status(int new_stat
 }
 
 // Generate the json file by hand to generate a flexible human-readable file.
-// TODO: think about use io/json.hpp
+// TODO: consider emitting this dump with nlohmann/json.
 template <class ZT, class FT>
 void BKZReduction<ZT, FT>::dump_gso(std::string_view filename, bool append, std::string_view step,
                                     const int loop, const double time)

@@ -16,7 +16,7 @@
 #include "test_utils.h"
 #include <cstring>
 #include <fplll/fplll.h>
-#include <fplll/io/json.hpp>
+#include <nlohmann/json.hpp>
 
 using json = nlohmann::json;
 

@@ -27,7 +27,6 @@ REQUIRED = [
 
 FORBIDDEN_SUBSTRINGS = [
     "include/fplll/enum-parallel/",
-    "include/fplll/io/json.hpp",
     "include/fplll/enum/topenum.h",
     "include/fplll/main.h",
 ]

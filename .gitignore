@@ -6,6 +6,11 @@
 # Stray compilation database (Meson writes it inside the build directory)
 /compile_commands.json
 
+# Meson subprojects: only the pinned wrap files are tracked, checkouts and
+# downloaded archives are local state.
+/subprojects/*
+!/subprojects/*.wrap
+
 # Local working notes and editor configuration
 /notes/
 .vscode/

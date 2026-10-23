@@ -15,7 +15,7 @@ INPUT                  = @SOURCE_ROOT@/fplll \
                          @SOURCE_ROOT@/doc/building.md
 FILE_PATTERNS          = *.cpp *.h *.hpp *.inl *.md
 RECURSIVE              = YES
-EXCLUDE                = @SOURCE_ROOT@/fplll/io/json.hpp @BUILD_ROOT@
+EXCLUDE                = @BUILD_ROOT@
 USE_MDFILE_AS_MAINPAGE = @SOURCE_ROOT@/README.md
 INCLUDE_PATH           = @BUILD_ROOT@
 INPUT_ENCODING         = UTF-8
