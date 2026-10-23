@@ -1,14 +1,11 @@
 # Build and install trees
-/build/
+/build*/
 /_install/
 
 # Local working notes and editor configuration
 /notes/
 .vscode/
-/CMakeUserPresets.json
-/compile_commands.json
 /.venv/
 
-# CMake may create these before rejecting an in-source configure.
-/CMakeCache.txt
-/CMakeFiles/
+# Local caches (clangd, ccache, uv)
+/.cache/

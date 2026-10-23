@@ -1,459 +1,270 @@
 # Building fplll
 
-## Requirements and first build
+fplll is built with [Meson](https://mesonbuild.com) and Ninja. Run commands
+from the repository root.
 
-The library requires CMake 3.25 or newer, Ninja, a C++23-capable compiler,
-GMP 4.2 or newer, and MPFR 2.3 or newer. The validated toolchain floor is
-GCC 14, Clang 18 (with libstdc++ 14 or libc++ 18) and AppleClang 16; older
-compilers may accept a C++23 mode but are not supported.
-QD is optional. CMake discovers the compiler automatically; use
-`CMAKE_PREFIX_PATH` for dependencies installed outside standard search paths.
-ccache is optional.
+## Requirements
 
-For installation, choose the final prefix at configure time:
+- Meson 1.8 or newer and Ninja.
+- A C++23 compiler. The validated floor is GCC 14, Clang 18 (libstdc++ 14 or
+  libc++ 18) and AppleClang 16; C++23 is mandatory and cannot be downgraded.
+- GMP 4.2 or newer and MPFR 2.3 or newer, found through pkg-config, plus
+  pkg-config itself.
+- Optional: QD (quad-double arithmetic), Doxygen (API documentation), and
+  gcovr or lcov/genhtml (code coverage).
 
-```sh
-cmake -S . -B build/install -G Ninja -DCMAKE_BUILD_TYPE=Release \
-  -DCMAKE_INSTALL_PREFIX="$HOME/.local"
-cmake --build build/install --parallel
-ctest --test-dir build/install --output-on-failure --no-tests=error
-cmake --install build/install
-```
+Install Meson with `uv tool install meson` (`uvx meson` runs it ephemerally)
+or `pipx install meson`.
 
-The build directory retains its compiler, options, and prefix. Use a separate
-directory when switching toolchains. In-source builds, including through a
-symlink, are rejected; always pass a separate `-B` directory. CMake can create an
-initial cache before that check, so do not try configuring directly in the source
-directory.
-
-## Development presets
-
-The default contribution check configures, builds, and tests in order:
+## First build
 
 ```sh
-cmake --workflow --preset debug
+meson setup build
+meson compile -C build
+meson test -C build --print-errorlogs
 ```
 
-Use the `release` configure, build, and test presets for optimized validation.
-The Debug and distcheck workflows build the test executables before running
-them: **CTest does not compile changed code.**
-For the edit/build loop, build the default targets or select a particular one:
+The default configuration builds shared and static libraries, enables the
+tests, and uses Meson's default build type. For an optimized installation,
+choose the final prefix at configure time:
 
 ```sh
-cmake --build --preset debug
-cmake --build --preset debug --target fplll_cli
-ctest --preset debug -R '^test_lll$'
+meson setup build-release --buildtype=release --prefix "$HOME/.local"
+meson compile -C build-release
+meson test -C build-release --print-errorlogs
+meson install -C build-release
 ```
 
-The last command is useful after the relevant targets have been rebuilt. The
-`fplll_cli` target builds its library and CLI, not the test executables. Add
-`--verbose` to a build command to inspect compiler and linker commands.
+With the default `build` directory, the command-line tools are
+`build/tools/fplll` and `build/tools/latticegen`.
+A build directory keeps its compiler, options, and prefix; use one directory
+per configuration.
 
-All configure presets except `distcheck` have matching build and test presets;
-the `distcheck` build preset targets the release build tree.
+## Build options
 
-| Preset | Purpose |
+| Option | Default | Purpose |
+| --- | --- | --- |
+| `-Dqd=enabled/disabled/auto` | `disabled` | QD arithmetic; `enabled` fails if QD is missing |
+| `-Dmax_enum_dim=N` | `256` | maximum enumeration dimension (positive integer) |
+| `-Dmax_parallel_enum_dim=N` | `120` | maximum parallel enumeration dimension; `0` disables it, valid values are `20` to `160` in steps of ten, and it must stay below `max_enum_dim` |
+| `-Dextenum_dir=DIR` | empty | directory hint for an external enumeration library |
+| `-Dextenum_library=LIB` | empty | external enumeration library name or path |
+| `-Dextenum_function=SYM` | empty | exported enumeration symbol; defaults to the library basename |
+| `-Dtests=true/false` | `true` | build and register the tests (top-level builds only) |
+| `-Dbenchmarks=true/false` | `false` | build the `fplll_bench` microbenchmark |
+
+Built-in Meson options replace project-specific switches: `--buildtype`,
+`--default-library` (`both` by default; `shared` and `static` are also
+accepted), `--prefix`, `-Dwarning_level=3 -Dwerror=true` (or
+`--warnlevel=3 --werror`), `-Db_sanitize`, `-Db_coverage`, `-Dc_args`,
+`-Dcpp_args`, and `-Dcpp_std`. C++23 is mandatory; `-Dcpp_std` accepts a newer
+standard but rejects older ones.
+
+```sh
+meson setup build --default-library=static   # or shared; both is the default
+```
+
+Change an option after configuring with `meson configure -Doption=value build`,
+or recreate the build directory with `meson setup --wipe build`. Use a new
+directory when switching compilers.
+
+## Build output layout
+
+| Output | Location relative to the build directory |
 | --- | --- |
-| `debug` | Default development build and validation |
-| `release` | Optimized build and validation |
-| `ubsan` | Debug build with UndefinedBehaviorSanitizer |
-| `warnings` | Debug build with the project's strict warnings and `-Werror` |
-| `asan` | Debug build with AddressSanitizer and UndefinedBehaviorSanitizer |
-| `tsan` | Debug build with ThreadSanitizer |
+| Libraries | `fplll/libfplll.{dylib,so*,a}` |
+| Tools | `tools/fplll`, `tools/latticegen`, plus `tools/fplll_dbg` and `tools/latticegen_dbg` |
+| Tests | `tests/test_*`, `tests/llldiff` |
+| Benchmark | `bench/fplll_bench` |
+| Generated files | `fplll/fplll_config.h`, `fplll/enumlib_dim.<dim>.cpp` |
+| API documentation | `doc/html/index.html` |
+| Logs | `meson-logs/testlog.txt`, `meson-logs/install-log.txt` |
+| Source archive | `meson-dist/fplll-6.0.0.tar.xz` |
 
-The sanitizer and warnings presets require a matching GCC or Clang toolchain.
-Configure, build, and test each separately:
+All build products stay inside the build directory.
+
+## Testing
+
+The suite contains 15 numerical tests and the `llldiff` diagnostic tool:
 
 ```sh
-cmake --preset ubsan
-cmake --build --preset ubsan
-ctest --preset ubsan
+meson compile -C build
+meson test -C build --print-errorlogs
 ```
 
-Each preset uses `build/<preset>/` and an installation prefix of
-`_install/<preset>/`. Project presets define shared build scenarios, not machine
-settings. Pass occasional compiler, dependency, or launcher choices on the
-command line; save repeated choices in an untracked `CMakeUserPresets.json` only
-when useful. For an installed ccache, configure with
-`-DCMAKE_CXX_COMPILER_LAUNCHER=ccache`. Set parallelism with `--parallel` or
-`CMAKE_BUILD_PARALLEL_LEVEL`; no fixed job count is part of the shared presets.
-List all available presets with `cmake --list-presets=all`.
+Standard Meson filters apply: select a suite with `--suite`, an individual test
+by name (for example `meson test -C build test_lll`), or raise timeouts with
+`-t 300`. Results are logged to `build/meson-logs/testlog.txt`.
 
-CMake Tools can select the shared presets and build targets directly. The
-checked-in `.clangd` reads `build/debug/compile_commands.json` after Debug has
-been configured. It does not follow preset selection automatically; select the
-appropriate compilation database in your editor when using another build.
+Fixtures under `tests/lattices/` and `strategies/` are read-only inputs. Tests
+write only into their build-tree working directory, `build/tests/`; do not run
+the test executables from the source tree. `llldiff` compares two reduction
+outputs and is not installed.
 
-## Output ownership
+## Installation
 
-| Output | Location relative to the binary directory |
+```sh
+meson install -C build
+meson install -C build --destdir /abs/stage
+```
+
+`meson install` copies the libraries, the two command-line tools, public
+headers, pkg-config metadata, and the default strategy data into the configured
+prefix. `--destdir` stages the same layout for package managers without
+changing the compiled final prefix. Installed layout, relative to the prefix:
+
+| Path | Contents |
 | --- | --- |
-| Public configuration header | `fplll/fplll_config.h` |
-| Generated enumeration translation units | `generated/enum-parallel/` |
-| Executables, debug tools and tests | `bin/` |
-| Shared and static libraries, including variants | `lib/` |
-| Per-test working directories and generated test data | `test-work/<CONFIG>/<test-name>/` |
-| CMake test metadata (`CMakeFiles/`, `CTestTestfile.cmake`) | `tests/` |
-| Package metadata | `fplll.pc`, `fplllConfig*.cmake` |
-| Source archive | `fplll-<version>.tar.gz` |
-| API documentation | `doc/html/` |
+| `bin/fplll`, `bin/latticegen` | command-line tools |
+| `include/fplll.h` | compatibility forwarding header |
+| `include/fplll/fplll.h`, `defs.h`, ...; `include/fplll/fplll_config.h` | public headers and the generated configuration header |
+| `include/fplll/enum/*.h`; `include/fplll/io/thread_pool.hpp` | enumeration and thread-pool headers |
+| `include/fplll/nr/*.h`, `*.inl`; `include/fplll/pruner/pruner.h`, `pruner_simplex.inl` | number, matrix, and pruning headers |
+| `lib/libfplll.so.10.0.0` (Linux) or `lib/libfplll.10.dylib` (macOS), plus `lib/libfplll.a` | shared library with SONAME 10 and the static library |
+| `lib/pkgconfig/fplll.pc` | pkg-config metadata |
+| `share/fplll/strategies/default.json` | default BKZ strategies |
 
-The single-configuration Ninja presets keep a flat layout: the Debug CLI is
-`build/debug/bin/fplll`. In `test-work/`, `<CONFIG>` is uppercase, for example
-`DEBUG`; each configuration and test is isolated.
+On macOS the shared library's compatibility and current versions are 11.0.0.
+Public headers are installed from the source tree; there is no separate
+`include` directory in the repository.
 
-Targets inherit the generated header directories ahead of source directories.
-Do not use relative includes into the source tree for generated headers.
-New generated sources must use binary-directory paths for outputs and
-byproducts. Test fixtures in `tests/lattices/` and `strategies/` are read-only
-inputs; tests must write relative to their isolated CTest working directories.
-Run tests through CTest to establish those directories.
-The test registrations live in `tests/CMakeLists.txt`; CMake's `CMakeFiles/`
-directories are generated in the binary tree and are never source files.
+The default strategy path is compiled into `bkz_param.cpp` as
+`$prefix/$datadir/fplll/strategies`. Configure the final `--prefix` before
+building; installing the same build with a different prefix later is
+unsupported. To change it, reconfigure and rebuild (for example with
+`meson setup --wipe build --prefix /new/prefix`), then reinstall.
 
-## Build options and targets
-
-| Option | Default / purpose |
-| --- | --- |
-| `BUILD_TESTING` | `ON`; build and register the 15 numerical tests and `llldiff` |
-| `FPLLL_WITH_QD` | `OFF`; enable QD arithmetic |
-| `FPLLL_MAX_ENUM_DIM` | `256`; maximum enumeration dimension |
-| `FPLLL_MAX_PARALLEL_ENUM_DIM` | `120`; `0` disables parallel enumeration |
-| `FPLLL_EXTENUM_DIR`, `FPLLL_EXTENUM_LIBRARY`, `FPLLL_EXTENUM_FUNCTION` | External enumeration library and symbol |
-| `FPLLL_WARNINGS`, `FPLLL_WARNINGS_AS_ERRORS` | `OFF`; enable `-Wall -Wextra -Wpedantic -Wshadow` (and optionally `-Werror`) |
-| `FPLLL_BUILD_BENCHMARKS` | `OFF`; build the `fplll_bench` microbenchmark target |
-
-Parallel dimensions are multiples of ten between 20 and 160 and must be smaller
-than `FPLLL_MAX_ENUM_DIM`. External enumeration requires an independently
-installed dependency; its availability is separate from the default build.
-The ubsan build also requires the matching compiler runtime library.
-The project requires C++23. Presets or embedding projects may request a newer
-standard, but not an older one.
-
-QD is explicitly disabled by default. `-DFPLLL_WITH_QD=ON` requires a usable QD
-installation and fails if it cannot be found; unlike the historical Autotools
-auto-detection, installing QD does not silently change the enabled arithmetic.
-For a shorter local build, `-DFPLLL_MAX_PARALLEL_ENUM_DIM=20` compiles fewer
-parallel-enumeration specializations. It changes the configured capability;
-retain the default 120 for normal release validation.
-
-CMake's `configure_file()` generates the public configuration header from
-`cmake/fplll_config.h.in`. The shorter per-dimension enumeration sources and
-pkg-config metadata use `file(CONFIGURE CONTENT ...)` directly. Bracket
-arguments keep these short snippets readable without escaping quotes, and
-`@ONLY` preserves pkg-config's own `${variable}` references. Both commands
-update outputs only when their content changes, so a no-op reconfiguration
-does not trigger recompilation.
-Feature macros retain their defined/undefined semantics for existing consumers.
-The CLI programs use the version in `fplll/fplll_config.h`, so a second private
-version header is unnecessary.
-
-The public umbrella header is `fplll/fplll.h`, used as
-`#include <fplll/fplll.h>` in both the build and installation trees.
-
-`cmake/configuration.cmake` owns generated headers and enumeration sources.
-`cmake/packaging.cmake` owns header and target installation, pkg-config metadata,
-CMake package exports, and source archives. The installed package is generated
-from `cmake/fplllConfig.cmake.in` using `configure_package_config_file()`.
-Build-time and installed-package dependency discovery share the find modules
-under `cmake/modules/`; consumers can locate dependencies through
-`CMAKE_PREFIX_PATH` or the corresponding package's `<PackageName>_ROOT` variable.
-The installed configuration keeps its module search path local and propagates
-`QUIET` and `REQUIRED` through `find_dependency()`.
-
-The two multiline templates remain separate from generation logic. Local
-VS Code language mappings in the ignored `.vscode/settings.json` can associate
-`.h.in` and `.cpp.in` with C++, and `.cmake.in` with CMake.
-For C++ templates under `cmake/`, `.clangd` suppresses diagnostics and skips
-background indexing because CMake placeholders and directives are not valid C++.
-Generated headers and sources retain normal clangd analysis.
-
-Default targets include shared/static `fplll` libraries, `fplll_cli` (output
-name `fplll`), `latticegen`, and tests when enabled. Optional targets are
-`fplllv`, `fplllv_static`, `fpllld`, `fpllld_static`, `fplll_dbg` and
-`latticegen_dbg`; `dbg` builds both debug executables. Shared/static variants
-reuse OBJECT libraries. The `fpllld` and `*_dbg` variants enable fplll's `DEBUG`
-macro; this is separate from the Debug build type, which controls compiler
-optimization and debugging information.
-
-When embedded with `add_subdirectory()`, fplll provides its library and tool
-targets and installation rules. Tests and project lifecycle targets are only
-registered in a top-level build.
-
-## Version management
-
-`project(fplll VERSION ...)` in `CMakeLists.txt` is the version source for CMake
-package compatibility, the generated public configuration header, pkg-config,
-documentation, and archive names. Building a checkout or extracted source archive
-does not require Git or a version override. Shared-library ABI versions are
-maintained separately from the release version.
-
-## Installation and downstream use
-
-```cmake
-find_package(fplll 6.0 CONFIG REQUIRED)
-target_link_libraries(my_program PRIVATE fplll::fplll)
-# Or use fplll::fplll_static.
-```
-
-Include the public API with `#include <fplll/fplll.h>`.  The
-[6.0 migration guide](migration-6.0.md) lists the API and build changes for
-upgrading from 5.x. Point
-`CMAKE_PREFIX_PATH` at the installation prefix; the exported targets carry
-required dependencies and include paths. The historical `<fplll.h>` entry point
-remains as a forwarding header. For non-CMake consumers, add the
-installation's `lib/pkgconfig/` (or configured library directory) to
-`PKG_CONFIG_PATH`, and use `pkg-config --cflags --libs fplll`. Use
-`pkg-config --static --libs fplll` when linking statically. The `gmp` and
-`mpfr` modules (and `qd` when enabled) must be resolvable by pkg-config; the
-CMake package path does not depend on pkg-config.
-The install includes public headers, both libraries, the two CLI programs and
-the default strategy data. `llldiff` and debug tools are not installed.
-On macOS and Unix, installed tools use a relative runtime library path when
-the library directory is relative to the install prefix.
-
-The default strategy-data path is compiled into the library. Configure the
-intended final `CMAKE_INSTALL_PREFIX` before building. Installing with a
-different `--prefix` is not rejected up front, but the installed tools then
-fail at runtime with a clear message because the compiled strategy directory
-does not exist there. Reconfigure and rebuild to change the final prefix. The
-installed tree is not generally relocatable merely because its libraries use
-relative runtime paths.
-
-Package managers can stage that fixed final layout with `DESTDIR`:
+CI and release validation check a staged install at `_install`:
 
 ```sh
-DESTDIR=/absolute/staging cmake --install build/install
+python3 scripts/check_install_manifest.py --prefix _install \
+  --forbid-installed-cpp --forbid-private-fragments
+python3 scripts/check_headers.py --include-dir _install/include \
+  --compiler c++ --std c++23
 ```
 
-This prepends the staging root to installed paths without changing the compiled
-final prefix. A staged tree is not the final runtime location.
+## Downstream use
 
-## Clean and uninstall
+pkg-config is the installed interface for downstream projects. Add the
+prefix's `lib/pkgconfig` to `PKG_CONFIG_PATH` and query the module:
 
 ```sh
-cmake --build --preset debug --target clean
-cmake --build build/install --target uninstall
+export PKG_CONFIG_PATH="$HOME/.local/lib/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
+pkg-config --cflags --libs fplll
+pkg-config --static --cflags --libs fplll
 ```
 
-`clean` is the generator's native target: it removes compiled outputs and
-preserves the configuration, configure-generated sources, and installation
-manifest. The next build can run without reconfiguring. It does not uninstall
-files. To discard configuration state as well, remove that specific build
-directory after checking it contains no needed files.
+The module requires `gmp` and `mpfr`, and `qd` when QD is enabled; `--static`
+adds the private libraries. Include the public API as
+`#include <fplll/fplll.h>`; the historical `<fplll.h>` entry point remains as a
+forwarding header.
 
-`uninstall` removes files and symlinks listed in that build directory's
-`install_manifest.txt`; it neither rebuilds nor deletes an installation prefix
-recursively. Missing manifests fail with a diagnostic. Retain the build
-directory until uninstalling. For a staged install, supply the same `DESTDIR`:
+Meson consumers discover the installed module through pkg-config and must
+request C++23 themselves:
+
+```meson
+project('consumer', 'cpp', default_options: ['cpp_std=c++23'])
+
+fplll_dep = dependency('fplll')
+executable('consumer', 'main.cpp', dependencies: fplll_dep)
+```
+
+Set `PKG_CONFIG_PATH` to the prefix's `lib/pkgconfig` directory before running
+`meson setup build`. The C++ standard is not carried by pkg-config, so direct
+compilation must select C++23 as well.
+
+## Sanitizers
 
 ```sh
-DESTDIR=/absolute/staging cmake --build build/install --target uninstall
+meson setup build-asan --buildtype=debug \
+  -Db_sanitize=address,undefined -Db_lundef=false
+meson compile -C build-asan
+meson test -C build-asan --print-errorlogs
 ```
 
-The manifest describes the most recent installation from that build directory.
-Uninstall a staging tree before using the same directory for a different
-installation. Package-manager installations should be removed by their package
-manager.
+`-Db_lundef=false` keeps the sanitizer-instrumented shared libraries linkable.
+
+## Code coverage
+
+```sh
+meson setup build --buildtype=debug -Db_coverage=true
+meson compile -C build
+meson test -C build --print-errorlogs
+ninja -C build coverage
+```
+
+Coverage requires `gcovr` or `lcov`/`genhtml`. The HTML report
+is written under `build/meson-logs/coveragereport/`. `coverage` is Meson's
+built-in target, run through the Ninja backend. Use a dedicated directory such
+as `build-coverage` when other configurations share the tree.
+
+## Development targets
+
+```sh
+meson compile -C build dbg       # fplll_dbg and latticegen_dbg
+meson compile -C build variants  # fplllv and fpllld variant libraries
+meson compile -C build format    # apply clang-format in place
+meson compile -C build lint      # check formatting without changing files
+meson compile -C build doc       # API documentation, if Doxygen was found
+```
+
+`dbg` builds the `DEBUG`-enabled tools. `variants` builds `fplllv` and
+`fpllld`, optional variant libraries that are not built by default and never
+installed. To build a single target, use its unambiguous Meson specification,
+for example `meson compile -C build tools/fplll:executable`; plain `fplll` is
+ambiguous because the library target has the same name. `format` and
+`lint` use the repository `.clang-format` and skip the bundled third-party
+headers `fplll/io/json.hpp` and `fplll/io/thread_pool.hpp`; the targets are
+available when Python 3 and `clang-format` are found at configure time, and
+`lint` is non-mutating. `doc` writes HTML to `build/doc/html/`, requires
+Doxygen at configure time, and generates its Doxygen configuration with Meson.
 
 ## Source packages
 
 ```sh
-cmake --preset release
-cmake --build --preset release --target package_source
+meson dist -C build
 ```
 
-Source archives exclude Git metadata, local notes, editor/agent state, caches,
-build outputs and installation prefixes. The `package_source` target creates the
-archive; archive creation alone does not verify a release.
-Run the complete distribution check with:
+Meson creates `build/meson-dist/fplll-6.0.0.tar.xz` from a clean Git checkout
+and, by default, configures, builds, and tests the extracted archive itself;
+`--no-tests` skips that validation. The release version comes from `project(..., version: '6.0.0')` in
+the root `meson.build`; the ABI version (10.0.0) is maintained independently.
+
+## Clean and uninstall
 
 ```sh
-cmake --workflow --preset distcheck
+meson compile -C build --clean     # remove build outputs, keep configuration
+ninja -C build uninstall           # remove files from the last install
+meson setup --wipe build           # recreate the build directory
 ```
 
-The check creates an archive in `build/release/`, then validates that exact
-archive without relying on the original checkout or build outputs. It extracts
-read-only sources, builds in a separate directory, runs the numerical tests,
-and checks the installed package metadata, strategy-data loading, and
-manifest-based uninstall. It separately checks `DESTDIR` staging,
-clean/rebuild behavior, and source-tree cleanliness.
+`--clean` keeps the configuration, so the next build does not need to
+reconfigure. `uninstall` is Meson's built-in target, run through the Ninja
+backend; it removes the files recorded by the most recent `meson install` from
+that build directory, without deleting build outputs. Reconfigure or wipe the
+build directory when changing options or the prefix instead of installing over
+an existing tree.
 
-The archive and stage logs remain in the build directory. Logs are under
-`build/release/distcheck/logs/`; on failure the sandbox is retained at
-`build/release/distcheck/work/` so the failing command and inputs can be
-inspected. Successful checks remove the sandbox. The ordinary test suite does
-not run this full release lifecycle.
+## Troubleshooting
 
-## Development utilities
+**pkg-config cannot find GMP or MPFR.** Install the development packages (for
+example `libgmp-dev` and `libmpfr-dev` on Debian/Ubuntu, `gmp` and `mpfr` with
+Homebrew) and check that `pkg-config --modversion gmp mpfr` works. For
+dependencies in a nonstandard prefix, set `PKG_CONFIG_PATH` before configuring.
 
-The `lint` target checks C++ formatting without changing source files.
-The `format` target applies clang-format.
-Both use `cmake/lints.cmake`, scan `.cpp`, `.h`, `.hpp`, and `.inl` files under
-`fplll/`, `tests/`, `tools/`, and `bench/`, and preserve bundled `json.hpp`
-and `thread_pool.hpp`.
-The repository's `.clang-format` is always used, and formatting warnings or
-incomplete formatting fail the command. These are formatting checks; semantic
-static analysis requires a separate tool such as clang-tidy.
+**The installed tools cannot load the strategies.** The default strategy
+directory is compiled in from the prefix chosen at configure time; installing
+the same build with a different prefix is unsupported. Reconfigure and rebuild
+to change it.
 
-The script can also run before configuring the project, without compiling or
-discovering library dependencies:
+**The `doc` target does not exist.** Doxygen was not found when the build
+directory was configured. Install Doxygen and wipe and reconfigure the
+directory, or configure a new one.
 
-```sh
-cmake -P cmake/lints.cmake
-cmake -DFPLLL_FORMAT=ON -P cmake/lints.cmake
-```
+**QD fails to configure.** `-Dqd=enabled` requires a QD installation
+discoverable through pkg-config; install QD, or leave it disabled
+(`-Dqd=disabled`, the default) or automatic (`-Dqd=auto`).
 
-With Doxygen 1.9.8 or newer installed at configure time, build the `doc` target
-to generate API documentation:
-
-```sh
-cmake --preset debug
-cmake --build --preset debug --target doc
-```
-
-CMake's `doxygen_add_docs()` generates `Doxyfile.doc` in the binary directory
-using the project's name and version. Project-specific settings live in
-`cmake/documentation.cmake`; the root `CMakeLists.txt` loads the module and
-calls `fplll_add_documentation()`. Its function scope keeps Doxygen settings
-local. No source-tree Doxyfile or custom HTML templates are needed.
-The inputs are library sources, the README, changelog,
-and the usage, build, and contribution guides. Heading links use GitHub-style
-anchors so they work in both the repository and generated pages. Undocumented
-API entries remain visible; namespace macros are expanded so classes and
-functions appear in their C++ scopes.
-
-HTML output is written to `doc/html/` under the binary directory. Doxygen's
-native theme supplies navigation and search. Formulas use MathJax 3.2.2 from
-a CDN, so formula rendering requires network access. Graphviz is optional;
-when available, dependency and hierarchy diagrams use SVG. Doxygen is optional
-for normal builds, and documentation is generated only when `doc` is requested.
-Reconfigure after installing Doxygen to make the target available. Review
-generated pages and external links before publishing: correcting namespace
-scopes can change API page URLs.
-
-## Local code coverage
-
-This optional recipe collects gcov-format data locally. Run the following block
-from the repository root with Bash and the existing Apple
-Clang toolchain. With GCC, change `clang++` to the chosen GCC C++ compiler and
-`coverage_gcov=(llvm-cov gcov)` to its matching `coverage_gcov=(gcov)` command
-(use matching version suffixes when applicable).
-
-The dedicated `build/coverage` directory uses Debug, the default library
-features, parallel enumeration dimension 20, and all 15 numerical tests. Start
-with a fresh coverage directory when changing compiler or enabled source sets.
-Each measurement clears only its previous runtime counters and generated
-coverage reports; normal development builds are separate.
-
-```bash
-bash <<'SH'
-set -euo pipefail
-coverage_source=$PWD
-coverage_build="$coverage_source/build/coverage"
-coverage_reports="$coverage_build/gcov"
-coverage_gcov=(llvm-cov gcov)
-export CCACHE_DIR="$coverage_build/ccache"
-
-cmake --preset debug -B "$coverage_build" \
-  -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_CXX_FLAGS=--coverage \
-  -DCMAKE_EXE_LINKER_FLAGS=--coverage -DCMAKE_SHARED_LINKER_FLAGS=--coverage \
-  -DFPLLL_MAX_PARALLEL_ENUM_DIM=20 \
-  -DBUILD_TESTING=ON
-cmake --build "$coverage_build" --parallel 4
-find "$coverage_build" -type f \( -name '*.gcda' -o -name '*.gcov' \) -delete
-rm -f "$coverage_build/coverage-lines.tsv" "$coverage_build/coverage-summary.txt"
-ctest --test-dir "$coverage_build" --output-on-failure --no-tests=error
-
-mkdir -p "$coverage_reports"
-find "$coverage_build" -type f -name '*.gcno' | LC_ALL=C sort \
-  > "$coverage_build/coverage-notes.txt"
-test -s "$coverage_build/coverage-notes.txt"
-while IFS= read -r coverage_note; do
-  coverage_output="$coverage_reports/${coverage_note#"$coverage_build/"}"
-  mkdir -p "$coverage_output"
-  (cd "$coverage_output"
-   "${coverage_gcov[@]}" -p -r -s "$coverage_source" "$coverage_note" > gcov.log 2>&1)
-done < "$coverage_build/coverage-notes.txt"
-
-find "$coverage_reports" -type f -name '*.gcov' -exec cat {} + |
-  awk -F: -v root="$coverage_source/" '
-    $2 == 0 && $3 == "Source" {
-      source = substr($0, index($0, "Source:") + 7)
-      if (index(source, root) == 1) source = substr(source, length(root) + 1)
-    }
-    source ~ /^fplll\// && source != "fplll/io/json.hpp" && $2 > 0 {
-      count = $1
-      gsub(/[[:space:]*]/, "", count)
-      if (count != "-") {
-        key = source "\t" ($2 + 0)
-        covered[key] = covered[key] || (count ~ /^[0-9]+$/ && count + 0 > 0)
-      }
-    }
-    END { for (key in covered) print key "\t" (covered[key] ? 1 : 0) }
-  ' | LC_ALL=C sort > "$coverage_build/coverage-lines.tsv"
-
-awk -F '\t' '
-  { files[$1] = 1; lines++; hits += $3 }
-  END {
-    if (!lines) exit 1
-    for (file in files) total_files++
-    printf "Files: %d\nLines: %d\nHits: %d\nMisses: %d\nCoverage: %.2f%%\n", \
-      total_files, lines, hits, lines - hits, int(10000 * hits / lines) / 100
-  }
-' "$coverage_build/coverage-lines.tsv" | tee "$coverage_build/coverage-summary.txt"
-SH
-```
-
-Collect every `.gcno`, including objects in enumeration, pruning, and test
-subdirectories. An object without runtime counts produces zero-covered lines.
-Separate output directories preserve all copies of headers instantiated by
-different objects. The summary merges each source line across those copies:
-a line is covered if any object executed it. It includes the project's `fplll/`
-sources and excludes tests, external headers, and the vendored JSON header.
-Codecov's root `codecov.yml` retains the project and patch coverage policies
-and excludes tests and the JSON header during service-side processing.
-
-`build/coverage/gcov/` contains the raw `.gcov` reports and per-object logs.
-`coverage-lines.tsv` contains source path, line number, and covered status
-(`1` or `0`); `coverage-summary.txt` records the file count and line totals.
-All of these files stay under `build/coverage`. The collection block performs
-no upload. Use the corrected report as the baseline for subsequent comparisons
-with the same compiler, features, and test selection.
-
-Verified local baseline on 2026-10-22: Apple Clang 21.0.0 on arm64 macOS,
-C++23 Debug, GMP/MPFR, QD disabled, and parallel enumeration dimension 20.
-All 15 tests passed in two clean measurements, with identical covered-line sets.
-The table below predates moving the command-line programs to `tools/`; the
-coverage filter only includes `fplll/` library sources, so regenerate the
-baseline after that layout change.
-
-| Files | Executable lines | Covered | Uncovered | Coverage (rounded down) |
-| --- | --- | --- | --- | --- |
-| 63 | 8,090 | 5,179 | 2,911 | 64.01% |
-
-## Historical baseline and cleanup
-
-The original toolchain is retained in Git history. Keep its reference checkout
-outside this source tree and outside all build/installation directories:
-
-```sh
-git worktree add --detach ../fplll-autotools-reference 360cfc6b
-git worktree list
-```
-
-If that worktree already exists, reuse it. Its historical build instructions
-belong to that checkout. Moving a configured reference checkout can invalidate
-its cached absolute paths; regenerate its configuration there before rebuilding.
-Do not share generated headers or caches with the CMake checkout.
-
-Local migration notes are ignored under `notes/`. To inspect disposable outputs
-before deleting them:
-
-```sh
-git status --short
-git clean -ndX -- build/ _install/ .cache/
-```
-
-Only after reviewing that list, use `git clean -fdX` with the same path list.
-Do not run an unrestricted ignored-file cleanup: local notes are ignored too.
+**Meson is too old, or the compiler is rejected.** Meson 1.8 or newer and a
+C++23 compiler (GCC 14, Clang 18, AppleClang 16, or newer) are required; C++23
+cannot be downgraded.

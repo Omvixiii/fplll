@@ -2,22 +2,28 @@ FROM debian:bookworm
 
 LABEL org.opencontainers.image.source="https://github.com/fplll/fplll"
 
-ARG JOBS=2
-ARG CXXFLAGS="-O2 -march=x86-64"
-
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends build-essential cmake ninja-build \
-        libgmp-dev libmpfr-dev libqd-dev pkg-config && \
+    apt-get install -y --no-install-recommends \
+        build-essential ninja-build libgmp-dev libmpfr-dev libqd-dev \
+        pkg-config python3-venv ca-certificates && \
     rm -rf /var/lib/apt/lists/*
+
+# The Meson in Debian bookworm predates the project's 1.8 floor; install a
+# current Meson into an isolated environment.
+RUN python3 -m venv /opt/meson && \
+    /opt/meson/bin/pip install --no-cache-dir 'meson>=1.8' && \
+    ln -s /opt/meson/bin/meson /usr/local/bin/meson
 
 WORKDIR /src/fplll
 COPY . .
-RUN cmake -S . -B build/docker -G Ninja \
-        -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="$CXXFLAGS" \
-        -DCMAKE_INSTALL_PREFIX=/usr/local -DCMAKE_INSTALL_LIBDIR=lib \
-        -DBUILD_TESTING=OFF -DFPLLL_WITH_QD=ON && \
-    cmake --build build/docker --parallel "$JOBS" && \
-    cmake --install build/docker && \
+RUN meson setup build/docker \
+        --buildtype=release \
+        -Dqd=enabled \
+        -Dprefix=/usr/local \
+        --default-library=shared \
+        -Dtests=false && \
+    meson compile -C build/docker && \
+    meson install -C build/docker && \
     ldconfig && \
     rm -rf /src/fplll
 WORKDIR /

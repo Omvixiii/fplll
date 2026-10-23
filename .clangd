@@ -1,11 +1,3 @@
+# Meson always writes the compilation database to build/compile_commands.json.
 CompileFlags:
-  CompilationDatabase: build/debug
-
----
-# CMake input templates use placeholders and directives that are not C++.
-If:
-  PathMatch: cmake/.*\.(h|cpp)\.in
-Diagnostics:
-  Suppress: '*'
-Index:
-  Background: Skip
+  CompilationDatabase: build

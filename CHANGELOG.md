@@ -10,19 +10,22 @@ API, and replaces the generated pruner tables with runtime computation.  See
 
 ### Build and development
 
-- Use CMake as the sole build toolchain; remove the legacy build scripts and
-  macro files.
+- Use Meson 1.8 or newer with Ninja as the sole build toolchain; remove the
+  intermediate CMake build and the legacy Autotools files.
 - Require C++23 for the library, installed headers, tools, tests and
   benchmarks.
 - Remove the MPIR backend, the recursive-enumeration build switch and the
   `ZZ_mat<double>` integer backend.
-- Provide configure, build and test presets with independent build and install
-  directories. Reject in-source builds.
-- Generate configuration headers and enumeration sources in the binary tree;
-  keep libraries, executables and per-test output directories there as well.
-- Provide shared/static libraries, optional debug variants, exported CMake
-  targets, pkg-config metadata and CPack source archives.
-- Migrate CI, packaging, container builds and contributor instructions to CMake.
+- Replace build presets with Meson options and independent build directories.
+- Generate configuration headers and enumeration sources in the build tree;
+  keep libraries, executables and test working directories there as well.
+- Provide shared and static libraries (`both` by default), optional debug and
+  variant libraries, pkg-config metadata and `meson dist` source archives.
+- Remove the CMake package config and exported targets; downstream projects
+  use pkg-config or Meson's `dependency('fplll')`.
+- Replace CPack source archives and the distcheck workflow with `meson dist`,
+  which builds and tests the generated archive.
+- Migrate CI, container builds and contributor instructions to Meson.
 - Consolidate historical release notes here; keep local migration notes out of
   version control and source packages.
 

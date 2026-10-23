@@ -20,21 +20,37 @@ Now clone your git repo where my-github-name is your account name on GitHub:
 git clone git@github.com:my-github-name/fplll.git
 ```
 
-Install CMake 3.25 or newer, Ninja, a C++23-capable compiler, GMP, and MPFR.
-Configure, build, and test with the shared workflow:
+Install Meson 1.8 or newer, Ninja, a C++23-capable compiler, GMP and MPFR
+development packages, and pkg-config. Install Meson with
+`uv tool install meson` or `pipx install meson`. Configure, build, and run the
+tests:
 
 ```sh
-cmake --workflow --preset debug
+meson setup build
+meson compile -C build
+meson test -C build --print-errorlogs
 ```
 
-For the edit/build loop, use `cmake --build --preset debug`, optionally selecting
-a target with `--target` or adding `--verbose` for compiler commands. CTest alone
-does not build changed code; run the workflow before submitting a change. See
-the [build guide](doc/building.md) for options, diagnostics, and output locations.
+The default configuration builds both libraries and registers the test suite.
+Use a separate build directory for each configuration; see the
+[build guide](doc/building.md) for options, diagnostics, and output locations.
+
+For an optimized validation build with strict warnings:
+
+```sh
+meson setup build-release --buildtype=release --warnlevel=3 --werror
+meson compile -C build-release
+meson test -C build-release --print-errorlogs
+```
+
+Changes to installation, packaging, or the build system should also pass
+`meson dist -C build-release`; `meson dist` requires a clean Git checkout, so
+commit locally before running it. See
+[source packages](doc/building.md#source-packages).
 
 ## Reporting Bugs
 
-Bug should be filed at [https://github.com/fplll/fplll/issues](https://github.com/fplll/fplll/issues). Alternatively, feel free to contact  [https://groups.google.com/forum/#!forum/fplll-devel](https://groups.google.com/forum/#!forum/fplll-devel). The former method is definitely preferred though.
+Bug should be filed at [https://github.com/fplll/fplll/issues](https://github.com/fplll/fplll/issues). Alternatively, feel free to contact [https://groups.google.com/forum/#!forum/fplll-devel](https://groups.google.com/forum/#!forum/fplll-devel). The former method is definitely preferred though.
 
 ## Setting up topic branches and generating pull requests
 
@@ -46,7 +62,7 @@ While it takes some experience to get the right feel about how to break up commi
 
 Also since GitHub pegs and syncs a pull request to a specific branch, it is the **only** way that you can submit more than one fix at a time. If you submit a pull from your ``master`` branch, you can't make any more commits to your ``master`` branch without those getting added to the pull.
 
-To create a topic branch, its easiest to use the convenient ``-b`` argument to ``git checkout``
+To create a topic branch, its easiest to use the convenient ``-b`` argument to ``git checkout``:
 
 ```sh
 git checkout -b fix-broken-thing
@@ -54,7 +70,7 @@ git checkout -b fix-broken-thing
 
 You should use a verbose enough name for your branch so it is clear what it is about. Now you can commit your changes and regularly merge in the upstream develop as described below.
 
-When you are ready to generate a pull request, either for preliminary review, or for consideration of merging into the project you must first push your local topic branch back up to GitHub
+When you are ready to generate a pull request, either for preliminary review, or for consideration of merging into the project you must first push your local topic branch back up to GitHub:
 
 ```sh
 git push origin fix-broken-thing
@@ -98,12 +114,14 @@ We want your submission. But we also want to provide a stable experience for our
 Before you submit a pull request, configure, build, and run the tests:
 
 ```sh
-cmake --workflow --preset debug
+meson setup build
+meson compile -C build
+meson test -C build --print-errorlogs
 ```
 
-Use the `release` configure, build, and test presets to validate an optimized
-build. Changes to installation, packaging, or the build system should also pass
-`cmake --workflow --preset distcheck`; see the [build guide](doc/building.md#source-packages).
+Use an optimized build directory to validate release behaviour. Changes to
+installation, packaging, or the build system should also pass `meson dist`; see
+the [build guide](doc/building.md#source-packages).
 
 ### If you add code please add tests
 
@@ -112,6 +130,9 @@ Code that isn’t tested is broken.
 Also, keep your tests simple. Complex tests end up requiring their own tests. We would rather see duplicated assertions across test methods then cunning utility methods that magically determine which assertions are needed at a particular stage. Remember: Explicit is better than implicit.
 
 Finally, the nature of fplll means that sometimes it is hard to properly test the behaviour of a change quickly. Running BKZ for several minutes takes way too long for a test. In this case, we should at least test that a particular piece of code compiles and runs.
+
+Fixtures under `tests/lattices/` and `strategies/` are read-only inputs. Tests
+must write only into their build-tree working directory, `build/tests/`.
 
 ### Keep your pull requests limited to a single issue
 
@@ -149,21 +170,21 @@ Furthermore, the pixel shortage is over. We want to see:
 The repository's `.clang-format` is the authoritative formatting
 configuration. Keep formatting changes separate from functional changes.
 
-### Enforcement of the coding convention
+### Formatting and linting
 
-The coding convention applies throughout the project. Automatic formatting can
-be performed with:
+Apply the formatting or check it without modifying files:
 
 ```sh
-cmake --build --preset debug --target format
+meson compile -C build format
+meson compile -C build lint
 ```
 
-This requires clang-format. The `lint` target checks formatting without modifying
-files. You can also run `cmake -P cmake/lints.cmake`
-without configuring the project. Both commands include test headers and inline
-implementation files, and exclude bundled third-party headers.
+Both targets use the repository `.clang-format` and skip the bundled
+third-party headers `fplll/io/json.hpp` and `fplll/io/thread_pool.hpp`. They are
+available when Python 3 and `clang-format` are found at configure time; `lint`
+is non-mutating and is the command to use before submitting.
 
-In order to improve readability, some situations might require manual formatting. Clang-format [includes a comment trigger](http://llvm.org/releases/6.0.0/tools/clang/docs/https://releases.llvm.org/6.0.0/tools/clang/docs/ClangFormatStyleOptions.html#disabling-formatting-on-a-piece-of-code) to _locally_ disable the formatting. The code between a comment `// clang-format off` or `/* clang-format off */` up to a comment `// clang-format on` or `/* clang-format on */` will not be formatted.
+In order to improve readability, some situations might require manual formatting. Clang-format [includes a comment trigger](https://clang.llvm.org/docs/ClangFormatStyleOptions.html#disabling-formatting-on-a-piece-of-code) to _locally_ disable the formatting. The code between a comment `// clang-format off` or `/* clang-format off */` up to a comment `// clang-format on` or `/* clang-format on */` will not be formatted.
 
 ```c++
 int formatted_code;
@@ -175,34 +196,39 @@ void formatted_code_again;
 
 ### Faster compilation
 
-The shared and static libraries reuse the same compiled OBJECT library. Build
-only the target you are changing during development, then run the workflow for
-full validation. To enable an installed ccache, configure with
-`-DCMAKE_CXX_COMPILER_LAUNCHER=ccache`; shared presets do not require it.
-Debug variant objects are compiled only when a debug variant target is requested.
-These variants enable fplll's `DEBUG` macro and are distinct from the Debug
-build type. Reducing the parallel enumeration dimension is an optional local
-tradeoff, not the release default; see the [build guide](doc/building.md#build-options-and-targets).
+Meson rebuilds incrementally. Install ccache and configure with an explicit
+compiler wrapper:
+
+```sh
+CXX="ccache c++" meson setup build
+```
+
+The compiler wrapper is recorded at configure time; use a new build directory
+(or `meson setup --wipe build`) when changing it. Keep one build directory per
+configuration (debug, release, sanitizers) instead of reconfiguring one
+directory back and forth, and use `-Dtests=false -Dbenchmarks=false` in a
+throwaway directory for quick compile-only checks. Lowering
+`-Dmax_parallel_enum_dim` (for example to `20`) compiles fewer enumeration
+specializations; this changes the configured capability, so keep the default
+`120` for release validation. See the
+[build guide](doc/building.md#build-options) for all options.
 
 ### Attribution
 
-Please add yourself to the historical credits in [usage.md](doc/usage.md) if you
-make a non-trivial contribution. You may also claim copyright in the copyright
-headers of files you change.
+Please add yourself to the historical credits in [usage.md](doc/usage.md) if you make a non-trivial contribution. You may also claim copyright in the copyright headers of files you change.
 
 ## Documentation
 
-With Doxygen 1.9.8 or newer installed, configure a preset and build the `doc` target:
+With Doxygen found at configure time, build the API documentation:
 
 ```sh
-cmake --preset debug
-cmake --build --preset debug --target doc
+meson compile -C build doc
 ```
 
-HTML output is written to `build/debug/doc/html/`. Library sources, the
-README, changelog, and usage, build, and contribution guides are documentation
-inputs; build configuration headers and local notes are excluded.
-The [build guide](doc/building.md#development-utilities) describes the generated
-configuration, optional Graphviz diagrams, and formula rendering.
-Review the generated documentation before publishing to the separate `gh-pages`
-checkout. Never generate documentation into the source tree.
+HTML output is written to `build/doc/html/`. Library sources, the README,
+changelog, and usage, build, and contribution guides are documentation inputs;
+build configuration headers and local notes are excluded. Meson generates the
+Doxygen configuration, and heading links use GitHub-style anchors so they work
+in both the repository and generated pages. Review the generated documentation
+before publishing to the separate `gh-pages` checkout. Never generate
+documentation into the source tree.

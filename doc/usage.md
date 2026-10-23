@@ -2,11 +2,12 @@
 
 ## How to use
 
-The build places `fplll` and `latticegen` under `build/<preset>/bin/` (for
-example, `build/debug/bin/`). Installation places them in the prefix's `bin/`
+The build places `fplll` and `latticegen` under `build/tools/` (for example,
+`build/tools/fplll`). Installation places them in the prefix's `bin/`
 directory. `llldiff` is a test helper and is not installed.
-The examples below assume the current directory is the build's `bin/`
-directory so the programs can be invoked as `./fplll` and `./latticegen`.
+The examples below assume the command-line tools are on the search path (for
+example after `meson install` or by prefixing the build path), so the programs
+can be invoked as `fplll` and `latticegen`.
 
 ### latticegen
 
