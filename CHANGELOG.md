@@ -25,6 +25,9 @@ API, and replaces the generated pruner tables with runtime computation.  See
   through `wait_work()`/`wait_sleep()` instead of terminating the process.
 - `dump_mu_d` appends to its output vector; `FPLLL_CHECK`/`FPLLL_ABORT` are
   usable from consumer code outside namespace `fplll`.
+- `FP_NR` integer conversions are range-checked instead of relying on
+  undefined float-to-integer casts, and the in-place arithmetic
+  overloads return by value rather than a dangling rvalue reference.
 - Portability: `std::`-qualified math in the optional long-double and QD
   backends, MPFR-based string-to-double parsing (no floating-point
   `std::from_chars`), `std::numbers::e` instead of `M_E`, `_MSVC_LANG` for
