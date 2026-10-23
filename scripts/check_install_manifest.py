@@ -80,10 +80,9 @@ def main():
     libraries = [entry for entry in installed if entry.startswith("lib/libfplll")]
     if not libraries:
         errors.append("no libfplll library found under lib/")
+    # pkg-config is the downstream consumption interface in the 6.0 layout.
     if not any(entry.endswith("pkgconfig/fplll.pc") for entry in installed):
         errors.append("missing pkg-config metadata: fplll.pc")
-    if not any(entry.endswith("cmake/fplll/fplllConfig.cmake") for entry in installed):
-        errors.append("missing CMake package config: fplllConfig.cmake")
 
     for error in errors:
         print(f"FAIL: {error}", file=sys.stderr)

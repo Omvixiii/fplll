@@ -21,7 +21,7 @@ fi
 
 case "$(uname -s)" in
   Darwin)
-    symbols="$(nm -gU "$library" | awk '{print $2}' | sed 's/^_//')"
+    symbols="$(nm -gU "$library" | awk '{print $3}' | sed 's/^_//')"
     ;;
   Linux)
     symbols="$(nm -D --defined-only "$library" | awk '{print $3}')"
