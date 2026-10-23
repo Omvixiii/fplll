@@ -204,6 +204,7 @@ template <> inline void Z_NR<long>::randb(int bits)
     FPLLL_ABORT("randb: number of bits must be non-negative");
     return;
   }
+  std::lock_guard<std::mutex> lock(RandGen::mutex());
   mpz_t temp;
   mpz_init(temp);
   mpz_urandomb(temp, RandGen::get_gmp_state(), bits);
@@ -219,6 +220,7 @@ template <> inline void Z_NR<long>::randb_si(int bits)
 
 template <> inline void Z_NR<long>::randm(const Z_NR<long> &max)
 {
+  std::lock_guard<std::mutex> lock(RandGen::mutex());
   mpz_t temp, lim;
   mpz_init(temp);
   mpz_init(lim);

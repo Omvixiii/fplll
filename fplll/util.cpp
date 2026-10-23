@@ -43,13 +43,13 @@ std::atomic<std::ostream *> current_log_stream{nullptr};
 
 std::ostream &log_stream()
 {
-  std::ostream *stream = current_log_stream.load(std::memory_order_relaxed);
+  std::ostream *stream = current_log_stream.load(std::memory_order_acquire);
   return stream != nullptr ? *stream : null_log_stream;
 }
 
 void set_log_stream(std::ostream *stream)
 {
-  current_log_stream.store(stream, std::memory_order_relaxed);
+  current_log_stream.store(stream, std::memory_order_release);
 }
 
 enum MinPrecAlgo
@@ -60,7 +60,6 @@ enum MinPrecAlgo
 
 /* State of the random generator (declared in nr.h, must be defined in exactly
    one source file) */
-bool RandGen::initialized = false;
 gmp_randstate_t RandGen::gmp_state;
 
 static int compute_min_prec(double &rho, int d, double delta, double eta, double epsilon,

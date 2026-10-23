@@ -31,8 +31,10 @@
 #define THREAD_POOL_HPP
 
 #include <atomic>
+#include <cassert>
 #include <condition_variable>
 #include <cstdint>
+#include <exception>
 #include <functional>
 #include <future>
 #include <memory>
@@ -148,7 +150,8 @@ public:
 private:
   void _init_thread();
 
-  std::atomic_uint _threads_busy;
+  std::size_t _outstanding = 0;
+  std::exception_ptr _exception;
   std::vector<std::unique_ptr<std::thread>> _threads;
   std::vector<std::shared_ptr<std::atomic_bool>> _threads_stop;
   std::queue<std::function<void()>> _tasks;
@@ -160,19 +163,20 @@ class barrier
 {
 public:
   barrier(std::size_t count);
-  ~barrier() noexcept(false);
+  ~barrier() noexcept;
 
   void wait();
 
 private:
-  std::size_t _i, _count;
+  std::size_t _count;
+  std::size_t _waiting    = 0;
+  std::size_t _generation = 0;
   std::mutex _mutex;
   std::condition_variable _condition;
 };
 
 inline thread_pool::thread_pool(std::size_t nrthreads)
 {
-  _threads_busy = 0;
   resize(nrthreads);
 }
 
@@ -192,7 +196,21 @@ inline bool thread_pool::work()
     task = std::move(this->_tasks.front());
     this->_tasks.pop();
   }
-  task();
+  try
+  {
+    task();
+  }
+  catch (...)
+  {
+    std::lock_guard<std::mutex> lock(_mutex);
+    if (!_exception)
+      _exception = std::current_exception();
+  }
+  {
+    std::lock_guard<std::mutex> lock(_mutex);
+    --_outstanding;
+  }
+  _condition.notify_all();
   return true;
 }
 
@@ -200,14 +218,28 @@ inline void thread_pool::wait_work()
 {
   while (work())
     ;
-  while (_threads_busy != 0)
-    std::this_thread::yield();
+  std::unique_lock<std::mutex> lock(_mutex);
+  _condition.wait(lock, [this] { return _outstanding == 0; });
+  if (_exception)
+  {
+    std::exception_ptr exception = _exception;
+    _exception                 = nullptr;
+    lock.unlock();
+    std::rethrow_exception(exception);
+  }
 }
 
 inline void thread_pool::wait_sleep()
 {
-  while (_tasks.size() != 0 || _threads_busy != 0)
-    std::this_thread::yield();
+  std::unique_lock<std::mutex> lock(_mutex);
+  _condition.wait(lock, [this] { return _outstanding == 0; });
+  if (_exception)
+  {
+    std::exception_ptr exception = _exception;
+    _exception                 = nullptr;
+    lock.unlock();
+    std::rethrow_exception(exception);
+  }
 }
 
 inline void thread_pool::push(const std::function<void()> &f)
@@ -215,6 +247,7 @@ inline void thread_pool::push(const std::function<void()> &f)
   {
     std::unique_lock<std::mutex> lock(_mutex);
     _tasks.emplace(f);
+    ++_outstanding;
   }
   _condition.notify_one();
 }
@@ -224,6 +257,7 @@ inline void thread_pool::push(std::function<void()> &&f)
   {
     std::unique_lock<std::mutex> lock(_mutex);
     _tasks.emplace(std::move(f));
+    ++_outstanding;
   }
   _condition.notify_one();
 }
@@ -243,13 +277,18 @@ inline void thread_pool::run(const std::function<void()> &f, int threads)
 {
   if (threads < 1 || threads > int(_threads.size()) + 1)
     threads = int(_threads.size()) + 1;
+  for (int i = 0; i < threads - 1; ++i)
+    push(f);
+  try
   {
-    std::unique_lock<std::mutex> lock(_mutex);
-    for (int i = 0; i < threads - 1; ++i)
-      _tasks.emplace(f);
+    f();
   }
-  _condition.notify_all();
-  f();
+  catch (...)
+  {
+    std::lock_guard<std::mutex> lock(_mutex);
+    if (!_exception)
+      _exception = std::current_exception();
+  }
   this->wait_sleep();
 }
 
@@ -257,13 +296,18 @@ inline void thread_pool::run(const std::function<void(int)> &f, int threads)
 {
   if (threads < 1 || threads > int(_threads.size()) + 1)
     threads = int(_threads.size()) + 1;
+  for (int i = 0; i < threads - 1; ++i)
+    push([f, i] { f(i); });
+  try
   {
-    std::unique_lock<std::mutex> lock(_mutex);
-    for (int i = 0; i < threads - 1; ++i)
-      _tasks.emplace([=]() { f(i); });
+    f(threads - 1);
   }
-  _condition.notify_all();
-  f(threads - 1);
+  catch (...)
+  {
+    std::lock_guard<std::mutex> lock(_mutex);
+    if (!_exception)
+      _exception = std::current_exception();
+  }
   this->wait_sleep();
 }
 
@@ -271,18 +315,29 @@ inline void thread_pool::run(const std::function<void(int, int)> &f, int threads
 {
   if (threads < 1 || threads > int(_threads.size()) + 1)
     threads = int(_threads.size()) + 1;
+  for (int i = 0; i < threads - 1; ++i)
+    push([f, i, threads] { f(i, threads); });
+  try
   {
-    std::unique_lock<std::mutex> lock(_mutex);
-    for (int i = 0; i < threads - 1; ++i)
-      _tasks.emplace([=]() { f(i, threads); });
+    f(threads - 1, threads);
   }
-  _condition.notify_all();
-  f(threads - 1, threads);
+  catch (...)
+  {
+    std::lock_guard<std::mutex> lock(_mutex);
+    if (!_exception)
+      _exception = std::current_exception();
+  }
   this->wait_sleep();
 }
 
 inline void thread_pool::resize(std::size_t nrthreads)
 {
+  if (nrthreads == _threads.size())
+    return;
+
+  // The pool must be idle before the worker vectors are changed.
+  wait_work();
+
   if (nrthreads < _threads.size())
   {
     // decreasing number of active threads
@@ -298,12 +353,9 @@ inline void thread_pool::resize(std::size_t nrthreads)
     _threads_stop.resize(nrthreads);
     _threads.resize(nrthreads);
   }
-  else if (nrthreads > _threads.size())
+  else
   {
-    // wait before resizing because it may cause reallocation
-    wait_work();
-
-    std::unique_lock<std::mutex> _lock(_mutex);
+    std::unique_lock<std::mutex> lock(_mutex);
     _threads_stop.reserve(nrthreads);
     _threads.reserve(nrthreads);
     for (std::size_t i = _threads.size(); i < nrthreads; ++i)
@@ -333,39 +385,46 @@ inline void thread_pool::_init_thread()
         continue;
       }
 
-      ++this->_threads_busy;
       task = std::move(this->_tasks.front());
       this->_tasks.pop();
 
       lock.unlock();
-      task();
-      --this->_threads_busy;
+      try
+      {
+        task();
+      }
+      catch (...)
+      {
+        std::lock_guard<std::mutex> guard(this->_mutex);
+        if (!this->_exception)
+          this->_exception = std::current_exception();
+      }
       lock.lock();
+      --this->_outstanding;
+      this->_condition.notify_all();
     }
   };
   _threads.emplace_back(new std::thread(f));
 }
 
-inline barrier::barrier(std::size_t count) : _i(0), _count(count) {}
+inline barrier::barrier(std::size_t count) : _count(count) {}
 
-inline barrier::~barrier() noexcept(false)
-{
-  if (_i != 0)
-    throw std::runtime_error("barrier::~barrier: threads are still waiting on barrier");
-}
+inline barrier::~barrier() noexcept { assert(_waiting == 0); }
 
 inline void barrier::wait()
 {
   std::unique_lock<std::mutex> lock(_mutex);
-  if (++_i >= _count)
+  const std::size_t generation = _generation;
+  if (++_waiting >= _count)
   {
-    _i = 0;
+    _waiting = 0;
+    ++_generation;
     lock.unlock();
     _condition.notify_all();
   }
   else
   {
-    _condition.wait(lock);
+    _condition.wait(lock, [this, generation] { return _generation != generation; });
   }
 }
 

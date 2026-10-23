@@ -15,6 +15,7 @@
 
 #include "threadpool.h"
 
+#include <atomic>
 #include <mutex>
 
 FPLLL_BEGIN_NAMESPACE
@@ -28,7 +29,11 @@ thread_pool::thread_pool &pool_instance()
   return pool;
 }
 
-std::mutex &threads_mutex()
+/* Number of threads including the main thread; lock-free so that jobs may
+   query it while the pool is active. */
+std::atomic<int> thread_count{1};
+
+std::mutex &resize_mutex()
 {
   static std::mutex mutex;
   return mutex;
@@ -39,21 +44,19 @@ std::mutex &threads_mutex()
 thread_pool::thread_pool &get_threadpool() { return pool_instance(); }
 
 /* get and set number of threads in threadpool, both return the (new) number of threads */
-int get_threads()
-{
-  std::lock_guard<std::mutex> lock(threads_mutex());
-  return static_cast<int>(get_threadpool().size()) + 1;
-}
+int get_threads() { return thread_count.load(std::memory_order_relaxed); }
 
 int set_threads(int th)
 {
-  std::lock_guard<std::mutex> lock(threads_mutex());
   if (th > int(std::thread::hardware_concurrency()) || th == -1)
-    th = std::thread::hardware_concurrency();
+    th = int(std::thread::hardware_concurrency());
   if (th < 1)
     th = 1;
+
+  std::lock_guard<std::mutex> lock(resize_mutex());
   get_threadpool().resize(static_cast<std::size_t>(th - 1));
-  return static_cast<int>(get_threadpool().size()) + 1;
+  thread_count.store(th, std::memory_order_relaxed);
+  return th;
 }
 
 FPLLL_END_NAMESPACE

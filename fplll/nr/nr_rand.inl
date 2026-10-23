@@ -53,12 +53,16 @@ class RandGen
 public:
   static void init()
   {
-    initialized = true;
-    gmp_randinit_default(gmp_state);
+    std::call_once(init_flag(),
+                   []
+                   {
+                     gmp_randinit_default(gmp_state);
+                   });
   }
   static void init_with_seed(unsigned long seed)
   {
     init();
+    std::lock_guard<std::mutex> lock(mutex());
     gmp_randseed_ui(gmp_state, seed);
     RandGenInt::seed(seed);
   }
@@ -71,16 +75,26 @@ public:
         std::chrono::high_resolution_clock::now().time_since_epoch().count());
     init_with_seed(static_cast<unsigned long>(random_bits ^ clock_bits));
   }
+  /* GMP randstates are not thread-safe; hold this mutex while touching
+     get_gmp_state().  The Z_NR random helpers take it internally. */
+  static std::mutex &mutex()
+  {
+    static std::mutex state_mutex;
+    return state_mutex;
+  }
   static gmp_randstate_t &get_gmp_state()
   {
-    if (!initialized)
-      init();
+    init();
     return gmp_state;
   }
   static gmp_randstate_t gmp_state;
 
 private:
-  static bool initialized;
+  static std::once_flag &init_flag()
+  {
+    static std::once_flag flag;
+    return flag;
+  }
 };
 
 FPLLL_END_NAMESPACE

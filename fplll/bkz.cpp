@@ -48,6 +48,8 @@ void BKZReduction<ZT, FT>::rerandomize_block(int min_row, int max_row, int densi
   if (max_row - min_row < 2)
     return;
 
+  std::lock_guard<std::mutex> rng_lock(RandGen::mutex());
+
   // 1. permute rows
   size_t niter = 4 * (max_row - min_row);  // some guestimate
 

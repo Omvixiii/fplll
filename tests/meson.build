@@ -18,6 +18,8 @@ test_names = [
   'test_config',
   'test_public_macros',
   'test_regressions',
+  'test_rng',
+  'test_threadpool',
 ]
 
 executable(
