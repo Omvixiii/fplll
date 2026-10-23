@@ -13,3 +13,7 @@
 
 # Local caches (clangd, ccache, uv)
 /.cache/
+
+# Python bytecode from the helper scripts
+__pycache__/
+*.pyc

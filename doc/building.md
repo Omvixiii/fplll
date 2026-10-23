@@ -45,7 +45,7 @@ a shell with them on `PATH`.
 | `build/` | developer build; Meson writes `build/compile_commands.json` here for editors |
 | `build-release/` | optimized build for validation, installation and packaging |
 | `build-asan/` | AddressSanitizer and UndefinedBehaviorSanitizer build |
-| `build-<name>/` | further one-off configurations (coverage, static or shared, benchmarks) |
+| `build-<name>/` | further one-off configurations (coverage, static or shared) |
 | `_install/` | staging prefix for install validation |
 
 Rules that keep the tree predictable:
@@ -66,10 +66,9 @@ Rules that keep the tree predictable:
 meson compile -C build                   # incremental build
 meson test -C build --print-errorlogs    # full suite
 meson test -C build test_lll             # single test; --list for all tests
-meson compile -C build format            # apply clang-format in place
-meson compile -C build lint              # check formatting without modifying files
 meson compile -C build doc               # API documentation, if Doxygen was found
 meson compile -C build dbg               # DEBUG-enabled fplll_dbg and latticegen_dbg
+meson compile -C build variants          # fplllv/fpllld variant libraries (never installed)
 meson compile -C build --clean           # remove build outputs, keep configuration
 ```
 
@@ -91,8 +90,9 @@ Language tooling follows the canonical directory, so it is configured once:
   after cloning, and again after `meson setup --wipe build`.
 - `.clang-tidy` is the clang-tidy configuration; apply it with
   `clang-tidy -p build path/to/file.cpp`.
-- `.clang-format` is the formatting authority; `format` and `lint` skip the
-  vendored headers under `fplll/io/`.
+- `.clang-format` is the formatting authority; run `clang-format` directly on
+  the files you change. The vendored headers under `fplll/io/` keep their
+  upstream formatting.
 - `build/fplll/fplll_config.h` and the generated enumeration sources are
   resolved through the compilation database; no manual include paths needed.
 
@@ -136,9 +136,6 @@ ninja -C build-coverage coverage
 # single library flavour
 meson setup build-static --buildtype=release --default-library=static
 meson setup build-shared --buildtype=release --default-library=shared
-
-# benchmarks
-meson setup build-bench --buildtype=release -Dbenchmarks=true
 ```
 
 Strict warnings are available with `-Dwarning_level=3 -Dwerror=true`. The
@@ -156,7 +153,6 @@ advisory: it is expected to fail until the warning baseline is cleaned up.
 | `-Dextenum_library=LIB` | empty | external enumeration library name or path |
 | `-Dextenum_function=SYM` | empty | exported enumeration symbol; defaults to the library basename |
 | `-Dtests=true/false` | `true` | build and register the tests (top-level builds only) |
-| `-Dbenchmarks=true/false` | `false` | build the `fplll_bench` microbenchmark |
 
 Built-in Meson options replace project-specific switches: `--buildtype`,
 `--default-library` (`both` by default; `shared` and `static` are also
@@ -173,7 +169,6 @@ standard but rejects older ones. Inspect a configured directory with
 | Libraries | `fplll/libfplll.{dylib,so*,a}` |
 | Tools | `tools/fplll`, `tools/latticegen`, plus `tools/fplll_dbg` and `tools/latticegen_dbg` |
 | Tests | `tests/test_*`, `tests/llldiff` |
-| Benchmark | `bench/fplll_bench` |
 | Generated files | `fplll/fplll_config.h`, `fplll/enumlib_dim.<dim>.cpp` |
 | Compilation database | `compile_commands.json` |
 | API documentation | `doc/html/index.html` |
@@ -287,13 +282,11 @@ documentation into the source tree.
 Builds, tests, installs and release archives are validated locally: run the
 same Meson commands before submitting changes or tagging a release.
 
-1. Developer build: `meson test -C build --print-errorlogs` and
-   `meson compile -C build lint`.
-2. Optimized build with a staging prefix, then its test suite and lint:
+1. Developer build: `meson test -C build --print-errorlogs`.
+2. Optimized build with a staging prefix, then its test suite:
    `meson setup build-release --buildtype=release --prefix="$PWD/_install"`,
    `meson compile -C build-release`,
-   `meson test -C build-release --print-errorlogs`,
-   `meson compile -C build-release lint`.
+   `meson test -C build-release --print-errorlogs`.
 3. Sanitizer build: the [configuration](#configurations) above, with
    `UBSAN_OPTIONS=halt_on_error=1 meson test -C build-asan --print-errorlogs -t 5`.
 4. Static and shared library configurations: configure each as
@@ -304,16 +297,9 @@ same Meson commands before submitting changes or tagging a release.
    meson install -C build-release
    python3 scripts/check_install_manifest.py --prefix _install \
      --forbid-installed-cpp --forbid-private-fragments
-   export PKG_CONFIG_PATH="$PWD/_install/lib/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
    python3 scripts/check_headers.py --include-dir _install/include \
      --compiler c++ --std c++23
-   meson setup build-consumer tests/consumer --buildtype=release
-   meson test -C build-consumer --print-errorlogs
    ```
-
-   Replace `lib/pkgconfig` with the configured `libdir` plus `/pkgconfig`
-   for a multiarch or `lib64` installation. The consumer checks both shared
-   and static linking; configure fplll with the default `both` for this step.
 
 6. Release archive: commit first, then `meson dist -C build-release`; it
    requires a clean Git checkout and builds and tests the extracted tree.

@@ -6,9 +6,9 @@ public API. This guide lists the changes that need action when upgrading.
 
 ## Toolchain and library version
 
-- C++23 is required for the library, installed headers, command-line tools,
-  tests and benchmarks. The validated floor is GCC 14, Clang 18 (libstdc++ 14
-  or libc++ 18) and AppleClang 16.
+- C++23 is required for the library, installed headers, command-line tools
+  and tests. The validated floor is GCC 14, Clang 18 (libstdc++ 14 or
+  libc++ 18) and AppleClang 16.
 - The shared-library SONAME is now 10; the library version is 10.0.0 and the
   macOS compatibility/current version is 11.0.0. Rebuild all consumers against
   the installed library.
@@ -74,7 +74,6 @@ headers directly must select C++23 themselves.
 | `-DFPLLL_EXTENUM_DIR=...` | `-Dextenum_dir=...` |
 | `-DFPLLL_EXTENUM_LIBRARY=...` | `-Dextenum_library=...` |
 | `-DFPLLL_EXTENUM_FUNCTION=...` | `-Dextenum_function=...` |
-| `-DFPLLL_BUILD_BENCHMARKS=ON` | `-Dbenchmarks=true` |
 | `-DFPLLL_WARNINGS=ON`, `-DFPLLL_WARNINGS_AS_ERRORS=ON` | `-Dwarning_level=3 -Dwerror=true` |
 | `-DCMAKE_BUILD_TYPE=Release` | `--buildtype=release` |
 | `-DCMAKE_INSTALL_PREFIX=...` | `--prefix ...` |
@@ -84,7 +83,8 @@ headers directly must select C++23 themselves.
 | `-DCMAKE_EXPORT_COMPILE_COMMANDS=ON` | always written in the build directory (`build/compile_commands.json` for the developer build) |
 | `find_package(fplll CONFIG)` | pkg-config or `dependency('fplll')` |
 | `cmake --build ... --target package_source`, `distcheck` | `meson dist` |
-| `cmake --build ... --target format`, `lint`, `doc` | `meson compile -C build format`, `lint`, `doc` |
+| `cmake --build ... --target format`, `lint` | removed with the Meson port; run `clang-format` (and `clang-tidy`) directly |
+| `cmake --build ... --target doc` | `meson compile -C build doc` |
 | `cmake --install ...` | `meson install -C build` |
 | `cmake --build ... --target uninstall` | `ninja -C build uninstall` |
 

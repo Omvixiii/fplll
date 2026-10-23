@@ -4,9 +4,6 @@
 Each header is compiled with -fsyntax-only to catch missing includes and
 missing include guards. This is intentionally stricter than including
 <fplll/fplll.h> once: consumers are allowed to include individual headers.
-
-Known non-standalone headers are listed below and are expected to become
-private implementation fragments in the 6.0 cleanup.
 """
 
 import argparse
@@ -18,9 +15,6 @@ import shutil
 import subprocess
 import sys
 import tempfile
-
-# Installed in the current tree, but only valid when included from pruner.h.
-KNOWN_NON_STANDALONE = set()
 
 
 def pkg_config_cflags():
@@ -83,13 +77,9 @@ def main():
     base_flags += args.extra_cflag
 
     failures = []
-    skipped = []
     with tempfile.TemporaryDirectory(prefix="fplll-headers-") as workdir:
         for header in headers:
             relative = header.relative_to(include_dir).as_posix()
-            if relative in KNOWN_NON_STANDALONE:
-                skipped.append(relative)
-                continue
             source = pathlib.Path(workdir) / "check.cpp"
             source.write_text(f"#include <{relative}>\n")
             command = [*shlex.split(args.compiler), *base_flags, str(source)]
@@ -99,17 +89,12 @@ def main():
             if result.returncode != 0:
                 failures.append((relative, (result.stderr or result.stdout).strip()))
 
-    for relative in skipped:
-        print(f"skip (known non-standalone): {relative}")
     for relative, message in failures:
         print(f"FAIL: {relative}", file=sys.stderr)
         print(message, file=sys.stderr)
         print(file=sys.stderr)
 
-    print(
-        f"checked {len(headers) - len(skipped)} headers "
-        f"({len(skipped)} skipped, {len(failures)} failed)"
-    )
+    print(f"checked {len(headers)} headers ({len(failures)} failed)")
     return 0 if not failures else 1
 
 

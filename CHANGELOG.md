@@ -12,8 +12,7 @@ API, and replaces the generated pruner tables with runtime computation.  See
 
 - Use Meson 1.8 or newer with Ninja as the sole build toolchain; remove the
   intermediate CMake build and the legacy Autotools files.
-- Require C++23 for the library, installed headers, tools, tests and
-  benchmarks.
+- Require C++23 for the library, installed headers, tools and tests.
 - Remove the MPIR backend, the recursive-enumeration build switch and the
   `ZZ_mat<double>` integer backend.
 - Replace build presets with Meson options and independent build directories.
@@ -31,7 +30,7 @@ API, and replaces the generated pruner tables with runtime computation.  See
 - Remove the GitHub Actions workflow; builds, tests, installs and release
   archives are validated locally with the Meson commands documented in the
   build guide.
-- Migrate the container build and contributor instructions to Meson.
+- Migrate contributor instructions to Meson.
 - Consolidate historical release notes here; keep local migration notes out of
   version control and source packages.
 

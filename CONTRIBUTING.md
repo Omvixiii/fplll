@@ -118,12 +118,11 @@ We want your submission. But we also want to provide a stable experience for our
 
 ### Run the tests
 
-Before you submit a pull request, run the test suite and the formatting check:
+Before you submit a pull request, run the test suite:
 
 ```sh
 meson compile -C build
 meson test -C build --print-errorlogs
-meson compile -C build lint
 ```
 
 Use an optimized build directory to validate release behaviour. Changes to
@@ -148,7 +147,7 @@ Pull requests should be as small/atomic as possible.
 ### Coding Conventions
 
 The project requires C++23 for the library, installed headers, command-line
-tools, tests and benchmarks. Compiler modes older than C++23 are not supported.
+tools and tests. Compiler modes older than C++23 are not supported.
 
 Please keep your code as clean and straightforward as possible. Code is written for the consumption by compilers and for the consumption by human beings. By making code clear and easy to understand, others can build on it and fix issues should they arise.
 
@@ -174,22 +173,19 @@ Furthermore, the pixel shortage is over. We want to see:
 - `grid` instead of `g`
 - `my_function_that_does_things` instead of `mftdt`
 
+### Formatting
+
 The repository's `.clang-format` is the authoritative formatting
-configuration. Keep formatting changes separate from functional changes.
-
-### Formatting and linting
-
-Apply the formatting or check it without modifying files:
+configuration; run `clang-format` directly on the files you change:
 
 ```sh
-meson compile -C build format
-meson compile -C build lint
+clang-format --style=file -i path/to/file.cpp
+clang-format --style=file --dry-run --Werror path/to/file.cpp  # check only
 ```
 
-Both targets use the repository `.clang-format` and skip the bundled
-third-party headers `fplll/io/json.hpp` and `fplll/io/thread_pool.hpp`. They are
-available when Python 3 and `clang-format` are found at configure time; `lint`
-is non-mutating and is the command to use before submitting.
+Keep formatting changes separate from functional changes. The bundled
+third-party headers `fplll/io/json.hpp` and `fplll/io/thread_pool.hpp` follow
+their upstream formatting and must not be reformatted.
 
 In order to improve readability, some situations might require manual formatting. Clang-format [includes a comment trigger](https://clang.llvm.org/docs/ClangFormatStyleOptions.html#disabling-formatting-on-a-piece-of-code) to _locally_ disable the formatting. The code between a comment `// clang-format off` or `/* clang-format off */` up to a comment `// clang-format on` or `/* clang-format on */` will not be formatted.
 
@@ -207,10 +203,10 @@ Meson rebuilds incrementally. Install `ccache` or `sccache` and Meson picks it
 up automatically the next time a build directory is configured; no compiler
 wrapper is needed. Keep one build directory per configuration (developer,
 release, sanitizers) instead of reconfiguring one directory back and forth, and
-use `-Dtests=false -Dbenchmarks=false` in a throwaway directory for quick
-compile-only checks. Lowering `-Dmax_parallel_enum_dim` (for example to `20`)
-compiles fewer enumeration specializations; this changes the configured
-capability, so keep the default `120` for release validation. See the
+use `-Dtests=false` in a throwaway directory for quick compile-only checks.
+Lowering `-Dmax_parallel_enum_dim` (for example to `20`) compiles fewer
+enumeration specializations; this changes the configured capability, so keep
+the default `120` for release validation. See the
 [build guide](doc/building.md#build-options) for all options.
 
 ### Attribution

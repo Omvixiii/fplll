@@ -17,7 +17,7 @@ test_names = [
   'test_ceil',
 ]
 
-llldiff = executable(
+executable(
   'llldiff',
   'llldiff.cpp',
   dependencies: fplll_dep,

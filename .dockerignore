@@ -1,8 +1,0 @@
-.git
-build
-build-*
-_install
-.venv
-.vscode
-notes
-.cache

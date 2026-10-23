@@ -203,20 +203,7 @@ if not meson.is_subproject()
   if get_option('tests')
     subdir('tests')
   endif
-  if get_option('benchmarks')
-    subdir('bench')
-  endif
   subdir('doc')
-
-  python3 = find_program('python3', required: false)
-  clang_format = find_program('clang-format', required: false)
-  if python3.found() and clang_format.found()
-    format_script = files('scripts/format.py')
-    run_target('format', command: [python3, format_script, clang_format, '--format'])
-    run_target('lint', command: [python3, format_script, clang_format, '--check'])
-  else
-    message('clang-format or python3 not found; format and lint targets are unavailable')
-  endif
 endif
 
 summary({
@@ -228,5 +215,4 @@ summary({
   'Max enumeration dimension': max_enum_dim,
   'Max parallel enumeration dimension': max_parallel_enum_dim,
   'Tests': not meson.is_subproject() and get_option('tests'),
-  'Benchmarks': not meson.is_subproject() and get_option('benchmarks'),
 }, section: 'fplll')

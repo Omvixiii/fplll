@@ -115,8 +115,6 @@ template <> template <> inline void Z_NR<long>::set_f(const FP_NR<mpfr_t> &a) { 
 
 #endif  // #ifdef FPLLL_WITH_ZLONG
 
-/* set_f (FP_NR to Zdouble) */
-
 /* set_f (FP_NR to mpz_t) */
 template <> template <> inline void Z_NR<mpz_t>::set_f(const FP_NR<double> &a)
 {

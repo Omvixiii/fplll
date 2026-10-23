@@ -88,7 +88,7 @@ Options for BKZ-reduction:
 
 Without any of the last three options, BKZ runs until no block has been updated for a full loop iteration.
 
-* `-s filename.json` :         use strategies for preprocessing and pruning parameter (/strategies/default.json provided). Experimental.
+* `-s filename.json` :         use strategies for preprocessing and pruning parameter (`strategies/default.json` in the source tree; installed under `share/fplll/strategies/`). Experimental.
 
 * `-bkzghbound factor` :       multiplies the Gaussian heuristic by `factor` (of float type) to set the enumeration radius of the SVP calls.
 * `-bkzboundedlll` : restricts the LLL call before considering a block to vector indices within that block.
@@ -113,12 +113,12 @@ A combination of these option is allowed (e.g., `-of bkut`).
 Only for `-a hlll`:
 
 * `-t theta` : θ (default=0.001). See [[MSV09](#msv09)] for the definition of (δ,η,θ)-HLLL-reduced bases.
-* `-c c` : constant for HLLL during the size-reduction (only used if `fplll` is compiled with `-DHOUSEHOLDER_USE_SIZE_REDUCTION_TEST`)
+* `-c c` : arbitrary positive constant for HLLL, used as the size-reduction threshold (default=0.1).
 
 ### llldiff
 
 `llldiff` compares two bases (b1,...,bd) and (c1,...c_d'): they are considered
-equal iff d=d' and for any i, bi = +- ci. Concretely, if basis B is in file 'B.txt' and if basis C is in file 'C.txt' (in the fplll format), then one may run `cat B.txt C.txt | ./llldiff`.
+equal iff d=d' and for any i, bi = +- ci. Concretely, if basis B is in file 'B.txt' and if basis C is in file 'C.txt' (in the fplll format), then one may run `cat B.txt C.txt | build/tests/llldiff` (`llldiff` is built but not installed).
 
 ### How to use as a library
 
@@ -138,7 +138,7 @@ At present fplll does not contain strategies for multi-core pruned enumeration, 
 LLL reduction on a generated lattice:
 
 ```sh
-./latticegen r 10 1000 | ./fplll
+latticegen r 10 1000 | fplll
 ```
 
 For file input, put the following matrix in a file named `matrix`:
@@ -148,7 +148,7 @@ For file input, put the following matrix in a file named `matrix`:
  [11 12]]
 ```
 
-Then `./fplll matrix` produces a reduced basis:
+Then `fplll matrix` produces a reduced basis:
 
 ```text
 [[0 1]
@@ -159,15 +159,15 @@ Then `./fplll matrix` produces a reduced basis:
 Use `-randseed` to choose a deterministic seed or the current time:
 
 ```sh
-./latticegen -randseed 1234 r 10 1000 | ./fplll
-./latticegen -randseed time u 10 16 | ./fplll
+latticegen -randseed 1234 r 10 1000 | fplll
+latticegen -randseed time u 10 16 | fplll
 ```
 
 Solve SVP or CVP:
 
 ```sh
-./latticegen r 30 3000 | ./fplll -a svp
-printf '%s\n' '[[17 42 4][50 75 108][11 47 33]][100 101 102]' | ./fplll -a cvp
+latticegen r 30 3000 | fplll -a svp
+printf '%s\n' '[[17 42 4][50 75 108][11 47 33]][100 101 102]' | fplll -a cvp
 ```
 
 ## Alternative interfaces
