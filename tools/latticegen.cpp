@@ -17,12 +17,13 @@
 
 #include <fplll/fplll_config.h>
 #include <fplll/nr/matrix.h>
+#include <fplll/nr/nr.h>
 
 #include <climits>
 #include <cmath>
 #include <exception>
 
-#include "main.h"
+#include "cli.h"
 
 using namespace fplll;
 

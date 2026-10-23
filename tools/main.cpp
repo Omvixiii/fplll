@@ -15,11 +15,68 @@
    You should have received a copy of the GNU Lesser General Public License
    along with fplll. If not, see <http://www.gnu.org/licenses/>. */
 
-#include "main.h"
+#include "cli.h"
+
+#include <fplll/fplll.h>
 #include <fplll/fplll_config.h>
 
 #include <cmath>
 #include <exception>
+
+using namespace fplll;
+
+enum Action
+{
+  ACTION_LLL,
+  ACTION_HKZ,
+  ACTION_BKZ,
+  ACTION_SVP,
+  ACTION_CVP,
+  ACTION_HLLL,
+  ACTION_PRU
+};
+
+struct Options
+{
+  Options()
+      : action(ACTION_LLL), method(LM_WRAPPER), int_type(ZT_MPZ), float_type(FT_DEFAULT),
+        delta(LLL_DEF_DELTA), eta(LLL_DEF_ETA), precision(0), early_red(false), siegel(false),
+        no_lll(false), block_size(0), bkz_flags(0), bkz_max_loops(0), prune_start(0), prune_end(0),
+        prune_pre_nodes(0.0), prune_min_prob(0.0), bkz_max_time(0.0), bkz_gh_factor(1.1),
+        verbose(false), input_file(nullptr), output_format(nullptr), theta(HLLL_DEF_THETA),
+        c(HLLL_DEF_C)
+  {
+  }
+  Action action;
+  LLLMethod method;
+  IntType int_type;
+  FloatType float_type;
+  double delta;
+  double eta;
+  int precision;
+  bool early_red;
+  bool siegel;
+
+  bool no_lll;
+  int block_size;
+  int bkz_flags;
+  int bkz_max_loops;
+  int prune_start;
+  int prune_end;
+  double prune_pre_nodes;
+  double prune_min_prob;
+  double bkz_max_time;
+  string bkz_dump_gso_filename;
+  double bkz_gh_factor;
+  string bkz_strategy_file;
+
+  bool verbose;
+  const char *input_file;
+  const char *output_format;
+
+  double theta;
+  double c;
+};
 
 template <class ZT> int lll(Options &o, ZZ_mat<ZT> &b)
 {
