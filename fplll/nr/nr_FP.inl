@@ -378,7 +378,7 @@ template <class F> inline FP_NR<F> operator+(const FP_NR<F> &a, const FP_NR<F> &
   return r;
 }
 
-template <class F> inline FP_NR<F> &&operator+(FP_NR<F> &&a, const FP_NR<F> &b)
+template <class F> inline FP_NR<F> operator+(FP_NR<F> &&a, const FP_NR<F> &b)
 {
   a.add(a, b);
   return std::move(a);
@@ -462,7 +462,7 @@ template <class F> inline FP_NR<F> operator*(const FP_NR<F> &a, const FP_NR<F> &
   return r;
 }
 
-template <class F> inline FP_NR<F> &&operator*(FP_NR<F> &&a, const FP_NR<F> &b)
+template <class F> inline FP_NR<F> operator*(FP_NR<F> &&a, const FP_NR<F> &b)
 {
   a.mul(a, b);
   return std::move(a);
@@ -473,6 +473,12 @@ template <class F> inline FP_NR<F> operator*(const FP_NR<F> &a, double b)
   FP_NR<F> r;
   r.mul_d(a, b);
   return r;
+}
+
+template <class F> inline FP_NR<F> operator*(FP_NR<F> &&a, double b)
+{
+  a.mul_d(a, b);
+  return std::move(a);
 }
 
 template <class F> inline FP_NR<F> operator*(const FP_NR<F> &a, long b)
@@ -488,12 +494,6 @@ template <class F> inline FP_NR<F> operator*(double a, const FP_NR<F> &b)
   FP_NR<F> r;
   r.mul_d(b, a);
   return r;
-}
-
-template <class F> inline FP_NR<F> &&operator*(FP_NR<F> &&a, double b)
-{
-  a.mul_d(a, b);
-  return std::move(a);
 }
 
 template <class F> inline FP_NR<F> operator/(const FP_NR<F> &a, const FP_NR<F> &b)
@@ -524,7 +524,7 @@ template <class F> inline FP_NR<F> sqrt(const FP_NR<F> &a)
   return r;
 }
 
-template <class F> inline FP_NR<F> &&sqrt(FP_NR<F> &&a)
+template <class F> inline FP_NR<F> sqrt(FP_NR<F> &&a)
 {
   a.sqrt(a);
   return std::move(a);
@@ -537,7 +537,7 @@ template <class F> inline FP_NR<F> abs(const FP_NR<F> &a)
   return r;
 }
 
-template <class F> inline FP_NR<F> &&abs(FP_NR<F> &&a)
+template <class F> inline FP_NR<F> abs(FP_NR<F> &&a)
 {
   a.abs(a);
   return std::move(a);
@@ -550,7 +550,7 @@ template <class F> inline FP_NR<F> floor(const FP_NR<F> &a)
   return r;
 }
 
-template <class F> inline FP_NR<F> &&floor(FP_NR<F> &&a)
+template <class F> inline FP_NR<F> floor(FP_NR<F> &&a)
 {
   a.floor(a);
   return std::move(a);
@@ -563,7 +563,7 @@ template <class F> inline FP_NR<F> log(const FP_NR<F> &a)
   return r;
 }
 
-template <class F> inline FP_NR<F> &&log(FP_NR<F> &&a)
+template <class F> inline FP_NR<F> log(FP_NR<F> &&a)
 {
   a.log(a);
   return std::move(a);
@@ -576,7 +576,7 @@ template <class F> inline FP_NR<F> exp(const FP_NR<F> &a)
   return r;
 }
 
-template <class F> inline FP_NR<F> &&exp(FP_NR<F> &&a)
+template <class F> inline FP_NR<F> exp(FP_NR<F> &&a)
 {
   a.exponential(a);
   return std::move(a);
@@ -589,7 +589,7 @@ template <class F> inline FP_NR<F> pow_si(const FP_NR<F> &a, long b)
   return r;
 }
 
-template <class F> inline FP_NR<F> &&pow_si(FP_NR<F> &&a, long b)
+template <class F> inline FP_NR<F> pow_si(FP_NR<F> &&a, long b)
 {
   a.pow_si(a, b);
   return std::move(a);
@@ -602,7 +602,7 @@ template <class F> inline FP_NR<F> root(const FP_NR<F> &a, unsigned int b)
   return r;
 }
 
-template <class F> inline FP_NR<F> &&root(FP_NR<F> &&a, unsigned int b)
+template <class F> inline FP_NR<F> root(FP_NR<F> &&a, unsigned int b)
 {
   a.root(a, b);
   return std::move(a);

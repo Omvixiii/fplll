@@ -42,7 +42,16 @@ template <> inline void FP_NR<double>::set_mpfr(mpfr_t r, mp_rnd_t rnd)
   data = mpfr_get_d(r, rnd);
 }
 
-template <> inline long FP_NR<double>::get_si() const { return static_cast<long>(data); }
+template <> inline long FP_NR<double>::get_si() const
+{
+  const double limit = std::ldexp(1.0, numeric_limits<long>::digits);
+  if (!std::isfinite(data) || data < -limit || data >= limit)
+  {
+    FPLLL_ABORT("FP_NR<double>::get_si: value out of range");
+    return 0;
+  }
+  return static_cast<long>(data);
+}
 
 template <> inline long FP_NR<double>::exponent() const { return std::ilogb(data) + 1; }
 

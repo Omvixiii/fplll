@@ -175,10 +175,7 @@ private:
   std::condition_variable _condition;
 };
 
-inline thread_pool::thread_pool(std::size_t nrthreads)
-{
-  resize(nrthreads);
-}
+inline thread_pool::thread_pool(std::size_t nrthreads) { resize(nrthreads); }
 
 inline thread_pool::~thread_pool() { stop(); }
 
@@ -223,7 +220,7 @@ inline void thread_pool::wait_work()
   if (_exception)
   {
     std::exception_ptr exception = _exception;
-    _exception                 = nullptr;
+    _exception                   = nullptr;
     lock.unlock();
     std::rethrow_exception(exception);
   }
@@ -236,7 +233,7 @@ inline void thread_pool::wait_sleep()
   if (_exception)
   {
     std::exception_ptr exception = _exception;
-    _exception                 = nullptr;
+    _exception                   = nullptr;
     lock.unlock();
     std::rethrow_exception(exception);
   }

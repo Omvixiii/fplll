@@ -38,24 +38,43 @@ template <> inline void FP_NR<mpfr_t>::get_mpfr(mpfr_t r, mp_rnd_t rnd) const
 
 template <> inline void FP_NR<mpfr_t>::set_mpfr(mpfr_t r, mp_rnd_t rnd) { mpfr_set(data, r, rnd); }
 
-template <> inline long FP_NR<mpfr_t>::get_si() const { return mpfr_get_si(data, GMP_RNDN); }
+template <> inline long FP_NR<mpfr_t>::get_si() const
+{
+  if (!mpfr_fits_slong_p(data, GMP_RNDN))
+  {
+    FPLLL_ABORT("FP_NR<mpfr_t>::get_si: value out of range");
+    return 0;
+  }
+  return mpfr_get_si(data, GMP_RNDN);
+}
 
 template <> inline long FP_NR<mpfr_t>::exponent() const { return mpfr_get_exp(data); }
 
 template <> inline long FP_NR<mpfr_t>::get_si_exp(long &expo) const
 {
-  if (mpfr_zero_p(data))
+  // Work on a local copy: a const method must not modify data.
+  mpfr_t scaled;
+  mpfr_init2(scaled, mpfr_get_prec(data));
+  mpfr_set(scaled, data, GMP_RNDN);
+  if (mpfr_zero_p(scaled))
   {
     expo = 0;
   }
   else
   {
     expo = max(exponent() - numeric_limits<long>::digits, 0L);
+    mpfr_div_2si(scaled, scaled, expo, GMP_RNDN);
   }
-  mpfr_t &nc_data = const_cast<mpfr_t &>(data);
-  mpfr_div_2si(nc_data, nc_data, expo, GMP_RNDN);
-  long result = mpfr_get_si(nc_data, GMP_RNDZ);
-  mpfr_mul_2si(nc_data, nc_data, expo, GMP_RNDN);
+  long result = 0;
+  if (!mpfr_fits_slong_p(scaled, GMP_RNDZ))
+  {
+    FPLLL_ABORT("FP_NR<mpfr_t>::get_si_exp: value out of range");
+  }
+  else
+  {
+    result = mpfr_get_si(scaled, GMP_RNDZ);
+  }
+  mpfr_clear(scaled);
   return result;
 }
 
