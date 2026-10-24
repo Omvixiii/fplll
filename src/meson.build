@@ -53,6 +53,7 @@ fplll_lib = library(
   objects: bkz_param_object.extract_all_objects(recursive: true),
   include_directories: public_inc,
   dependencies: library_deps,
+  link_args: gmp_link_args,
   cpp_args: extenum_cpp_args,
   version: fplll_libversion,
   soversion: fplll_soversion,
@@ -64,6 +65,7 @@ fplll_dep = declare_dependency(
   link_with: fplll_lib,
   include_directories: public_inc,
   dependencies: public_deps,
+  link_args: gmp_link_args,
 )
 if get_option('default_library') == 'both'
   meson.override_dependency('fplll', fplll_dep.as_shared(), static: false)
@@ -79,6 +81,7 @@ fplllv_lib = library(
   variant_sources,
   include_directories: public_inc,
   dependencies: library_deps,
+  link_args: gmp_link_args,
   cpp_args: strategy_define_args + extenum_cpp_args,
   version: fplll_libversion,
   soversion: fplll_soversion,
@@ -91,6 +94,7 @@ fpllld_lib = library(
   variant_sources,
   include_directories: public_inc,
   dependencies: library_deps,
+  link_args: gmp_link_args,
   cpp_args: strategy_define_args + ['-DDEBUG'] + extenum_cpp_args,
   version: fplll_libversion,
   soversion: fplll_soversion,
@@ -101,10 +105,17 @@ fpllld_lib = library(
 alias_target('variants', fplllv_lib, fpllld_lib)
 
 # --- pkg-config metadata --------------------------------------------------
+# Public headers use GMP, MPFR and QD types directly, so these are public
+# requirements; a QD fallback without qd.pc can only export link flags.
 pkgconfig = import('pkgconfig')
 pc_requires = [mpfr_dep, gmp_dep]
-if with_qd and qd_via_pkgconfig
-  pc_requires += qd_dep
+pc_public_libs = [threads_dep]
+if with_qd
+  if qd_via_pkgconfig
+    pc_requires += qd_dep
+  else
+    pc_public_libs += qd_dep
+  endif
 endif
 pkgconfig.generate(
   fplll_lib,

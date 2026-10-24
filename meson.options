@@ -6,6 +6,13 @@ option(
 )
 
 option(
+  'rpath',
+  type: 'feature',
+  value: 'auto',
+  description: 'Relative install RPATH for tools (auto: non-/usr prefixes, non-static builds)',
+)
+
+option(
   'max_enum_dim',
   type: 'integer',
   value: 256,

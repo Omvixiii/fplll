@@ -10,7 +10,8 @@ own sibling directory, and all build products stay inside those directories.
 - Meson 1.11 or newer and Ninja.
 - A C++23 compiler: GCC 14, Clang 18 (libstdc++ 14 or libc++ 18), AppleClang 16
   or newer. C++23 is mandatory and cannot be downgraded.
-- GMP 4.2 or newer, MPFR 2.3 or newer, and pkg-config.
+- GMP 4.2 or newer and MPFR 2.3 or newer, resolved through pkg-config or
+  CMake.
 - nlohmann/json 3.12 or newer (header-only). Meson prefers a system package and
   otherwise downloads the pinned `subprojects/nlohmann_json.wrap` during
   `meson setup`.
@@ -155,6 +156,7 @@ advisory: it is expected to fail until the warning baseline is cleaned up.
 | Option | Default | Purpose |
 | --- | --- | --- |
 | `-Dqd=enabled/disabled/auto` | `disabled` | QD arithmetic; `enabled` fails if QD is missing |
+| `-Drpath=auto/enabled/disabled` | `auto` | relative install RPATH for tools; `auto` enables it for non-`/usr` prefixes and non-static builds |
 | `-Dmax_enum_dim=N` | `256` | maximum enumeration dimension (integer from 1 to 1024) |
 | `-Dmax_parallel_enum_dim=N` | `120` | maximum parallel enumeration dimension; `0` disables it, valid values are `20` to `160` in steps of ten, and it must stay below `max_enum_dim` |
 | `-Dtests=true/false` | `true` | build and register the tests (top-level builds only) |
@@ -251,11 +253,14 @@ prefix. Installed layout, relative to the prefix:
 | `share/strategies/default.json` | default BKZ strategies |
 
 On macOS the shared library's compatibility and current versions are 11.0.0.
-The installed tools use relative runtime library lookup, including under
-`DESTDIR`; staged BKZ runs still need an explicit staged strategy file because
-the default strategy path retains the final prefix. Public headers are installed from the source tree; there is no separate
-`include/` directory in the repository. Installing the same build with a
-different prefix later is unsupported: reconfigure and rebuild instead.
+`-Drpath=auto` (the default) gives installed tools a relative RPATH for
+non-`/usr` prefixes in non-static builds; `enabled`/`disabled` override it and
+the path follows `bindir`/`libdir`. macOS records absolute installed dylib IDs,
+so `--destdir` staging is not relocatable: run staged tools with
+`DYLD_LIBRARY_PATH`. Staged BKZ runs also need an explicit strategy file
+because the compiled default path keeps the final prefix. Public headers come
+from the source tree; there is no separate `include/` directory. Reconfigure
+and rebuild instead of installing the same build with a different prefix.
 
 ## Source packages
 
@@ -291,11 +296,12 @@ pkg-config --cflags --libs fplll
 pkg-config --static --cflags --libs fplll
 ```
 
-The module requires `gmp` and `mpfr`. QD builds require `qd` when `qd.pc`
-is available; compiler-discovered QD is exported as a public link dependency
-instead. `--static` adds the private libraries; a build with the external
-enumeration library adds `Requires.private: fplll_extenum` when that library is
-a pkg-config module, so `--static` consumers link it as well. Include the
+The module requires `gmp` and `mpfr`. QD builds add `qd` to `Requires` when
+`qd.pc` is available; without `qd.pc`, QD is exported as a public `-lqd` and its
+headers must be on the compiler's default search path. `--static` adds the
+private libraries; a build with the external enumeration library adds
+`Requires.private: fplll_extenum` when that library is a pkg-config module, so
+`--static` consumers link it as well. Include the
 public API as `#include <fplll/fplll.h>`; the historical `<fplll.h>` entry
 point remains as a forwarding header. Meson consumers discover the module
 through pkg-config and must request C++23 themselves:
@@ -339,10 +345,13 @@ same Meson commands before submitting changes or tagging a release.
    `UBSAN_OPTIONS=halt_on_error=1 meson test -C build-asan --print-errorlogs -t 5`.
 4. Static and shared library configurations: configure each as
    `build-<library>/` with `--default-library=<library>`, then compile and test.
-5. Install the staged tree:
+5. Install the staged tree and check the installed interface (with
+   `PKG_CONFIG_PATH="$PWD/_install/lib/pkgconfig"`):
 
    ```sh
    meson install -C build-release
+   pkg-config --cflags --libs fplll
+   pkg-config --static --cflags --libs fplll
    ```
 
 6. Release archive: commit first, then `meson dist -C build-release`; it
@@ -384,14 +393,19 @@ dependencies in a nonstandard prefix, set `PKG_CONFIG_PATH` before configuring.
 directory is compiled in from the prefix chosen at configure time; reconfigure
 and rebuild to change it.
 
+**Installed tools cannot find libfplll.** `-Drpath=auto` covers non-`/usr`
+prefixes. On macOS, `--destdir` staging keeps absolute dylib IDs, so run staged
+tools with `DYLD_LIBRARY_PATH`; on Linux the relative `$ORIGIN` RPATH follows
+the relocated tree.
+
 **The `doc` target does not exist.** Doxygen was not found when the build
 directory was configured. Install Doxygen and wipe and reconfigure the
 directory, or configure a new one.
 
 **QD fails to configure.** `-Dqd=enabled` requires a QD installation
-discoverable through `qd.pc` or, failing that, through `libqd` and
-`qd/dd_real.h` and `qd/qd_real.h` in the compiler search paths; install QD, or leave it disabled
-(`-Dqd=disabled`, the default) or automatic (`-Dqd=auto`).
+discoverable through `qd.pc` or, failing that, through `libqd` plus
+`qd/dd_real.h` and `qd/qd_real.h` in the compiler search paths. Install QD, or
+leave it disabled (`-Dqd=disabled`, the default) or automatic (`-Dqd=auto`).
 
 **`meson setup` does not report `External enumeration: true`.** The dependency
 is optional and is only discovered through pkg-config or a wrap. Set

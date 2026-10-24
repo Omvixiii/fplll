@@ -55,6 +55,13 @@ API, and replaces the generated pruner tables with runtime computation.  See
   `fplll.pc` carries `Requires.private: fplll_extenum`, and the 5.x
   autotools and intermediate CMake options are gone. See
   [external enumeration](doc/building.md#external-enumeration).
+- Resolve GMP and MPFR through Meson's native dependency machinery (pkg-config
+  or CMake); the Homebrew `-L` workaround is only reintroduced when a
+  configure-time link probe shows that `mpfr.pc` is incomplete.
+- Discover QD through `qd.pc` or a `find_library(has_headers:)` fallback, and
+  export QD as a public pkg-config requirement.
+- Add `-Drpath=auto/enabled/disabled` to control the relative install RPATH of
+  the tools; `auto` skips `/usr` installs and static builds.
 - Replace build presets with Meson options and independent build directories.
 - Make `build/` the canonical Meson developer build directory and point clangd
   at its compilation database; every other configuration uses a sibling
