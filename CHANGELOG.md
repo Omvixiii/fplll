@@ -62,9 +62,10 @@ API, and replaces the generated pruner tables with runtime computation.  See
   module (no `find_library` fallback), and export it as a public pkg-config
   requirement in QD builds.
 - Replace build presets with Meson options and independent build directories.
-- Make `build/` the canonical Meson developer build directory and point clangd
-  at its compilation database; every other configuration uses a sibling
-  `build-<name>/` directory.
+- Default to the `release` build type for installation and packaging;
+  developers select `--buildtype=debugoptimized` explicitly. `build/` remains
+  the local build directory and its compilation database feeds clangd; every
+  additional configuration uses a sibling `build-<name>/` directory.
 - Generate configuration headers and enumeration sources in the build tree;
   keep libraries, executables and test working directories there as well.
 - Provide shared and static libraries (`both` by default), optional debug and

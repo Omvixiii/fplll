@@ -5,30 +5,22 @@ floating-point LLL, BKZ (including BKZ 2.0), Slide reduction, self-dual BKZ,
 shortest-vector enumeration, and closest-vector enumeration. See the
 [usage guide](doc/usage.md) for algorithm options and references.
 
-## Build from source
+## Install
 
 fplll is built with Meson and Ninja; Meson is the only build interface. Install
 Meson 1.11 or newer, Ninja, a C++23-capable compiler, GMP 4.2 or newer and
 MPFR 2.3 or newer, then from the repository root:
 
 ```sh
-meson setup build --buildtype=debugoptimized
-meson compile -C build
-meson test -C build --print-errorlogs
+meson setup build
+meson install -C build
 ```
 
-`build/` is the canonical developer build directory and produces
-`build/compile_commands.json`, which feeds clangd and other language tooling.
-
-Choose the final installation prefix when configuring, then build, test, and
-install:
-
-```sh
-meson setup build-release --buildtype=release --prefix "$HOME/.local"
-meson compile -C build-release
-meson test -C build-release --print-errorlogs
-meson install -C build-release
-```
+The project defaults to the `release` build type, and the default prefix is
+`/usr/local`; on Linux and macOS, installing there may require administrator
+rights. Choose a different prefix when configuring, for example
+`meson setup build --prefix "$HOME/.local"`. `meson install` builds the project
+first; run `meson test -C build --print-errorlogs` beforehand to validate it.
 
 Meson is available with `uv tool install meson` or `pipx install meson`; QD is
 optional (`-Dqd=enabled`), and so is an external enumeration library, which is
@@ -36,17 +28,20 @@ discovered as the Meson dependency `fplll_extenum` (see
 [external enumeration](doc/building.md#external-enumeration)). If a macOS
 compiler cannot find SDK headers or libc++, set
 `export SDKROOT="$(xcrun --show-sdk-path)"` before configuring. The
-[build guide](doc/building.md) covers the build directory layout, options,
-editor setup, sanitizers, coverage, source archives, and downstream use through
-pkg-config or Meson's `dependency('fplll')`.
+[build guide](doc/building.md) covers options, additional configurations,
+sanitizers, coverage, source archives, and downstream use through pkg-config or
+Meson's `dependency('fplll')`. For development builds, tests and tooling, see
+[CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Command-line tools
 
 The build provides `fplll` for lattice reduction and `latticegen` for generating
-example lattices. Matrix rows are basis vectors. For example:
+example lattices; after installation both are on `PATH`, and in a build tree
+they are `build/tools/fplll` and `build/tools/latticegen`. Matrix rows are basis
+vectors. For example:
 
 ```sh
-build/tools/latticegen r 10 1000 | build/tools/fplll -a lll
+latticegen r 10 1000 | fplll -a lll
 ```
 
 ### latticegen

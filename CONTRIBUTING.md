@@ -27,7 +27,10 @@ is required as well; a system package is optional because Meson downloads
 the pinned wrap during the first `meson setup` when none is found, which
 needs network access once. If a macOS compiler cannot find SDK headers or
 libc++, set `export SDKROOT="$(xcrun --show-sdk-path)"` before configuring.
-Configure, build, and run the tests:
+
+The project defaults to the `release` build type, which installation and
+packaging use. Select the development configuration explicitly, then build and
+run the tests:
 
 ```sh
 meson setup build --buildtype=debugoptimized
@@ -35,19 +38,12 @@ meson compile -C build
 meson test -C build --print-errorlogs
 ```
 
-`build/` is the canonical developer build directory, and its
+`build/` is the conventional local build directory, and its
 `build/compile_commands.json` feeds clangd and clang-tidy; see
 [editor and tooling setup](doc/building.md#editor-and-tooling-setup). Use a
-separate `build-<name>/` directory for every other configuration; see the
-[build guide](doc/building.md) for options, diagnostics, and output locations.
-
-For an optimized validation build:
-
-```sh
-meson setup build-release --buildtype=release
-meson compile -C build-release
-meson test -C build-release --print-errorlogs
-```
+separate `build-<name>/` directory for every additional configuration; release,
+sanitizer and coverage builds are described in the
+[build guide](doc/building.md#configurations).
 
 A strict-warnings configuration is available as
 `-Dwarning_level=3 -Dwerror=true`. It is advisory: it is expected to report
@@ -122,16 +118,23 @@ We want your submission. But we also want to provide a stable experience for our
 
 ### Run the tests
 
-Before you submit a pull request, run the test suite:
+Before you submit a pull request, run the test suite in your development build:
 
 ```sh
 meson compile -C build
 meson test -C build --print-errorlogs
 ```
 
-Use an optimized build directory to validate release behaviour. Changes to
-installation, packaging, or the build system should also pass `meson dist`; see
-the [build guide](doc/building.md#source-packages).
+Also run it in a release build (the default configuration):
+
+```sh
+meson setup build-release
+meson compile -C build-release
+meson test -C build-release --print-errorlogs
+```
+
+Changes to installation, packaging, or the build system should also pass
+`meson dist`; see the [build guide](doc/building.md#source-packages).
 
 ### If you add code please add tests
 

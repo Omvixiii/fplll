@@ -2,8 +2,9 @@
 
 fplll is built with [Meson](https://mesonbuild.com) and Ninja, and Meson is the
 only build interface: run `meson` directly from the repository root. `build/`
-is the canonical developer build directory; every other configuration gets its
-own sibling directory, and all build products stay inside those directories.
+is the conventional local build directory; every additional configuration gets
+its own sibling directory, and all build products stay inside those
+directories.
 
 ## Requirements
 
@@ -32,6 +33,19 @@ export SDKROOT="$(xcrun --show-sdk-path)"
 
 ## First build
 
+The project defaults to the `release` build type, which is what installation and
+packaging need:
+
+```sh
+meson setup build
+meson compile -C build
+meson test -C build --print-errorlogs
+meson install -C build          # optional; `meson install` builds first
+```
+
+Developers select an optimized build with debug symbols explicitly; `build/`
+remains the directory editor tooling reads:
+
 ```sh
 meson setup build --buildtype=debugoptimized
 meson compile -C build
@@ -39,10 +53,11 @@ meson test -C build --print-errorlogs
 ```
 
 The setup step runs once per build directory; after that the loop is
-`meson compile -C build` and `meson test -C build`. `debugoptimized` keeps
-debug symbols while the numerical suite stays fast. The tools are
-`build/tools/fplll` and `build/tools/latticegen`; `meson devenv -C build` opens
-a shell with them on `PATH`.
+`meson compile -C build` and `meson test -C build`. `release` is the default for
+installation and packaging; `debugoptimized` keeps debug symbols while the
+numerical suite stays fast. The tools are `build/tools/fplll` and
+`build/tools/latticegen`; `meson devenv -C build` opens a shell with them on
+`PATH`.
 
 When no suitable system nlohmann/json is installed, the first `meson setup`
 downloads the pinned wrap into `subprojects/`, so it needs network access
@@ -52,8 +67,8 @@ once; later configurations reuse the downloaded subproject.
 
 | Directory | Role |
 | --- | --- |
-| `build/` | developer build; Meson writes `build/compile_commands.json` here for editors |
-| `build-release/` | optimized build for validation, installation and packaging |
+| `build/` | local build directory; Meson writes `build/compile_commands.json` here for editors |
+| `build-release/` | separate release build for validation, packaging and installation (the default build type) |
 | `build-asan/` | AddressSanitizer and UndefinedBehaviorSanitizer build |
 | `build-<name>/` | further one-off configurations (coverage, static or shared) |
 | `_install/` | staging prefix for install validation |
@@ -126,8 +141,8 @@ A configuration is one directory plus one `meson setup` command. The recurring
 ones:
 
 ```sh
-# optimized validation build
-meson setup build-release --buildtype=release
+# release validation build (the project default)
+meson setup build-release
 meson compile -C build-release
 meson test -C build-release --print-errorlogs
 
@@ -144,8 +159,8 @@ meson test -C build-coverage --print-errorlogs
 ninja -C build-coverage coverage
 
 # single library flavour
-meson setup build-static --buildtype=release --default-library=static
-meson setup build-shared --buildtype=release --default-library=shared
+meson setup build-static --default-library=static
+meson setup build-shared --default-library=shared
 ```
 
 Strict warnings are available with `-Dwarning_level=3 -Dwerror=true`. The
@@ -187,7 +202,7 @@ configuring.
 ```sh
 extenum_prefix=/path/to/extenum
 export PKG_CONFIG_PATH="$extenum_prefix/lib/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
-meson setup build --buildtype=release
+meson setup build
 ```
 
 The configuration summary then reports `External enumeration: true`. That
@@ -230,7 +245,7 @@ The final prefix is compiled into the library (the default strategy path is
 `$prefix/$datadir/strategies`), so choose it when configuring:
 
 ```sh
-meson setup build-release --buildtype=release --prefix "$HOME/.local"
+meson setup build-release --prefix "$HOME/.local"
 meson compile -C build-release
 meson test -C build-release --print-errorlogs
 meson install -C build-release
@@ -333,9 +348,10 @@ documentation into the source tree.
 Builds, tests, installs and release archives are validated locally: run the
 same Meson commands before submitting changes or tagging a release.
 
-1. Developer build: `meson test -C build --print-errorlogs`.
-2. Optimized build with a staging prefix, then its test suite:
-   `meson setup build-release --buildtype=release --prefix="$PWD/_install"`,
+1. Development build: `meson setup build --buildtype=debugoptimized`, then
+   `meson test -C build --print-errorlogs`.
+2. Release build (the default build type) with a staging prefix, then its test
+   suite: `meson setup build-release --prefix="$PWD/_install"`,
    `meson compile -C build-release`,
    `meson test -C build-release --print-errorlogs`.
 3. Sanitizer build: the [configuration](#configurations) above, with
