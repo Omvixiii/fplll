@@ -92,11 +92,12 @@ using ::extenum_cb_process_subsol;
 //);
 using ::extenum_fc_enumerate;
 
-/* set & get external enumerator. If extenum = nullptr then this interface is disabled,
-                                  and fplll will use the internal enumerator.
-                                  Otherwise, fplll will use the enumeration function pointed to
-                                  by extenum.
-*/
+/* Set and get the external enumerator. The initial value is the build-time
+   default: the external enumeration library linked through the "fplll_extenum"
+   Meson dependency, otherwise the built-in parallel enumerator when parallel
+   enumeration is compiled in, otherwise nullptr. With extenum = nullptr
+   external enumeration is disabled and fplll uses its own enumerator;
+   otherwise fplll uses the enumeration function pointed to by extenum. */
 void set_external_enumerator(std::function<extenum_fc_enumerate> extenum = nullptr);
 std::function<extenum_fc_enumerate> get_external_enumerator();
 

@@ -31,7 +31,10 @@ meson install -C build-release
 ```
 
 Meson is available with `uv tool install meson` or `pipx install meson`; QD is
-optional (`-Dqd=enabled`). If a macOS compiler cannot find SDK headers or libc++, set
+optional (`-Dqd=enabled`), and so is an external enumeration library, which is
+discovered as the Meson dependency `fplll_extenum` (see
+[external enumeration](doc/building.md#external-enumeration)). If a macOS
+compiler cannot find SDK headers or libc++, set
 `export SDKROOT="$(xcrun --show-sdk-path)"` before configuring. The
 [build guide](doc/building.md) covers the build directory layout, options,
 editor setup, sanitizers, coverage, source archives, and downstream use through

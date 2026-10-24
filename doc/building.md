@@ -14,8 +14,9 @@ own sibling directory, and all build products stay inside those directories.
 - nlohmann/json 3.12 or newer (header-only). Meson prefers a system package and
   otherwise downloads the pinned `subprojects/nlohmann_json.wrap` during
   `meson setup`.
-- Optional: QD (quad-double arithmetic), Doxygen (API documentation), and
-  gcovr or lcov/genhtml (code coverage).
+- Optional: QD (quad-double arithmetic), an external enumeration library (see
+  [external enumeration](#external-enumeration)), Doxygen (API
+  documentation), and gcovr or lcov/genhtml (code coverage).
 
 Install Meson with `uv tool install meson` (`uvx meson` runs it ephemerally) or
 `pipx install meson`.
@@ -158,12 +159,8 @@ advisory: it is expected to fail until the warning baseline is cleaned up.
 | `-Dmax_parallel_enum_dim=N` | `120` | maximum parallel enumeration dimension; `0` disables it, valid values are `20` to `160` in steps of ten, and it must stay below `max_enum_dim` |
 | `-Dtests=true/false` | `true` | build and register the tests (top-level builds only) |
 
-The optional external enumerator is imported as the Meson dependency
-`fplll_extenum`: install a `fplll_extenum.pc` on `PKG_CONFIG_PATH` (or provide
-a wrap) whose library exports `fplll_extenum_enumerate` with the
-`extenum_fc_enumerate` signature from `<fplll/enum/enumerate_ext_api.h>`.
-Without that dependency the built-in enumerator is used, and applications can
-always override the default at run time with `fplll::set_external_enumerator()`.
+The external enumeration library is an optional dependency rather than a
+project option; see [external enumeration](#external-enumeration).
 
 Built-in Meson options replace project-specific switches: `--buildtype`,
 `--default-library` (`both` by default; `shared` and `static` are also
@@ -172,6 +169,34 @@ accepted), `--prefix`, `-Dwarning_level=3 -Dwerror=true` (or
 `-Dcpp_args`, and `-Dcpp_std`. C++23 is mandatory; `-Dcpp_std` may name a newer
 standard, while older modes are rejected by the public headers at compile time.
 Inspect a configured directory with `meson configure build`.
+
+## External enumeration
+
+An external enumeration library (extenum) can replace fplll's built-in
+enumerator. It exports `fplll_extenum_enumerate` with the
+`extenum_fc_enumerate` signature declared in
+`<fplll/enum/enumerate_ext_api.h>`; that is a C++ symbol, so the library must
+be compiled with a compatible toolchain.
+
+External enumeration is a dependency, not a project option: make a
+`fplll_extenum.pc` available on `PKG_CONFIG_PATH` (or provide a wrap) before
+configuring.
+
+```sh
+extenum_prefix=/path/to/extenum
+export PKG_CONFIG_PATH="$extenum_prefix/lib/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
+meson setup build --buildtype=release
+```
+
+The configuration summary then reports `External enumeration: true`. That
+library becomes the build-time default enumerator of libfplll; without the
+dependency the built-in enumerator is used. Run-time code can override the
+choice for the whole process with `fplll::set_external_enumerator()` (pass
+`nullptr` to disable external enumeration), and
+`fplll::get_external_enumerator()` returns the current enumerator.
+
+The dependency is private: it does not appear in the public headers or in the
+installed `fplll_config.h`.
 
 ## Build output layout
 
@@ -268,10 +293,12 @@ pkg-config --static --cflags --libs fplll
 
 The module requires `gmp` and `mpfr`. QD builds require `qd` when `qd.pc`
 is available; compiler-discovered QD is exported as a public link dependency
-instead. `--static` adds the private libraries. Include the public API as
-`#include <fplll/fplll.h>`; the historical `<fplll.h>` entry point remains as a
-forwarding header. Meson consumers discover the module through pkg-config and
-must request C++23 themselves:
+instead. `--static` adds the private libraries; a build with the external
+enumeration library adds `Requires.private: fplll_extenum` when that library is
+a pkg-config module, so `--static` consumers link it as well. Include the
+public API as `#include <fplll/fplll.h>`; the historical `<fplll.h>` entry
+point remains as a forwarding header. Meson consumers discover the module
+through pkg-config and must request C++23 themselves:
 
 ```meson
 project('consumer', 'cpp', default_options: ['cpp_std=c++23'])
@@ -365,6 +392,11 @@ directory, or configure a new one.
 discoverable through `qd.pc` or, failing that, through `libqd` and
 `qd/dd_real.h` and `qd/qd_real.h` in the compiler search paths; install QD, or leave it disabled
 (`-Dqd=disabled`, the default) or automatic (`-Dqd=auto`).
+
+**`meson setup` does not report `External enumeration: true`.** The dependency
+is optional and is only discovered through pkg-config or a wrap. Set
+`PKG_CONFIG_PATH` to the directory containing `fplll_extenum.pc` before
+configuring and check that `pkg-config --modversion fplll_extenum` succeeds.
 
 **The nlohmann/json wrap cannot be downloaded.** Configure needs a system
 nlohmann/json 3.12.0 or newer, or network access for the pinned wrap. Install

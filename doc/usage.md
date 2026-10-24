@@ -124,6 +124,11 @@ equal iff d=d' and for any i, bi = +- ci. Concretely, if basis B is in file 'B.t
 
 See [API documentation](https://fplll.github.io/fplll/annotated.html) and [tests](https://github.com/fplll/fplll/tree/master/tests) as a source of examples.
 
+An external enumeration library can be linked at build time as the
+`fplll_extenum` Meson dependency (see
+[external enumeration](building.md#external-enumeration)); run-time code can
+override the compiled-in default with `fplll::set_external_enumerator()`.
+
 ### Multicore support
 
 This library does not currently use multiple cores and running multiple threads working on the same object `IntegerMatrix`, `LLLReduction`, `MatGSO` etc. is not supported.  Running multiple threads working on *different* objects, however, is supported. That is, there are no task-specific global variables and it is safe to e.g. reduce several lattices in parallel in the same process.  Note that some process-wide state is shared: the GMP random state used by BKZ rerandomization and the matrix generators (mutex-protected, so calls are safe but their interleaving determines the random stream), the MPFR default precision (thread-local only if MPFR was built thread-safe), and the log sink set with `fplll::set_log_stream` (the installed stream must outlive its use and concurrent writes must be synchronized by the caller).

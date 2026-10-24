@@ -1,18 +1,5 @@
 # Changelog
 
-## Unreleased
-
-### Build
-
-- Discover the optional external enumeration library as the Meson dependency
-  `fplll_extenum` (a `fplll_extenum.pc` on `PKG_CONFIG_PATH`, or a wrap)
-  instead of the `extenum_dir`, `extenum_library` and `extenum_function`
-  project options. The library exports `fplll_extenum_enumerate` with the
-  `extenum_fc_enumerate` signature and becomes the default external
-  enumerator; without that dependency the built-in enumerator is used. The
-  configured symbol is no longer written to the installed `fplll_config.h`,
-  and `-Dextenum_*` is no longer accepted.
-
 ## 6.0 (2026-10-23)
 
 fplll 6.0 requires C++23 and a rebuild against SONAME 10.  It removes the
@@ -57,6 +44,17 @@ API, and replaces the generated pruner tables with runtime computation.  See
 - Remove the vendored nlohmann/json copy `fplll/io/json.hpp` and resolve JSON
   support through Meson: prefer a system package (>= 3.12.0), otherwise
   download the pinned `subprojects/nlohmann_json.wrap`.
+- External enumeration is no longer a build option: discover the optional
+  external enumeration library as the Meson dependency `fplll_extenum` (a
+  `fplll_extenum.pc` on `PKG_CONFIG_PATH`, or a wrap). The library exports
+  `fplll_extenum_enumerate` with the `extenum_fc_enumerate` signature from
+  `<fplll/enum/enumerate_ext_api.h>` and becomes the build-time default
+  external enumerator; without it the built-in enumerator is used and
+  `fplll::set_external_enumerator()` still overrides the choice at run time.
+  `FPLLL_EXTENUM_FUNC` is not written to the installed `fplll_config.h`,
+  `fplll.pc` carries `Requires.private: fplll_extenum`, and the 5.x
+  autotools and intermediate CMake options are gone. See
+  [external enumeration](doc/building.md#external-enumeration).
 - Replace build presets with Meson options and independent build directories.
 - Make `build/` the canonical Meson developer build directory and point clangd
   at its compilation database; every other configuration uses a sibling

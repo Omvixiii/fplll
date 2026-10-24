@@ -71,7 +71,7 @@ headers directly must select C++23 themselves.
 | `-DFPLLL_WITH_QD=ON` | `-Dqd=enabled` (or `auto`) |
 | `-DFPLLL_MAX_ENUM_DIM=N` | `-Dmax_enum_dim=N` |
 | `-DFPLLL_MAX_PARALLEL_ENUM_DIM=N` | `-Dmax_parallel_enum_dim=N` |
-| `-DFPLLL_EXTENUM_DIR/LIBRARY/FUNCTION=...` | no option; provide the `fplll_extenum` dependency (pkg-config or wrap) whose library exports `fplll_extenum_enumerate` |
+| `-DFPLLL_EXTENUM_DIR/LIBRARY/FUNCTION=...` | no option; provide the `fplll_extenum` Meson dependency (see [external enumeration](building.md#external-enumeration)) |
 | `-DFPLLL_WARNINGS=ON`, `-DFPLLL_WARNINGS_AS_ERRORS=ON` | `-Dwarning_level=3 -Dwerror=true` |
 | `-DCMAKE_BUILD_TYPE=Release` | `--buildtype=release` |
 | `-DCMAKE_INSTALL_PREFIX=...` | `--prefix ...` |
@@ -106,6 +106,12 @@ See the [build guide](building.md) for the full Meson command set.
   (`-z long`) or `mpz` (`-z mpz`).
 - The **recursive-enumeration switch** (`FPLLL_WITH_RECURSIVE_ENUM`) was
   removed; recursive enumeration is always enabled.
+- **External enumeration build options** are gone: the 5.x autotools flags
+  `--with-extenum-dir`, `--with-extenum-lib` and `--with-extenum-func`, and
+  the intermediate CMake `FPLLL_EXTENUM_*` options, have no Meson equivalent.
+  Provide the library as the optional `fplll_extenum` Meson dependency instead
+  (see [external enumeration](building.md#external-enumeration)); the run-time
+  interface, `fplll::set_external_enumerator()`, is unchanged.
 - The unused `enum/topenum` enumerator and the `fplll/fplll.cpp` shim were
   removed; internal implementation-include fragments are named `.inl`.
 
@@ -144,7 +150,7 @@ See the [build guide](building.md) for the full Meson command set.
 ## Migration checklist
 
 1. Move to Meson 1.11 or newer with Ninja and a C++23 compiler; replace the
-   removed CMake options using the mapping above.
+   removed build options using the mappings above.
 2. Replace removed command-line switches (`-f dpe`, `-z double`).
 3. Rebuild against SONAME 10 and switch downstream discovery to pkg-config or
    `dependency('fplll')`; set C++23 for consumers that compile directly.

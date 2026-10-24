@@ -97,12 +97,13 @@ if qd_option.allowed()
 endif
 
 # --- Optional external enumeration library --------------------------------
-# An external enumerator is a library exporting a function with the
+# An external enumeration library exports a function with the
 # extenum_fc_enumerate signature under the well-known name
-# fplll_extenum_enumerate. Install it as a Meson dependency named
-# "fplll_extenum" (a fplll_extenum.pc on PKG_CONFIG_PATH or a wrap) to make it
-# the process-wide default; applications can still override the choice at run
-# time with set_external_enumerator().
+# fplll_extenum_enumerate. There is no project option: provide the library as
+# a Meson dependency named "fplll_extenum" (a fplll_extenum.pc on
+# PKG_CONFIG_PATH, or a wrap) to make it the build-time default. Without it the
+# built-in enumerator is used. Applications can still override the choice at
+# run time with set_external_enumerator().
 extenum_dep = dependency('fplll_extenum', required: false)
 extenum_cpp_args = []
 if extenum_dep.found()
