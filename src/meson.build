@@ -32,8 +32,8 @@ endif
 
 # Only this translation unit needs rebuilding when the configured prefix changes.
 strategy_define_args = [
-  '-DFPLLL_DEFAULT_STRATEGY_PATH="' + strategy_dir + '"',
-  '-DFPLLL_DEFAULT_STRATEGY="' + strategy_dir / 'default.json' + '"',
+  '-DFPLLL_DEFAULT_STRATEGY_PATH="' + default_strategy_dir + '"',
+  '-DFPLLL_DEFAULT_STRATEGY="' + default_strategy_dir / 'default.json' + '"',
 ]
 bkz_param_object = static_library(
   'fplll_bkz_param',

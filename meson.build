@@ -6,11 +6,9 @@ project(
   license_files: 'LICENSE',
   meson_version: '>=1.11.0',
   default_options: [
-    'cpp_std=c++23',
-    # People who only install and use the library get an optimized build
-    # without extra flags; contributors opt into --buildtype=debugoptimized
-    # (see CONTRIBUTING.md and doc/building.md).
+    # Installers get a release build; developers pass --buildtype=debugoptimized.
     'buildtype=release',
+    'cpp_std=c++23',
     'default_library=both',
   ],
 )
@@ -21,7 +19,8 @@ fplll_soversion = '10'
 fplll_libversion = '10.0.0'
 fplll_darwin_versions = ['11.0.0', '11.0.0']
 version_parts = meson.project_version().split('.')
-strategy_dir = get_option('prefix') / get_option('datadir') / 'strategies'
+strategies_install_dir = get_option('datadir') / 'strategies'
+default_strategy_dir = get_option('prefix') / strategies_install_dir
 
 # --- Toolchain -------------------------------------------------------------
 # warning_level=3 adds -Wall -Wextra -Wpedantic; pair it with the extra checks.
@@ -54,6 +53,8 @@ nlohmann_json_dep = dependency(
   include_type: 'system',
 )
 
+extenum_dep = dependency('fplll_extenum', required: false)
+
 public_deps = [gmp_dep, mpfr_dep, threads_dep]
 private_deps = [nlohmann_json_dep]
 
@@ -67,7 +68,6 @@ if gmp_libdir != ''
   public_deps += declare_dependency(link_args: ['-L' + gmp_libdir])
 endif
 
-extenum_dep = dependency('fplll_extenum', required: false)
 extenum_cpp_args = []
 if extenum_dep.found()
   private_deps += extenum_dep
@@ -81,10 +81,7 @@ subdir('src')
 subdir('tools')
 
 # --- Install ---------------------------------------------------------------
-install_data(
-  'strategies/default.json',
-  install_dir: get_option('datadir') / 'strategies',
-)
+install_data('strategies/default.json', install_dir: strategies_install_dir)
 install_subdir(
   'include',
   install_dir: get_option('includedir'),
