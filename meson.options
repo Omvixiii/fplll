@@ -2,14 +2,7 @@ option(
   'qd',
   type: 'feature',
   value: 'disabled',
-  description: 'Enable quad-double arithmetic through libqd',
-)
-
-option(
-  'rpath',
-  type: 'feature',
-  value: 'auto',
-  description: 'Relative install RPATH for tools (auto: non-/usr prefixes, non-static builds)',
+  description: 'Use quad-double arithmetic from libqd',
 )
 
 option(

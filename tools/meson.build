@@ -3,7 +3,6 @@ fplll_tool = executable(
   'main.cpp',
   dependencies: fplll_dep,
   install: true,
-  install_rpath: tool_install_rpath,
 )
 
 latticegen_tool = executable(
@@ -11,7 +10,6 @@ latticegen_tool = executable(
   'latticegen.cpp',
   dependencies: fplll_dep,
   install: true,
-  install_rpath: tool_install_rpath,
 )
 
 # Debug variants reuse the same sources but link the DEBUG-enabled library.
@@ -21,7 +19,6 @@ fplll_dbg = executable(
   include_directories: public_inc,
   dependencies: public_deps,
   link_with: fpllld_lib,
-  link_args: gmp_link_args,
   cpp_args: ['-DDEBUG'],
   build_by_default: false,
   install: false,
@@ -32,7 +29,6 @@ latticegen_dbg = executable(
   include_directories: public_inc,
   dependencies: public_deps,
   link_with: fpllld_lib,
-  link_args: gmp_link_args,
   cpp_args: ['-DDEBUG'],
   build_by_default: false,
   install: false,

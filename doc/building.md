@@ -15,9 +15,10 @@ own sibling directory, and all build products stay inside those directories.
 - nlohmann/json 3.12 or newer (header-only). Meson prefers a system package and
   otherwise downloads the pinned `subprojects/nlohmann_json.wrap` during
   `meson setup`.
-- Optional: QD (quad-double arithmetic), an external enumeration library (see
-  [external enumeration](#external-enumeration)), Doxygen (API
-  documentation), and gcovr or lcov/genhtml (code coverage).
+- Optional: QD (quad-double arithmetic), found through its `qd.pc` pkg-config
+  module; an external enumeration library (see
+  [external enumeration](#external-enumeration)); Doxygen (API
+  documentation); and gcovr or lcov/genhtml (code coverage).
 
 Install Meson with `uv tool install meson` (`uvx meson` runs it ephemerally) or
 `pipx install meson`.
@@ -155,8 +156,7 @@ advisory: it is expected to fail until the warning baseline is cleaned up.
 
 | Option | Default | Purpose |
 | --- | --- | --- |
-| `-Dqd=enabled/disabled/auto` | `disabled` | QD arithmetic; `enabled` fails if QD is missing |
-| `-Drpath=auto/enabled/disabled` | `auto` | relative install RPATH for tools; `auto` enables it for non-`/usr` prefixes and non-static builds |
+| `-Dqd=disabled/auto/enabled` | `disabled` | QD arithmetic, discovered through `qd.pc`; `enabled` fails at configure time when QD is missing |
 | `-Dmax_enum_dim=N` | `256` | maximum enumeration dimension (integer from 1 to 1024) |
 | `-Dmax_parallel_enum_dim=N` | `120` | maximum parallel enumeration dimension; `0` disables it, valid values are `20` to `160` in steps of ten, and it must stay below `max_enum_dim` |
 | `-Dtests=true/false` | `true` | build and register the tests (top-level builds only) |
@@ -253,14 +253,13 @@ prefix. Installed layout, relative to the prefix:
 | `share/strategies/default.json` | default BKZ strategies |
 
 On macOS the shared library's compatibility and current versions are 11.0.0.
-`-Drpath=auto` (the default) gives installed tools a relative RPATH for
-non-`/usr` prefixes in non-static builds; `enabled`/`disabled` override it and
-the path follows `bindir`/`libdir`. macOS records absolute installed dylib IDs,
-so `--destdir` staging is not relocatable: run staged tools with
-`DYLD_LIBRARY_PATH`. Staged BKZ runs also need an explicit strategy file
-because the compiled default path keeps the final prefix. Public headers come
-from the source tree; there is no separate `include/` directory. Reconfigure
-and rebuild instead of installing the same build with a different prefix.
+Installed tools carry no RPATH. On macOS Meson records an absolute install name
+for the dylib, so the tools work from the configured prefix; on Linux, a prefix
+outside the system loader paths needs `LD_LIBRARY_PATH` at run time. Build-tree
+tools use Meson's build RPATH. Staged BKZ runs need an explicit strategy file
+because the compiled default path keeps the final prefix. Public headers are
+installed from the source tree's `include/` directory. Reconfigure and rebuild
+instead of installing the same build with a different prefix.
 
 ## Source packages
 
@@ -296,12 +295,10 @@ pkg-config --cflags --libs fplll
 pkg-config --static --cflags --libs fplll
 ```
 
-The module requires `gmp` and `mpfr`. QD builds add `qd` to `Requires` when
-`qd.pc` is available; without `qd.pc`, QD is exported as a public `-lqd` and its
-headers must be on the compiler's default search path. `--static` adds the
-private libraries; a build with the external enumeration library adds
-`Requires.private: fplll_extenum` when that library is a pkg-config module, so
-`--static` consumers link it as well. Include the
+The module requires `gmp` and `mpfr`; QD builds add `qd` to `Requires`.
+`--static` adds the private libraries; a build with the external enumeration
+library adds `Requires.private: fplll_extenum` when that library is a
+pkg-config module, so `--static` consumers link it as well. Include the
 public API as `#include <fplll/fplll.h>`; the historical `<fplll.h>` entry
 point remains as a forwarding header. Meson consumers discover the module
 through pkg-config and must request C++23 themselves:
@@ -393,19 +390,20 @@ dependencies in a nonstandard prefix, set `PKG_CONFIG_PATH` before configuring.
 directory is compiled in from the prefix chosen at configure time; reconfigure
 and rebuild to change it.
 
-**Installed tools cannot find libfplll.** `-Drpath=auto` covers non-`/usr`
-prefixes. On macOS, `--destdir` staging keeps absolute dylib IDs, so run staged
-tools with `DYLD_LIBRARY_PATH`; on Linux the relative `$ORIGIN` RPATH follows
-the relocated tree.
+**Installed tools cannot find libfplll.** Installed tools are built without an
+RPATH. On Linux, set `LD_LIBRARY_PATH` to the prefix's `lib` directory, or
+install into a prefix the system loader searches. On macOS the dylib records an
+absolute install name, so the prefix must not be moved after installation.
+Tools in the build tree use Meson's build RPATH and work without it.
 
 **The `doc` target does not exist.** Doxygen was not found when the build
 directory was configured. Install Doxygen and wipe and reconfigure the
 directory, or configure a new one.
 
-**QD fails to configure.** `-Dqd=enabled` requires a QD installation
-discoverable through `qd.pc` or, failing that, through `libqd` plus
-`qd/dd_real.h` and `qd/qd_real.h` in the compiler search paths. Install QD, or
-leave it disabled (`-Dqd=disabled`, the default) or automatic (`-Dqd=auto`).
+**QD fails to configure.** `-Dqd=enabled` requires a QD installation that
+provides `qd.pc` on `PKG_CONFIG_PATH`; there is no library/header fallback.
+Install QD and make its pkg-config directory visible, or leave QD disabled
+(`-Dqd=disabled`, the default) or automatic (`-Dqd=auto`).
 
 **`meson setup` does not report `External enumeration: true`.** The dependency
 is optional and is only discovered through pkg-config or a wrap. Set
