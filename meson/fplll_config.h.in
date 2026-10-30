@@ -1,38 +1,20 @@
-#ifndef FPLLL_CONFIG__H
-#define FPLLL_CONFIG__H
+// SPDX-FileCopyrightText: 2026 Omvixiii
+// SPDX-License-Identifier: LGPL-2.1-or-later
+#ifndef FPLLL_CONFIG_H
+#define FPLLL_CONFIG_H
 
-/* use quaddouble library */
+/* Defined only when QD support is enabled. */
 #mesondefine FPLLL_WITH_QD
 
-/* fplll major version */
+/* Defined only when internal invariant checks are compiled in. */
+#mesondefine FPLLL_DEBUG_CHECKS
+
 #define FPLLL_MAJOR_VERSION @FPLLL_MAJOR_VERSION@
-
-/* fplll minor version */
 #define FPLLL_MINOR_VERSION @FPLLL_MINOR_VERSION@
-
-/* fplll micro version */
 #define FPLLL_MICRO_VERSION @FPLLL_MICRO_VERSION@
+#define FPLLL_VERSION "@FPLLL_VERSION@"
 
-/* fplll version */
-#define FPLLL_VERSION @FPLLL_VERSION@
-
-/* fplll version info */
-#define FPLLL_VERSION_INFO @FPLLL_VERSION_INFO@
-
-/* Maximum supported enumeration dimension */
 #define FPLLL_MAX_ENUM_DIM @FPLLL_MAX_ENUM_DIM@
-
-/* Recursive enumeration enabled */
-#mesondefine FPLLL_WITH_RECURSIVE_ENUM
-
-/* Maximum supported parallel enumeration dimension */
 #define FPLLL_MAX_PARALLEL_ENUM_DIM @FPLLL_MAX_PARALLEL_ENUM_DIM@
 
-/* Switch between GMP and MPIR */
-#mesondefine HAVE_LIBGMP
-#mesondefine HAVE_LIBMPIR
-
-/* external enumeration */
-#mesondefine FPLLL_EXTENUM_FUNC
-
-#endif /* FPLLL_CONFIG__H */
+#endif /* FPLLL_CONFIG_H */

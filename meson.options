@@ -1,55 +1,40 @@
+# SPDX-FileCopyrightText: 2026 Omvixiii
+# SPDX-License-Identifier: LGPL-2.1-or-later
 option(
-  'qd',
-  type: 'feature',
-  value: 'auto',
-  description: 'Enable quad-double arithmetic through libqd',
+    'qd',
+    type: 'feature',
+    value: 'disabled',
+    description: 'Enable quad-double arithmetic through libqd',
 )
 
 option(
-  'mpir',
-  type: 'boolean',
-  value: false,
-  description: 'Use MPIR instead of GMP',
+    'max_enum_dim',
+    type: 'integer',
+    value: 256,
+    min: 1,
+    max: 1024,
+    description: 'Maximum supported enumeration dimension',
 )
 
 option(
-  'recursive_enum',
-  type: 'boolean',
-  value: true,
-  description: 'Enable recursive enumeration',
+    'max_parallel_enum_dim',
+    type: 'integer',
+    value: 120,
+    min: 0,
+    max: 160,
+    description: 'Maximum parallel enumeration dimension (0 disables it; otherwise a multiple of 10 from 20 to 160)',
 )
 
 option(
-  'max_enum_dim',
-  type: 'integer',
-  value: 256,
-  description: 'Maximum supported enumeration dimension',
+    'debug_checks',
+    type: 'boolean',
+    value: false,
+    description: 'Compile in internal invariant checks (independent of NDEBUG)',
 )
 
 option(
-  'max_parallel_enum_dim',
-  type: 'integer',
-  value: 120,
-  description: 'Maximum parallel enumeration dimension (0 disables parallel enumeration)',
-)
-
-option(
-  'extenum_dir',
-  type: 'string',
-  value: '',
-  description: 'Directory hint for the external enumeration library',
-)
-
-option(
-  'extenum_lib',
-  type: 'string',
-  value: '',
-  description: 'External enumeration library name',
-)
-
-option(
-  'extenum_func',
-  type: 'string',
-  value: '',
-  description: 'External enumeration function name',
+    'tests',
+    type: 'boolean',
+    value: false,
+    description: 'Build and register the test suite (needs Catch2)',
 )

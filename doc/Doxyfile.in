@@ -1,0 +1,48 @@
+# SPDX-FileCopyrightText: 2026 Omvixiii
+# SPDX-License-Identifier: LGPL-2.1-or-later
+# Template for build/doc/Doxyfile: edit this file, not the generated Doxyfile.
+
+PROJECT_NAME           = @PROJECT_NAME@
+PROJECT_NUMBER         = @PROJECT_NUMBER@
+PROJECT_BRIEF          = Lattice algorithms using floating-point arithmetic
+OUTPUT_DIRECTORY       = @OUTPUT_DIRECTORY@
+OUTPUT_LANGUAGE        = English
+QUIET                  = YES
+WARNINGS               = YES
+INPUT                  = @SOURCE_ROOT@/include/fplll \
+                         @SOURCE_ROOT@/src \
+                         @SOURCE_ROOT@/README.md \
+                         @SOURCE_ROOT@/CHANGELOG.md
+FILE_PATTERNS          = *.cpp *.h *.hpp *.inl *.md
+EXTENSION_MAPPING      = inl=C++
+RECURSIVE              = YES
+USE_MDFILE_AS_MAINPAGE = @SOURCE_ROOT@/README.md
+INCLUDE_PATH           = @BUILD_ROOT@/include
+INPUT_ENCODING         = UTF-8
+EXCLUDE_PATTERNS       = */subprojects/* */build*/*
+
+EXTRACT_ALL            = YES
+EXTRACT_STATIC         = YES
+BUILTIN_STL_SUPPORT    = YES
+MARKDOWN_STRICT        = NO
+MARKDOWN_ID_STYLE      = GITHUB
+MACRO_EXPANSION        = YES
+EXPAND_ONLY_PREDEF     = YES
+PREDEFINED             = FPLLL_ABORT
+
+GENERATE_HTML          = YES
+HTML_OUTPUT            = html
+GENERATE_LATEX         = NO
+GENERATE_TREEVIEW      = YES
+HTML_DYNAMIC_MENUS     = NO
+OBFUSCATE_EMAILS       = NO
+USE_MATHJAX            = YES
+MATHJAX_VERSION        = MathJax_3
+MATHJAX_FORMAT         = SVG
+MATHJAX_RELPATH        = https://cdn.jsdelivr.net/npm/mathjax@3.2.2
+
+DOT_IMAGE_FORMAT       = svg
+CLASS_GRAPH            = NO
+COLLABORATION_GRAPH    = NO
+GROUP_GRAPHS           = NO
+INCLUDE_GRAPH          = NO
