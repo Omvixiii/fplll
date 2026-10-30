@@ -1,0 +1,32 @@
+# SPDX-FileCopyrightText: 2026 Omvixiii
+# SPDX-License-Identifier: LGPL-2.1-or-later
+
+# Meson writes the compilation database into the build directory; `build/` is
+# the development build directory that the tooling uses by default.  The default
+# configuration skips the test suite, so `tests/` has no entries here: point
+# `CompilationDatabase` at a tests-enabled directory (e.g. build-tests) when
+# working on the test sources.
+CompileFlags:
+  CompilationDatabase: build
+
+---
+# Include Cleaner diagnostics for project files only: "missing include"
+# reports direct include dependencies, not whether a header is self-contained
+# (that requires compiling the header on its own).  PathMatch is a full match
+# against the path relative to this file, so vendored code under subprojects/
+# is not affected; keeping the scope narrow also avoids extra analysis in
+# directories we do not maintain.
+If:
+  PathMatch: (include|src|tests|tools)/.*
+Diagnostics:
+  MissingIncludes: Strict
+
+---
+# Library sources/tests include project headers as <fplll/...>; analyse angled
+# includes of non-system headers so the unused-include diagnostics cover those
+# too (standard library angle includes are always analysed).
+If:
+  PathMatch: (src|tools|tests)/.*
+Diagnostics:
+  Includes:
+    AnalyzeAngledIncludes: true

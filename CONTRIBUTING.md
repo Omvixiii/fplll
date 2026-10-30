@@ -1,243 +1,331 @@
-# Contributing to fplll #
+<!-- SPDX-FileCopyrightText: 2026 Omvixiii
+     SPDX-License-Identifier: LGPL-2.1-or-later -->
 
-fplll welcomes contributions. We encourage users to fix bugs, improve the documentation, write tests and to enhance the code. We encourage researchers to contribute implementations of their algorithms to fplll. In the following we are trying to give some guidance on how to contribute effectively.
+# Contributing to fplll
 
-## Communication ##
+This document covers the development environment, the developer build, the
+layout of the sources, the coding conventions, and the workflow for making
+changes.
 
-Communication in the fplll project happens mainly on [GitHub](https://github.com/fplll/fplll/issues) and on our [mailing list](https://groups.google.com/forum/#!forum/fplll-devel).
+## Getting the source
 
-## Setup ##
+The 6.0 line is developed on the `refactor/meson` branch, which is not the
+repository default yet and is published with the 6.0 release. Switch to it after
+cloning (skip the switch once the 6.0 line is the default):
 
-### Fork on GitHub ##
-
-Login/signup on GitHub and fork fplll from [https://github.com/fplll/fplll](https://github.com/fplll/fplll).
-
-### Clone your fork locally
-
-Now clone your git repo where my-github-name is your account name on GitHub:
-
-    $ git clone git@github.com:my-github-name/fplll.git
-
-Then run
-
-    $ ./autogen.sh
-    $ ./configure
-    $ make
-    $ make check
-
-as usual.
-
-Note that the verbosity of ``make`` is set to low by default. To enable verbose output by default, use ``./configure --disable-silent-rules``. The verbosity can also be overridden at run time: ``make V=1`` will produce verbose output.
-
-## Reporting Bugs ##
-
-Bug should be filed at [https://github.com/fplll/fplll/issues](https://github.com/fplll/fplll/issues). Alternatively, feel free to contact  [https://groups.google.com/forum/#!forum/fplll-devel](https://groups.google.com/forum/#!forum/fplll-devel). The former method is definitely preferred though.
-
-## Setting up topic branches and generating pull requests
-
-While it's handy to provide useful code snippets in an issue, it is better for to submit pull requests.
-
-In Git it is best to isolate each topic or feature into a "topic branch". While individual commits allow you control over how small individual changes are made to the code, branches are a great way to group a set of commits all related to one feature together, or to isolate different efforts when you might be working on multiple topics at the same time.
-
-While it takes some experience to get the right feel about how to break up commits, a topic branch should be limited in scope to a single ``issue`` as submitted to an issue tracker.
-
-Also since GitHub pegs and syncs a pull request to a specific branch, it is the **only** way that you can submit more than one fix at a time. If you submit a pull from your ``master`` branch, you can't make any more commits to your ``master`` branch without those getting added to the pull.
-
-To create a topic branch, its easiest to use the convenient ``-b`` argument to ``git checkout``
-
-    $ git checkout -b fix-broken-thing
-    Switched to a new branch 'fix-broken-thing'
-
-You should use a verbose enough name for your branch so it is clear what it is about. Now you can commit your changes and regularly merge in the upstream develop as described below.
-
-When you are ready to generate a pull request, either for preliminary review, or for consideration of merging into the project you must first push your local topic branch back up to GitHub
-
-    git push origin fix-broken-thing
-
-Now when you go to your fork on GitHub, you will see this branch listed under the "Source" tab where it says "Switch Branches". Go ahead and select your topic branch from this list, and then click the "Pull request" button.
-
-Here you can add a comment about your branch. If this in response to a submitted issue, it is good to put a link to that issue in this initial comment. The maintainers will be notified of your pull request and it will be reviewed (see below for best practices). Note that you can continue to add commits to your topic branch (and push them up to GitHub) either if you see something that needs changing, or in response to a reviewer's comments. If a reviewer asks for changes, you do not need to close the pull and reissue it after making changes. Just make the changes locally, push them to GitHub, then add a comment to the discussion section of the pull request.
-
-## Pull upstream changes into your fork regularly
-
-It is important that you pull upstream changes from master into your fork on a regular basis. Nothing is worse than putting in a days of hard work into a pull request only to have it rejected because it has diverged too far from master. 
-
-To pull in upstream changes::
-
-    $ git remote add upstream https://github.com/fplll/fplll.git
-    $ git fetch upstream master
-
-Check the log to be sure that you actually want the changes, before merging::
-
-    $ git log upstream/master
-
-Then merge the changes that you fetched::
-
-    $ git merge upstream/master
-
-For more info, see http://help.github.com/fork-a-repo/
-
-## How to get your pull request accepted
-
-We want your submission. But we also want to provide a stable experience for our users. In the following, we give some guidelines for contributing.
-
-### Run the tests!
-
-Before you submit a pull request, please run tests:
-
-    $ make check
-
-These checks are also run automatically for every pull request. Nothing failing tests will be accepted.
-
-### If you add code please add tests
-
-Code that isn’t tested is broken.
-
-Also, keep your tests simple. Complex tests end up requiring their own tests. We would rather see duplicated assertions across test methods then cunning utility methods that magically determine which assertions are needed at a particular stage. Remember: Explicit is better than implicit.
-
-Finally, the nature of fplll means that sometimes it is hard to properly test the behaviour of a change quickly. Running BKZ for several minutes takes way too long for a test. In this case, we should at least test that a particular piece of code compiles and runs.
-
-### Keep your pull requests limited to a single issue
-
-Pull requests should be as small/atomic as possible.
-
-### Coding Conventions
-
-fplll is written in [C++11](https://en.wikipedia.org/wiki/C%2B%2B11) and we try to make use of its modern features to make the library readable.
-
-Please keep your code as clean and straightforward as possible. Code is written for the consumption by compilers and for the consumption by human beings. By making code clear and easy to understand, others can build on it and fix issues should they arise.
-
-Our naming convention is close to Python's [naming convention](https://www.python.org/dev/peps/pep-0008/). Classes are in ``CamelCase``. Functions, methods, parameters and local variables in ``lower_case`` . Curly braces go on the next line and we [prefer explicit curly braces](https://nakedsecurity.sophos.com/2014/02/24/anatomy-of-a-goto-fail-apples-ssl-bug-explained-plus-an-unofficial-patch/), e.g.
-
-```c++
-if (foo)
-{
-  do_something_good();
-}
-```
-    
-instead of:
-
-```c++
-if (foo)
-  do_something_bad();
+```sh
+git clone https://github.com/Omvixiii/fplll.git
+cd fplll
+git switch refactor/meson
+git switch --create fix-broken-thing
 ```
 
-Furthermore, the pixel shortage is over. We want to see:
+## Development environment
 
-- `package` instead of `pkg`
-- `grid` instead of `g`
-- `my_function_that_does_things` instead of `mftdt`
+Install the dependencies from the [requirements](README.md#requirements), plus
+`clang-format`, `clang-tidy` and, for the REUSE check, `reuse`. `ccache` or
+`sccache` is optional but speeds up repeated builds; Meson picks either up
+automatically.
 
-The following [clang-format](http://clang.llvm.org/docs/ClangFormat.html) configuration file describes our coding convention. Clang-format is both a library and a stand-alone tool aiming at automatically reformatting C++ sources files. 
+`reuse` needs a file-encoding backend; install the extra when the distribution
+package does not pull one in, e.g.
+`uv tool install "reuse[charset-normalizer]"` or
+`pipx install "reuse[charset-normalizer]"`.
 
-```yaml
----
-Language:        Cpp
-# BasedOnStyle:  LLVM
-AccessModifierOffset: -2
-AlignAfterOpenBracket: true
-AlignConsecutiveAssignments: true
-AlignEscapedNewlinesLeft: false
-AlignOperands:   true
-AlignTrailingComments: true
-AllowAllParametersOfDeclarationOnNextLine: true
-AllowShortBlocksOnASingleLine: false
-AllowShortCaseLabelsOnASingleLine: false
-AllowShortIfStatementsOnASingleLine: false
-AllowShortLoopsOnASingleLine: false
-AllowShortFunctionsOnASingleLine: All
-AlwaysBreakAfterDefinitionReturnType: false
-AlwaysBreakTemplateDeclarations: false
-AlwaysBreakBeforeMultilineStrings: false
-BreakBeforeBinaryOperators: None
-BreakBeforeTernaryOperators: true
-BreakConstructorInitializersBeforeComma: false
-BinPackParameters: true
-BinPackArguments: true
-ColumnLimit:     100
-ConstructorInitializerAllOnOneLineOrOnePerLine: false
-ConstructorInitializerIndentWidth: 4
-DerivePointerAlignment: false
-ExperimentalAutoDetectBinPacking: false
-IndentCaseLabels: false
-IndentWrappedFunctionNames: false
-IndentFunctionDeclarationAfterType: false
-MaxEmptyLinesToKeep: 1
-KeepEmptyLinesAtTheStartOfBlocks: true
-NamespaceIndentation: None
-ObjCBlockIndentWidth: 2
-ObjCSpaceAfterProperty: false
-ObjCSpaceBeforeProtocolList: true
-PenaltyBreakBeforeFirstCallParameter: 19
-PenaltyBreakComment: 300
-PenaltyBreakString: 1000
-PenaltyBreakFirstLessLess: 120
-PenaltyExcessCharacter: 1000000
-PenaltyReturnTypeOnItsOwnLine: 60
-PointerAlignment: Right
-SpacesBeforeTrailingComments: 2
-Standard:        Cpp11
-IndentWidth:     2
-TabWidth:        8
-UseTab:          Never
-BreakBeforeBraces: Allman
-SpacesInParentheses: false
-SpacesInSquareBrackets: false
-SpacesInAngles:  false
-SpaceInEmptyParentheses: false
-SpacesInCStyleCastParentheses: false
-SpaceAfterCStyleCast: false
-SpacesInContainerLiterals: true
-SpaceBeforeAssignmentOperators: true
-ContinuationIndentWidth: 4
-CommentPragmas:  '^ IWYU pragma:'
-ForEachMacros:   [ foreach, Q_FOREACH, BOOST_FOREACH ]
-SpaceBeforeParens: ControlStatements
-DisableFormat:   false
-...
+nlohmann/json comes from a system package when available; otherwise the pinned
+wrap in `subprojects/` is fetched once. Catch2 is needed only for the opt-in
+test suite (see below) and is resolved the same way.
+
+## Build and test
+
+The development build uses Meson's `debugoptimized` build type:
+
+```sh
+meson setup build --buildtype=debugoptimized
+meson compile -C build
 ```
 
-### Enforcement of the coding convention
+`build/` is the development and release-validation directory. Reconfigure it in
+place with `meson configure build -Doption=value`; create a sibling
+`build-<purpose>/` directory when a configuration must coexist with the default
+one (the test build below is one such case). The user-facing commands in
+`README.md` also use `build/`: in a checkout that has already been configured
+for a release build, wipe the directory first
+(`meson setup --wipe build -Dbuildtype=debugoptimized`).
 
-Starting from fplll 5.1.0, the coding convention is [enforced](https://github.com/fplll/fplll/pull/215) throughout the whole project. In particular, the code of every pull request has to strictly adhere to the coding convention, and a GitHub Action will error when it is not the case. Automatic formatting can (and should) be performed by the command
+Options that matter while developing:
 
+| Option | Default | Meaning |
+| --- | --- | --- |
+| `-Dtests=true` | `false` | build and register the test suite (resolves Catch2; see below) |
+| `-Ddebug_checks=true` | `false` | compile internal invariant checks into the library |
+| `-Dmax_enum_dim=N` | `256` | compile the enumerator for dimensions up to N |
+| `-Dmax_parallel_enum_dim=N` | `120` | parallel-enumeration dimension limit (`0` disables it; otherwise a multiple of 10 from `20` to `160`) |
+
+The test suite is opt-in so that plain builds stay free of Catch2. Enabling it
+also compiles the library with the internal test hooks (`-DFPLLL_TESTING`), so
+give it a sibling build directory instead of toggling `build/`:
+
+```sh
+meson setup build-tests --buildtype=debugoptimized -Dtests=true
+meson test -C build-tests --print-errorlogs
 ```
-make check-style
+
+`meson test` builds the single Catch2 test executable on demand. The suite is
+registered once per module tag, so a module can be rerun on its own:
+
+```sh
+meson test -C build-tests lll              # one module
+meson test -C build-tests --list           # all registered tests
+meson test -C build-tests --suite fplll    # the whole suite
 ```
 
-and require clang-format to be installed.
+A test binary can also be run directly, for example
+`build-tests/tests/fplll_tests --list-tests` or
+`build-tests/tests/fplll_tests "[bkz]" --order decl`. Fixtures under
+`tests/lattices/` and `strategies/` are read-only inputs; tests write only into
+their working directory.
 
-In order to improve readability, some situations might require manual formatting. Clang-format [includes a comment trigger](http://llvm.org/releases/6.0.0/tools/clang/docs/https://releases.llvm.org/6.0.0/tools/clang/docs/ClangFormatStyleOptions.html#disabling-formatting-on-a-piece-of-code) to _locally_ disable the formatting. The code between a comment `// clang-format off` or `/* clang-format off */` up to a comment `// clang-format on` or `/* clang-format on */` will not be formatted. 
+Internal invariant checks are a separate switch, independent of the build type
+and of `NDEBUG`:
 
+```sh
+meson setup build-check --buildtype=release -Ddebug_checks=true -Dtests=true
+meson compile -C build-check
+meson test -C build-check --print-errorlogs
 ```
-int formatted_code;
-// clang-format off
-    void    unformatted_code  ;
-// clang-format on
-void formatted_code_again;
+
+Strict warning builds are available with
+`-Dwarning_level=3 -Dwerror=true`; the tree is expected to stay clean at that
+level.
+
+## Source layout
+
+The library is split by module between `include/fplll/` (public headers) and
+`src/` (implementation). The test suite mirrors the same modules under
+`tests/`.
+
+```text
+include/fplll/
+├── defs.h                  # status, options, constants, error and check helpers
+├── fplll.h                 # aggregate public header
+├── nr/                     # numeric types, vectors and matrices
+├── gso/                    # Gram-Schmidt representations (basis, Gram, Householder)
+├── reduction/              # LLL, HLLL, BKZ, HKZ and their parameters
+├── enum/                   # enumeration core
+├── pruner/                 # pruning parameters and optimizer
+├── svpcvp.h                # SVP/CVP entry points
+├── threadpool.h            # get_threads/set_threads
+└── util.h                  # shared helpers
+
+src/
+├── detail/                 # private headers (float type/precision resolution,
+│                           #   CPU time, worker pool and enumeration session)
+├── enum/                   # enumeration core and the parallel backend (enum/parallel/)
+├── gso/                    # GSO implementations
+├── pruner/                 # pruner implementation
+├── reduction/              # LLL (lll/), HLLL (hlll/) and BKZ/HKZ (bkz/): kernels and drivers
+├── svpcvp.cpp
+├── threadpool.cpp
+└── util.cpp
 ```
 
-### Faster compilation
+Private headers live under `src/`; nothing below `src/` is installed. The
+public headers are self-contained and are all reachable from
+`<fplll/fplll.h>`.
 
-By default, libtool builds everything twice, one for the static and one for the dynamic library, cf. https://stackoverflow.com/questions/572760/libtool-slowness-double-building. If you want to avoid this double compiling time you can run ./configure --disable-static which disables building the static library.
+Names state the layer a translation unit implements. An installed header
+declares one layer of the API: the option structs and the entry-point functions
+(`lll.h`, `hlll.h`, `bkz.h`), or the configuration data and its loader
+(`bkz_param.h`). It never declares an algorithm kernel. A private
+`<module>_kernel.{h,cpp}` is an algorithm kernel: its class, the verification
+helper and the `extern template` declarations where it has them. A
+`<module>_driver.cpp` implements the public entry points of `<module>.h`:
+option validation, backend/precision selection and dispatch into the kernels.
+A translation unit that directly implements a public header keeps the header's
+stem (`bkz/bkz_param.cpp` implements `bkz_param.h`), and a private header named
+after the class it declares (`wrapper.h` declares `Wrapper`) is a shared engine
+below the drivers. Helpers shared by a set of drivers live at the module root
+in a header named after the family (`lll_family.h` holds the checks shared by
+the LLL and HLLL drivers).
 
-### Attribution
+No translation unit mixes an algorithm kernel with the entry-point layer, and
+no installed header declares a kernel: the file name and the layer of a
+definition agree. The reduction module is laid out as an example:
 
-Please do not forget to add yourself as a contributor in [README.md](README.md) if you make a non-trivial contribution. Furthermore, you may want to claim copyright in the copyright headers of each file.
+```text
+include/fplll/reduction/          # installed: options + entry points + data
+├── lll.h                         # LLLParameters, LLLOptions, lll_reduction()
+├── hlll.h                        # HLLLParameters, HLLLOptions, hlll_reduction()
+├── bkz.h                         # HKZOptions, bkz_reduction(), hkz_reduction()
+└── bkz_param.h                   # Strategy, BKZParam, load_strategies_json()
+
+src/reduction/                    # library: kernels, drivers, private headers
+├── lll/                          # LLL
+│   ├── lll_kernel.h/.cpp         # LLLReduction, is_lll_reduced
+│   └── lll_driver.cpp            # lll_reduction(): validation, backend, dispatch
+├── hlll/                         # HLLL
+│   ├── hlll_kernel.h/.cpp        # HLLLReduction, is_hlll_reduced
+│   └── hlll_driver.cpp           # hlll_reduction(): validation, backend, dispatch
+├── bkz/                          # BKZ, HKZ, SD-BKZ and slide
+│   ├── bkz_kernel.h/.cpp         # BKZReduction, BKZAutoAbort
+│   ├── bkz_driver.cpp            # bkz_reduction()/hkz_reduction(): validation, backend, dispatch
+│   └── bkz_param.cpp             # Strategy table and its JSON loader
+├── wrapper.h/.cpp                # Wrapper: self-tuning backend/precision escalation engine
+└── lll_family.h                  # checks shared by the LLL and HLLL drivers
+```
+
+The BKZ/HKZ units and the wrapper engine reach into `lll/` through relative
+private includes (the wrapper also into `hlll/`); the LLL and HLLL drivers
+share the module-root `wrapper.h` and `lll_family.h`, and the remaining units
+only include private headers under `src/detail/`.
+
+`tools/` contains the installed command-line programs built by Meson;
+`scripts/` contains maintainer-only helpers that are not part of the build,
+such as the generator of the pruner's compile-time tables.
+
+Include layering:
+
+- every installed header includes the standard-library and project headers it
+  uses directly; relying on transitive includes is not supported and is
+  checked by clangd's include-cleaner diagnostics;
+- `<fplll/fplll.h>` is the aggregate public header and `<fplll/nr/nr.h>` is the
+  numeric umbrella that pulls in the backend `.inl` files; both mark their
+  re-exports with `// IWYU pragma: export` so that consumers (and include
+  analyzers) treat them as the provider of those symbols;
+- the backend `.inl` files and everything under `src/` are implementation
+  details and are never included by users.
+
+## Design principles
+
+The public API is value-based and contract-first:
+
+- configuration is passed with plain option structs (`LLLOptions`, `BKZParam`,
+  `GSOOptions`, ...) that are validated once, before any caller data is
+  modified;
+- reductions return a `ReductionReport` describing what happened (status,
+  backend and precision actually used, guarantees, statistics) instead of a
+  bare status code;
+- global state is handled with RAII guards: `ScopedPrecision` /
+  `ScopedGsoPrecision` for the MPFR working precision, `RowOperations` for
+  batches of GSO row operations, and small guards for the FPU rounding mode;
+- the floating-point backend is selected once, by
+  `detail::dispatch_float_type()`; algorithm code never repeats a `FloatType`
+  `switch`;
+- hot loops stay free of allocation, exceptions and formatted output; the
+  observable contracts (status/report) live at the algorithm boundaries, not
+  in the inner loops.
+
+Header layering follows from the same idea: module headers are self-contained,
+the aggregate headers (`<fplll/fplll.h>`, `<fplll/nr/nr.h>`) own their
+re-exports, and headers that are only needed by an implementation live under
+`src/`.
+
+## Coding conventions
+
+- The library, installed headers, tools and tests require **C++23**. Use the
+  language where it pays off: `enum class`, designated initializers,
+  `std::format`/`std::print`, `std::span`, `std::string_view`, `if constexpr`,
+  `inline constexpr`, `[[nodiscard]]`, `std::to_underlying`.
+- Types are `CamelCase`; functions, methods, parameters and variables are
+  `lower_case`; private data members end in `_` only when a plain name would
+  clash with a parameter.
+- Public configuration is expressed with **option structs** passed by
+  `const&`, not with long parameter lists or integer flag bitsets. Optional
+  values use `std::optional`.
+- Enumerations are scoped (`enum class`); provide `to_string()` where the value
+  is printed.
+- Do not add namespace macros, `using namespace std`, or a block of `using
+  std::…` re-exports. Qualify standard names with `std::` directly.
+- Headers include what they use; do not rely on transitive includes.
+- The public integer type is `ZZ_mat<mpz_t>`; the `long` fast path is an
+  implementation detail of LLL, and neither dedicated `long` entry points nor a
+  `long double` floating-point backend are part of the API.
+- Errors use `FPLLL_CHECK(condition, "message {}", args…)` / `FPLLL_ABORT`,
+  which throw `fplll::Error`; `FPLLL_DEBUG_CHECK` is reserved for internal
+  invariants and aborts. Do not throw enum classes or other control-flow types.
+- Prefer value semantics and `std::unique_ptr` over reference members and raw
+  owning pointers. Hot loops must not allocate or format strings.
+- Preprocessor switches are limited to the build options (`FPLLL_WITH_QD`,
+  `FPLLL_DEBUG_CHECKS`, the generated enumeration-dimension limits), the
+  `FPLLL_TESTING` hooks of the internal thread pool, and the
+  platform/library-version guards (MSVC, MPFR); everything else is plain C++23.
+- Every source file keeps its SPDX identifiers; new files get a
+  `SPDX-FileCopyrightText` line and the `LGPL-2.1-or-later` license identifier
+  (or MIT for the parallel-enumeration code).
+
+### Formatting and static analysis
+
+`.clang-format` is authoritative; `clang-format --style=file -i` the files you
+touch. The tree is formatted with clang-format 23 and is also kept clean under
+the Apple clang-format 21 shipped with Xcode.
+
+`.clang-tidy` holds the curated check set; its `HeaderFilterRegex` restricts
+diagnostics to the project sources, so GMP, MPFR, Catch2 and the other
+third-party code never show up. `.clangd` points clangd at
+`build/compile_commands.json` and enables the include-cleaner diagnostics for
+project files, so headers must include what they use directly (no reliance on
+transitive includes). Because the default `build/` configuration skips the
+tests, `tests/` translation units have no entry in its compilation database;
+use a tests-enabled directory (or point `CompilationDatabase` at `build-tests`)
+when working on the test sources. Apply the checks to one file with:
+
+```sh
+clang-tidy -p build path/to/file.cpp
+```
+
+and to the whole tree (the gate the tree is kept at), using the tests-enabled
+database so the `tests/` units are covered too:
+
+```sh
+run-clang-tidy -p build-tests -j 8 -source-filter '^(?!.*/subprojects/).*/(include/fplll|src|tools|tests)/'
+```
+
+`clang-tidy --verify-config` checks that every configured check name exists in
+the installed clang-tidy. The tree is expected to be free of diagnostics under
+the configured checks and of missing/unused include diagnostics under clangd;
+suppress a deliberate, documented case with
+`// NOLINT(check-name)  // reason` instead of adding the check to the exclusion
+list.
+
+### License and REUSE
+
+The tree follows the [REUSE specification](https://reuse.software/): every
+tracked file carries SPDX information, either in its own header or through
+`REUSE.toml` for data files that cannot hold a comment. Run the check from the
+repository root:
+
+```sh
+reuse lint
+```
+
+A new file gets an `SPDX-FileCopyrightText` line and an `SPDX-License-Identifier`
+tag; add it to `REUSE.toml` instead when the format has no comment syntax.
+
+## Making changes
+
+- Keep each commit focused: `type(scope): summary`, with `build`, `chore`,
+  `docs`, `feat`, `fix`, `license`, `refactor`, `style` or `test` as the type
+  and `!` for breaking changes.
+- Add a small deterministic test for new behaviour. Tests are Catch2 v3 cases:
+  use `TEMPLATE_TEST_CASE` with `FPLLL_TEST_FP_BACKENDS` for every floating
+  backend, `CHECK` where execution can continue and `REQUIRE` where it cannot,
+  and `INFO`/`CAPTURE` for diagnostics.
+- Update the documentation that covers what you changed: `README.md` for user
+  visible behaviour, `CHANGELOG.md` for changes worth upgrading for, and the
+  Doxygen comments for the API.
+- Keep formatting changes separate from functional changes.
 
 ## Documentation
 
-fplll uses [doxygen](http://www.stack.nl/~dimitri/doxygen/) with a [bootstrap theme](https://github.com/Velron/doxygen-bootstrapped) to generate API documentation. To produce API documentation run
+`README.md` is the user documentation, `CHANGELOG.md` records the user-visible
+changes, and Doxygen generates the reference from the headers and sources (with
+`README.md` as the main page). Run
 
-    $ doxygen Doxyfile
+```sh
+meson compile -C build doc
+```
 
-Our documentation is served at [https://fplll.github.io/fplll/](https://fplll.github.io/fplll/) using [GitHub pages](https://pages.github.com). To update the documentation, check out the ``gh-pages`` branch and update the html files in there. Doxygen writes its outputs to ``doc/html``, you can arrange it that this directory holds the ``gh-pages`` branch of the fplll repository:
-
-    $ cd doc
-    $ git clone -b gh-pages git@github.com:<my-github-name>/fplll.git html
-    $ cd ..
-    
-Now, whenever you run ``doxygen`` it will write its outputs to a directory which holds the right branch. If you push it to your remote, you can then check it at [http://my-github-name.github.io/fplll](http://my-github-name.github.io/fplll).
-
-Before generating documentation with Doxygen to push to [https://fplll.github.io/fplll/](https://fplll.github.io/fplll/) please run ``make maintainer-clean`` in the fplll root directory. This removes ``config.h`` and ``fplll_config.h``, i.e. it prevents your local, machine-specific configuration to be pushed as part of the official API documentation. In any case, it is recommended to review the changes in the `gh-pages` branch before committing and pushing.
+to write the Doxygen HTML into `build/doc/html/`; the target only exists when
+Doxygen was found at configure time. Documentation is never generated into the
+source tree.

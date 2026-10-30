@@ -1,0 +1,32 @@
+# SPDX-FileCopyrightText: 2026 Omvixiii
+# SPDX-License-Identifier: LGPL-2.1-or-later
+#
+# REUSE metadata for files that cannot carry an SPDX header themselves
+# (data fixtures, JSON, Meson wrap metadata and the repository ignore file).
+# Every other file carries its own SPDX tags; `reuse lint` checks both.
+
+version = 1
+
+[[annotations]]
+path = "tests/lattices/**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2015-2021 The FPLLL development team"
+SPDX-License-Identifier = "LGPL-2.1-or-later"
+
+[[annotations]]
+path = "strategies/default.json"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2011-2026 The FPLLL development team"
+SPDX-License-Identifier = "LGPL-2.1-or-later"
+
+[[annotations]]
+path = ".gitignore"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2026 Omvixiii"
+SPDX-License-Identifier = "LGPL-2.1-or-later"
+
+[[annotations]]
+path = "subprojects/*.wrap"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2021 The Meson development team"
+SPDX-License-Identifier = "MIT"

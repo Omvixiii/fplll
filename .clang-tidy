@@ -1,0 +1,61 @@
+# SPDX-FileCopyrightText: 2026 Omvixiii
+# SPDX-License-Identifier: LGPL-2.1-or-later
+
+# Curated clang-tidy configuration for the project.
+# bugprone-* is enabled wholesale with two deliberate exclusions:
+#   - bugprone-easily-swappable-parameters reports adjacent parameters of
+#     similar type in internal helpers and tests; fixing it would mean API
+#     redesign, so it is left to review instead of being enforced.
+#   - bugprone-signed-bitwise flags the intentional status/flag idiom used
+#     throughout the tests and tools (status |= step, flags & VALUE).
+Checks:
+  - "-*"
+
+  - bugprone-*
+  # Similar adjacent parameters in internal helpers need API review.
+  - -bugprone-easily-swappable-parameters
+  # Status and flag bitwise operations are intentional.
+  - -bugprone-signed-bitwise
+
+  - performance-*
+  # FP_NR<F>/Z_NR<Z> declare the destructor in the class template and define it
+  # in explicit specializations per backend.  clang-tidy 23 proposes defaulting
+  # the primary declaration here, which removes the specializations and yields
+  # non-compiling code; the trivial destructors are already normalized by
+  # modernize-use-equals-default where that is valid.
+  - -performance-trivially-destructible
+  - modernize-*
+  - -modernize-use-trailing-return-type
+  - -modernize-use-nodiscard
+  - -modernize-avoid-c-arrays
+
+  - readability-braces-around-statements
+  - readability-const-return-type
+  - readability-container-size-empty
+  - readability-duplicate-include
+  - readability-misleading-indentation
+  - readability-misplaced-array-index
+  - readability-non-const-parameter
+  - readability-redundant-*
+  - readability-static-accessed-through-instance
+  - readability-static-definition-in-anonymous-namespace
+  - readability-string-compare
+  - readability-uniqueptr-delete-release
+
+  - llvm-namespace-comment
+  - misc-unused-parameters
+  - misc-unused-using-decls
+
+# Match source-layout components in relative and absolute paths, independent
+# of the checkout directory name. Dependencies and generated headers are
+# excluded below.
+HeaderFilterRegex: '(^|/)(include/fplll|src|tools|tests)/'
+
+# Never report diagnostics from dependencies or headers generated inside the
+# build tree, even when their paths contain one of the source-layout components.
+ExcludeHeaderFilterRegex: '(^|/)(subprojects|build)/|^/(opt/homebrew|usr|Library|Applications|System|private)/'
+
+FormatStyle: file
+CheckOptions:
+  # Only replace exact matches; the default also rewrites nearby test data.
+  modernize-use-std-numbers.DiffThreshold: "0.0"
