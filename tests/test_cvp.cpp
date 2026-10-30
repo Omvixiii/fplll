@@ -1,143 +1,247 @@
-/* Copyright (C) 2016 Guillaume Bonnoron
+// SPDX-FileCopyrightText: 2016 Guillaume Bonnoron
+//
+// SPDX-License-Identifier: LGPL-2.1-or-later
 
-   This file is part of fplll. fplll is free software: you
-   can redistribute it and/or modify it under the terms of the GNU Lesser
-   General Public License as published by the Free Software Foundation,
-   either version 2.1 of the License, or (at your option) any later version.
+#include <fplll/fplll.h>  // IWYU pragma: keep
+#include <fplll/nr/matrix.h>
+#include <fplll/nr/nr.h>
 
-   fplll is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-   GNU Lesser General Public License for more details.
-
-   You should have received a copy of the GNU Lesser General Public License
-   along with fplll. If not, see <http://www.gnu.org/licenses/>. */
+#include <catch2/catch_message.hpp>
+#include <catch2/catch_test_macros.hpp>
 
 #include "test_utils.h"
-#include <cstring>
-#include <fplll/fplll.h>
+
+#include <cstddef>
+#include <gmp.h>
+#include <vector>
 
 #ifndef TESTDATADIR
 #define TESTDATADIR ".."
 #endif
-using namespace std;
-using namespace fplll;
+
+namespace
+{
 
 /**
    @brief Test if CVP function returns correct vector.
 
    @param A              input lattice
+   @param target         target vector
    @param b              expected vector
-   @return
-*/
-
-template <class ZT>
-int test_cvp(ZZ_mat<ZT> &A, vector<Z_NR<mpz_t>> &target, vector<Z_NR<mpz_t>> &b, const int method)
+   @param method         CVP method to test
+ */
+void test_cvp(fplll::ZZ_mat<mpz_t> &A, std::vector<fplll::Z_NR<mpz_t>> &target,
+              std::vector<fplll::Z_NR<mpz_t>> &b, const fplll::CVPMethod method)
 {
-  vector<Z_NR<mpz_t>> sol_coord;  // In the LLL-reduced basis
-  vector<Z_NR<mpz_t>> solution;
-  ZZ_mat<mpz_t> u;
+  std::vector<fplll::Z_NR<mpz_t>> sol_coord;  // In the LLL-reduced basis
+  std::vector<fplll::Z_NR<mpz_t>> solution;
+  fplll::ZZ_mat<mpz_t> u;
 
-  // cerr << "A " << endl << A << endl;
-  int status =
-      lll_reduction(A, u, LLL_DEF_DELTA, LLL_DEF_ETA, LM_WRAPPER, FT_DEFAULT, 0, LLL_DEFAULT);
-  if (status != RED_SUCCESS)
+  const fplll::ReductionReport lll_report = fplll::lll_reduction(A, u);
+  if (!fplll::succeeded(lll_report))
   {
-    cerr << "LLL reduction failed: " << get_red_status_str(status) << endl;
-    return status;
+    UNSCOPED_INFO("LLL reduction failed: " << fplll::to_string(lll_report.status));
   }
+  REQUIRE(fplll::succeeded(lll_report));
 
-  status = closest_vector(A, target, sol_coord, method);
-
-  if (status != RED_SUCCESS)
+  const fplll::RedStatus status =
+      fplll::closest_vector(A, target, sol_coord, fplll::CVPOptions{.method = method});
+  if (!fplll::succeeded(status))
   {
-    cerr << "Failure: " << get_red_status_str(status) << endl;
-    return status;
+    UNSCOPED_INFO("closest_vector failed: " << fplll::to_string(status));
   }
+  REQUIRE(fplll::succeeded(status));
 
-  vector_matrix_product(solution, sol_coord, A);
+  fplll::vector_matrix_product(solution, sol_coord, A);
 
-  // cerr << "A red" << endl << A << endl;
-  // cerr << "sol_coord : " << sol_coord << endl;
-  // cerr << "solution : " << solution << endl;
-  // cerr << "expected : " << b << endl;
-  // cerr << "target : " << target << endl;
-
-  bool correct = true;
   for (int i = 0; i < A.get_cols(); i++)
   {
-    correct = correct && (solution[i] == b[i]);
+    if (solution[i] != b[i])
+    {
+      UNSCOPED_INFO("coordinate " << i << " differs; expected " << b[i] << ", got " << solution[i]);
+    }
+    CHECK(solution[i] == b[i]);
   }
-  if (!correct)
-    return 1;
-
-  return 0;
 }
 
 /**
-   @brief Test if CVP function returns the correct vector
+   @brief Test if CVP function returns the correct vector.
 
    @param input_filename_lattice   filename of an input lattice
    @param input_filename_target    filename of a target vector
-   @param output_filename  filename of the expected vector
-   @return
-*/
-
-template <class ZT>
-int test_filename(const char *input_filename_lattice, const char *input_filename_target,
-                  const char *output_filename, const int method = CVPM_FAST)
+   @param output_filename          filename of the expected vector
+   @param method                   CVP method to test
+ */
+void test_filename(const char *input_filename_lattice, const char *input_filename_target,
+                   const char *output_filename,
+                   const fplll::CVPMethod method = fplll::CVPMethod::fast)
 {
-  ZZ_mat<ZT> A;
-  int status = 0;
-  status |= read_file(A, input_filename_lattice);
+  fplll::ZZ_mat<mpz_t> A;
+  INFO("lattice file: " << input_filename_lattice);
+  REQUIRE(read_file(A, input_filename_lattice) == 0);
 
-  vector<Z_NR<mpz_t>> t;
-  status |= read_file(t, input_filename_target);
+  std::vector<fplll::Z_NR<mpz_t>> t;
+  INFO("target file: " << input_filename_target);
+  REQUIRE(read_file(t, input_filename_target) == 0);
 
-  vector<Z_NR<mpz_t>> b;
-  status |= read_file(b, output_filename);
+  std::vector<fplll::Z_NR<mpz_t>> b;
+  INFO("expected output file: " << output_filename);
+  REQUIRE(read_file(b, output_filename) == 0);
 
-  status |= test_cvp<ZT>(A, t, b, method);
-  return status;
+  test_cvp(A, t, b, method);
 }
 
-/**
-   @brief Run CVP tests.
-
-   @param argc             ignored
-   @param argv             ignored
-   @return
-*/
-
-int main(int argc, char *argv[])
+/** Sentinel contents so an untouched output is distinguishable from a cleared
+    or zero-filled one. */
+std::vector<fplll::Z_NR<mpz_t>> sentinel_coordinates()
 {
-
-  int status = 0;
-  status |= test_filename<mpz_t>(TESTDATADIR "/tests/lattices/example_cvp_in_lattice",
-                                 TESTDATADIR "/tests/lattices/example_cvp_in_target",
-                                 TESTDATADIR "/tests/lattices/example_cvp_out");
-  status |= test_filename<mpz_t>(TESTDATADIR "/tests/lattices/example_cvp_in_lattice2",
-                                 TESTDATADIR "/tests/lattices/example_cvp_in_target2",
-                                 TESTDATADIR "/tests/lattices/example_cvp_out2");
-  status |= test_filename<mpz_t>(TESTDATADIR "/tests/lattices/example_cvp_in_lattice3",
-                                 TESTDATADIR "/tests/lattices/example_cvp_in_target3",
-                                 TESTDATADIR "/tests/lattices/example_cvp_out3");
-  status |= test_filename<mpz_t>(TESTDATADIR "/tests/lattices/example_cvp_in_lattice4",
-                                 TESTDATADIR "/tests/lattices/example_cvp_in_target4",
-                                 TESTDATADIR "/tests/lattices/example_cvp_out4", CVPM_PROVED);
-  status |= test_filename<mpz_t>(TESTDATADIR "/tests/lattices/example_cvp_in_lattice5",
-                                 TESTDATADIR "/tests/lattices/example_cvp_in_target5",
-                                 TESTDATADIR "/tests/lattices/example_cvp_out5", CVPM_PROVED);
-
-  if (status == 0)
+  std::vector<fplll::Z_NR<mpz_t>> coordinates(3);
+  for (int i = 0; i < 3; ++i)
   {
-    cerr << "All tests passed." << endl;
-    return 0;
+    coordinates[static_cast<std::size_t>(i)] = 17 + i;
   }
-  else
-  {
-    return -1;
-  }
-
-  return 0;
+  return coordinates;
 }
+
+void check_unchanged(const std::vector<fplll::Z_NR<mpz_t>> &actual,
+                     const std::vector<fplll::Z_NR<mpz_t>> &expected)
+{
+  REQUIRE(actual.size() == expected.size());
+  for (std::size_t i = 0; i < actual.size(); ++i)
+  {
+    CHECK(actual[i] == expected[i]);
+  }
+}
+
+/** Checks the CVP answer of the one-dimensional lattice generated by
+    `basis_value`, for `target_value`. */
+void test_1d_cvp(long basis_value, long target_value, long expected_coord,
+                 const fplll::CVPOptions &options)
+{
+  fplll::ZZ_mat<mpz_t> basis(1, 1);
+  basis[0][0] = basis_value;
+  std::vector<fplll::Z_NR<mpz_t>> target(1);
+  target[0] = target_value;
+  std::vector<fplll::Z_NR<mpz_t>> sol_coord;
+
+  const fplll::RedStatus status = fplll::closest_vector(basis, target, sol_coord, options);
+  REQUIRE(fplll::succeeded(status));
+  REQUIRE(sol_coord.size() == 1);
+  CHECK(sol_coord[0] == expected_coord);
+
+  std::vector<fplll::Z_NR<mpz_t>> solution;
+  fplll::vector_matrix_product(solution, sol_coord, basis);
+  REQUIRE(solution.size() == 1);
+  CHECK(solution[0] == basis_value * expected_coord);
+}
+
+}  // namespace
+
+TEST_CASE("closest_vector finds the expected vector for example lattice 1 with the fast method",
+          "[cvp]")
+{
+  test_filename(TESTDATADIR "/tests/lattices/example_cvp_in_lattice",
+                TESTDATADIR "/tests/lattices/example_cvp_in_target",
+                TESTDATADIR "/tests/lattices/example_cvp_out");
+}
+
+TEST_CASE("closest_vector finds the expected vector for example lattice 2 with the fast method",
+          "[cvp]")
+{
+  test_filename(TESTDATADIR "/tests/lattices/example_cvp_in_lattice2",
+                TESTDATADIR "/tests/lattices/example_cvp_in_target2",
+                TESTDATADIR "/tests/lattices/example_cvp_out2");
+}
+
+TEST_CASE("closest_vector finds the expected vector for example lattice 3 with the fast method",
+          "[cvp]")
+{
+  test_filename(TESTDATADIR "/tests/lattices/example_cvp_in_lattice3",
+                TESTDATADIR "/tests/lattices/example_cvp_in_target3",
+                TESTDATADIR "/tests/lattices/example_cvp_out3");
+}
+
+TEST_CASE("closest_vector finds the expected vector for example lattice 4 with the proved method",
+          "[cvp]")
+{
+  test_filename(TESTDATADIR "/tests/lattices/example_cvp_in_lattice4",
+                TESTDATADIR "/tests/lattices/example_cvp_in_target4",
+                TESTDATADIR "/tests/lattices/example_cvp_out4", fplll::CVPMethod::proved);
+}
+
+TEST_CASE("closest_vector finds the expected vector for example lattice 5 with the proved method",
+          "[cvp]")
+{
+  test_filename(TESTDATADIR "/tests/lattices/example_cvp_in_lattice5",
+                TESTDATADIR "/tests/lattices/example_cvp_in_target5",
+                TESTDATADIR "/tests/lattices/example_cvp_out5", fplll::CVPMethod::proved);
+}
+
+// API-06: the target dimension is a precondition of the public entry point.  A
+// target shorter than the space used to be read out of bounds and a longer one
+// was silently truncated; both now raise fplll::Error before any access.
+TEST_CASE("closest_vector rejects a target of the wrong dimension", "[cvp]")
+{
+  fplll::ZZ_mat<mpz_t> basis(3, 3);
+  basis.gen_identity(3);
+  std::vector<fplll::Z_NR<mpz_t>> sol_coord;
+  std::vector<fplll::Z_NR<mpz_t>> short_target(2);
+  std::vector<fplll::Z_NR<mpz_t>> long_target(4);
+
+  CHECK_THROWS_AS(fplll::closest_vector(basis, short_target, sol_coord), fplll::Error);
+  CHECK_THROWS_AS(fplll::closest_vector(basis, long_target, sol_coord), fplll::Error);
+}
+
+// E-10: every precondition violation throws before the output is written, so
+// the caller's vector is left untouched.
+TEST_CASE("closest_vector leaves the output untouched when a precondition fails", "[cvp]")
+{
+  fplll::ZZ_mat<mpz_t> basis(3, 3);
+  basis.gen_identity(3);
+  const std::vector<fplll::Z_NR<mpz_t>> sentinel = sentinel_coordinates();
+  std::vector<fplll::Z_NR<mpz_t>> sol_coord      = sentinel;
+  const std::vector<fplll::Z_NR<mpz_t>> short_target(2);
+  const std::vector<fplll::Z_NR<mpz_t>> long_target(4);
+
+  CHECK_THROWS_AS(fplll::closest_vector(basis, short_target, sol_coord), fplll::Error);
+  check_unchanged(sol_coord, sentinel);
+
+  CHECK_THROWS_AS(fplll::closest_vector(basis, long_target, sol_coord), fplll::Error);
+  check_unchanged(sol_coord, sentinel);
+
+  fplll::ZZ_mat<mpz_t> empty_basis;
+  CHECK_THROWS_AS(fplll::closest_vector(empty_basis, short_target, sol_coord), fplll::Error);
+  check_unchanged(sol_coord, sentinel);
+
+  fplll::ZZ_mat<mpz_t> tall_basis(4, 3);
+  const std::vector<fplll::Z_NR<mpz_t>> matching_target(3);
+  CHECK_THROWS_AS(fplll::closest_vector(tall_basis, matching_target, sol_coord), fplll::Error);
+  check_unchanged(sol_coord, sentinel);
+}
+
+// Regression: a one-dimensional lattice used to always fail.  The enumeration
+// bound summed r(i, i) for i >= 1 only, which is the empty sum 0 for d == 1, so
+// no candidate was ever accepted (see src/svpcvp.cpp).  With the fixed bound
+// the 1-D CVP is solved by rounding the target coordinate.
+TEST_CASE("closest_vector solves one-dimensional CVP", "[cvp]")
+{
+  // 13 is 3 away from 10 and 7 away from 20: coordinate 1, vector [10].
+  test_1d_cvp(10, 13, 1, fplll::CVPOptions{});
+  test_1d_cvp(10, 13, 1, fplll::CVPOptions{.method = fplll::CVPMethod::proved});
+  test_1d_cvp(10, 13, 1, fplll::CVPOptions{.method = fplll::CVPMethod::fast});
+
+  // 4 is 4 away from 0 and 6 away from 10: coordinate 0, vector [0].
+  test_1d_cvp(10, 4, 0, fplll::CVPOptions{});
+  test_1d_cvp(10, 4, 0, fplll::CVPOptions{.method = fplll::CVPMethod::proved});
+
+  // Negative basis value and target.
+  test_1d_cvp(-10, -13, 1, fplll::CVPOptions{});
+  test_1d_cvp(-10, -13, 1, fplll::CVPOptions{.method = fplll::CVPMethod::proved});
+}
+
+// E-10: the implementation still clears `sol_coord` on any non-success status
+// (src/svpcvp.cpp) and the header documents that contract.  No deterministic
+// solver-failure input is reachable through documented public API usage: with a
+// valid LLL-reduced basis the enumeration bound is sufficient (randomised
+// probing found only the 1-D case, now fixed), and precondition violations
+// throw instead of returning a status.

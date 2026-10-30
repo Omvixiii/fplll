@@ -1,46 +1,52 @@
-/* Copyright (C) 2015 Martin Albrecht
- *               2016 Michael Walter
-
-   This file is part of fplll. fplll is free software: you
-   can redistribute it and/or modify it under the terms of the GNU Lesser
-   General Public License as published by the Free Software Foundation,
-   either version 2.1 of the License, or (at your option) any later version.
-
-   fplll is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-   GNU Lesser General Public License for more details.
-
-   You should have received a copy of the GNU Lesser General Public License
-   along with fplll. If not, see <http://www.gnu.org/licenses/>. */
+// SPDX-FileCopyrightText: 2015 Martin Albrecht 2016 Michael Walter
+//
+// SPDX-License-Identifier: LGPL-2.1-or-later
 
 #include "test_utils.h"
-#include <cstring>
+
+#include <catch2/catch_message.hpp>
+#include <catch2/catch_test_macros.hpp>
+
 #include <fplll/fplll.h>
+#include <fplll/gso/gso.h>
+#include <fplll/gso/gso_interface.h>
+#include <fplll/nr/matrix.h>
+#include <fplll/nr/nr.h>
+
+#include <cmath>
+#include <cstddef>
+#include <gmp.h>
+#include <vector>
 
 #ifndef TESTDATADIR
 #define TESTDATADIR ".."
 #endif
 
-using namespace std;
-using namespace fplll;
-
-enum Test
+namespace
 {
-  SVP_ENUM,
-  DSVP_ENUM,
-  DSVP_REDUCE
-};
 
-double inline norm(const vector<Z_NR<mpz_t>> &v)
+// A failed reduction means the rest of the check is meaningless; the INFO
+// stays local to this helper so it does not leak into later assertions.
+void require_red_success(fplll::RedStatus status, const char *what)
 {
-  Z_NR<mpz_t> norm, tmp;
-  for (size_t i = 0; i < v.size(); i++)
+  INFO(what << ": " << fplll::to_string(status));
+  REQUIRE(fplll::succeeded(status));
+}
+
+void require_red_success(const fplll::ReductionReport &report, const char *what)
+{
+  require_red_success(report.status, what);
+}
+
+double norm(const std::vector<fplll::Z_NR<mpz_t>> &v)
+{
+  fplll::Z_NR<mpz_t> norm, tmp;
+  for (const auto &i : v)
   {
-    tmp.mul(v[i], v[i]);
+    tmp.mul(i, i);
     norm.add(norm, tmp);
   }
-  return sqrt(norm.get_d());
+  return std::sqrt(norm.get_d());
 }
 
 /**
@@ -48,38 +54,27 @@ double inline norm(const vector<Z_NR<mpz_t>> &v)
 
    @param A              input lattice
    @param b              shortest vector
-   @return
-*/
-
-template <class ZT> int test_svp(ZZ_mat<ZT> &A, vector<Z_NR<mpz_t>> &b)
+ */
+void test_svp(fplll::ZZ_mat<mpz_t> &A, std::vector<fplll::Z_NR<mpz_t>> &b)
 {
-  vector<Z_NR<mpz_t>> sol_coord;   // In the LLL-reduced basis
-  vector<Z_NR<mpz_t>> sol_coord2;  // In the initial basis
-  vector<Z_NR<mpz_t>> solution;
-  ZZ_mat<mpz_t> u(A.get_rows(), A.get_rows());
+  std::vector<fplll::Z_NR<mpz_t>> sol_coord;   // In the LLL-reduced basis
+  std::vector<fplll::Z_NR<mpz_t>> sol_coord2;  // In the initial basis
+  std::vector<fplll::Z_NR<mpz_t>> solution;
+  fplll::ZZ_mat<mpz_t> u(A.get_rows(), A.get_rows());
 
-  int status =
-      lll_reduction(A, u, LLL_DEF_DELTA, LLL_DEF_ETA, LM_WRAPPER, FT_DEFAULT, 0, LLL_DEFAULT);
-  if (status != RED_SUCCESS)
-  {
-    cerr << "LLL reduction failed: " << get_red_status_str(status) << endl;
-    return status;
-  }
+  const fplll::ReductionReport report = fplll::lll_reduction(A, u);
+  require_red_success(report, "LLL reduction failed");
 
-  status = shortest_vector(A, sol_coord, SVPM_PROVED, SVP_DEFAULT);
+  const fplll::RedStatus status =
+      fplll::shortest_vector(A, sol_coord, fplll::SVPOptions{.method = fplll::SVPMethod::proved});
+  require_red_success(status, "shortest_vector failed");
 
-  if (status != RED_SUCCESS)
-  {
-    cerr << "Failure: " << get_red_status_str(status) << endl;
-    return status;
-  }
+  fplll::vector_matrix_product(sol_coord2, sol_coord, u);
+  fplll::vector_matrix_product(solution, sol_coord, A);
 
-  vector_matrix_product(sol_coord2, sol_coord, u);
-  vector_matrix_product(solution, sol_coord, A);
-
-  Z_NR<ZT> tmp;
-  Z_NR<ZT> norm_s;
-  Z_NR<ZT> norm_b;
+  fplll::Z_NR<mpz_t> tmp;
+  fplll::Z_NR<mpz_t> norm_s;
+  fplll::Z_NR<mpz_t> norm_b;
 
   for (int i = 0; i < A.get_cols(); i++)
   {
@@ -89,10 +84,8 @@ template <class ZT> int test_svp(ZZ_mat<ZT> &A, vector<Z_NR<mpz_t>> &b)
     tmp.mul(b[i], b[i]);
     norm_b.add(norm_b, tmp);
   }
-  if (norm_s != norm_b)
-    return 1;
-
-  return 0;
+  CAPTURE(norm_s, norm_b);
+  CHECK(norm_s == norm_b);
 }
 
 /**
@@ -100,37 +93,35 @@ template <class ZT> int test_svp(ZZ_mat<ZT> &A, vector<Z_NR<mpz_t>> &b)
 
    @param A              input lattice
    @param b              coefficients of shortest dual vector
-   @return
-*/
-template <class ZT>
-int dual_length(FP_NR<mpfr_t> &norm, ZZ_mat<ZT> &A, const vector<Z_NR<mpz_t>> &coords)
+ */
+void dual_length(fplll::FP_NR<mpfr_t> &norm, fplll::ZZ_mat<mpz_t> &A,
+                 const std::vector<fplll::Z_NR<mpz_t>> &coords)
 {
-  int d = coords.size();
-  if (A.get_rows() != d)
+  int d = static_cast<int>(coords.size());
   {
-    cerr << "DSVP length error: Coefficient vector has wrong dimension: ";
-    cerr << A.get_rows() << " vs " << d << endl;
-    return 1;
+    INFO("DSVP length error: coefficient vector has wrong dimension: " << A.get_rows() << " vs "
+                                                                       << d);
+    REQUIRE(A.get_rows() == d);
   }
-  vector<FP_NR<mpfr_t>> coords_d(d);
+  std::vector<fplll::FP_NR<mpfr_t>> coords_d(d);
   for (int i = 0; i < d; i++)
   {
     coords_d[i] = coords[i].get_d();
   }
 
-  ZZ_mat<mpz_t> empty_mat;
-  MatGSO<Z_NR<mpz_t>, FP_NR<mpfr_t>> gso(A, empty_mat, empty_mat, GSO_INT_GRAM);
-  if (!gso.update_gso())
+  fplll::ZZ_mat<mpz_t> empty_mat;
+  fplll::MatGSO<fplll::Z_NR<mpz_t>, fplll::FP_NR<mpfr_t>> gso(A, empty_mat, empty_mat,
+                                                              fplll::GSOOptions{.int_gram = true});
   {
-    cerr << "GSO Failure." << endl;
-    return 1;
+    INFO("GSO Failure.");
+    REQUIRE(gso.update_gso());
   }
-  FP_NR<mpfr_t> tmp;
+  fplll::FP_NR<mpfr_t> tmp;
   gso.get_r(tmp, d - 1, d - 1);
   tmp.pow_si(tmp, -1);
 
-  vector<FP_NR<mpfr_t>> alpha(d);
-  FP_NR<mpfr_t> mu, alpha2, r_inv;
+  std::vector<fplll::FP_NR<mpfr_t>> alpha(d);
+  fplll::FP_NR<mpfr_t> mu, alpha2, r_inv;
   norm = 0.0;
   for (int i = 0; i < d; i++)
   {
@@ -145,8 +136,6 @@ int dual_length(FP_NR<mpfr_t> &norm, ZZ_mat<ZT> &A, const vector<Z_NR<mpz_t>> &c
     alpha2.pow_si(alpha[i], 2);
     norm += alpha2 * r_inv;
   }
-
-  return 0;
 }
 
 /**
@@ -154,113 +143,31 @@ int dual_length(FP_NR<mpfr_t> &norm, ZZ_mat<ZT> &A, const vector<Z_NR<mpz_t>> &c
 
    @param A              input lattice
    @param b              shortest dual vector
-   @return
-*/
-
-template <class ZT> int test_dual_svp(ZZ_mat<ZT> &A, vector<Z_NR<mpz_t>> &b)
+ */
+void test_dual_svp(fplll::ZZ_mat<mpz_t> &A, std::vector<fplll::Z_NR<mpz_t>> &b)
 {
-  vector<Z_NR<mpz_t>> sol_coord;  // In the LLL-reduced basis
-  vector<Z_NR<mpz_t>> solution;
-  ZZ_mat<mpz_t> u;
+  std::vector<fplll::Z_NR<mpz_t>> sol_coord;  // In the LLL-reduced basis
+  fplll::ZZ_mat<mpz_t> u;
 
-  FP_NR<mpfr_t> normb;
-  if (dual_length(normb, A, b))
-  {
-    return 1;
-  }
+  fplll::FP_NR<mpfr_t> normb;
+  dual_length(normb, A, b);
 
-  int status =
-      lll_reduction(A, u, LLL_DEF_DELTA, LLL_DEF_ETA, LM_WRAPPER, FT_DEFAULT, 0, LLL_DEFAULT);
-  if (status != RED_SUCCESS)
-  {
-    cerr << "LLL reduction failed: " << get_red_status_str(status) << endl;
-    return status;
-  }
+  const fplll::ReductionReport report = fplll::lll_reduction(A, u);
+  require_red_success(report, "LLL reduction failed");
 
-  status = shortest_vector(A, sol_coord, SVPM_FAST, SVP_DUAL);
+  const fplll::RedStatus status = fplll::shortest_vector(
+      A, sol_coord, fplll::SVPOptions{.method = fplll::SVPMethod::fast, .dual = true});
+  require_red_success(status, "shortest_vector failed");
 
-  if (status != RED_SUCCESS)
-  {
-    cerr << "Failure: " << get_red_status_str(status) << endl;
-    return status;
-  }
+  fplll::FP_NR<mpfr_t> norm_sol;
+  dual_length(norm_sol, A, sol_coord);
 
-  FP_NR<mpfr_t> norm_sol;
-  if (dual_length(norm_sol, A, sol_coord))
-  {
-    return 1;
-  }
-
-  FP_NR<mpfr_t> error;
+  fplll::FP_NR<mpfr_t> error;
   error = 1;
-  error.mul_2si(error, -(int)error.get_prec());
+  error.mul_2si(error, -static_cast<int>(fplll::FP_NR<mpfr_t>::get_prec()));
   normb += error;
-  if (norm_sol > normb)
-  {
-    cerr << "Returned dual vector too long by more than " << error << endl;
-    return 1;
-  }
-
-  return 0;
-}
-
-/**
-   @brief Test if dual SVP reduction returns reduced basis.
-
-   @param A              input lattice
-   @param b              shortest dual vector
-   @return
-*/
-template <class ZT> int test_dsvp_reduce(ZZ_mat<ZT> &A, vector<Z_NR<mpz_t>> &b)
-{
-  ZZ_mat<mpz_t> u;
-  int d = A.get_rows();
-
-  FP_NR<mpfr_t> normb;
-  if (dual_length(normb, A, b))
-  {
-    return 1;
-  }
-
-  int status =
-      lll_reduction(A, u, LLL_DEF_DELTA, LLL_DEF_ETA, LM_WRAPPER, FT_DEFAULT, 0, LLL_DEFAULT);
-  if (status != RED_SUCCESS)
-  {
-    cerr << "LLL reduction failed: " << get_red_status_str(status) << endl;
-    return status;
-  }
-
-  ZZ_mat<mpz_t> empty_mat;
-  MatGSO<Z_NR<mpz_t>, FP_NR<mpfr_t>> gso(A, empty_mat, empty_mat, GSO_INT_GRAM);
-  LLLReduction<Z_NR<mpz_t>, FP_NR<mpfr_t>> lll_obj(gso, LLL_DEF_DELTA, LLL_DEF_ETA, LLL_DEFAULT);
-
-  vector<Strategy> strategies;
-  BKZParam dummy(d, strategies);
-  BKZReduction<Z_NR<mpz_t>, FP_NR<mpfr_t>> bkz_obj(gso, lll_obj, dummy);
-
-  bkz_obj.svp_reduction(0, d, dummy, true);
-
-  FP_NR<mpfr_t> norm_sol;
-  Z_NR<mpz_t> zero;
-  zero = 0;
-  vector<Z_NR<mpz_t>> e_n(d, zero);
-  e_n[d - 1] = 1;
-  if (dual_length(norm_sol, A, e_n))
-  {
-    return 1;
-  }
-
-  FP_NR<mpfr_t> error;
-  error = 1;
-  error.mul_2si(error, -(int)error.get_prec());
-  normb += error;
-  if (norm_sol > normb)
-  {
-    cerr << "Last dual vector too long by more than " << error << endl;
-    return 1;
-  }
-
-  return 0;
+  INFO("Returned dual vector too long by more than " << error);
+  CHECK(norm_sol <= normb);
 }
 
 /**
@@ -268,58 +175,68 @@ template <class ZT> int test_dsvp_reduce(ZZ_mat<ZT> &A, vector<Z_NR<mpz_t>> &b)
 
    @param d large dimension of initial lattice
    @param d2 enumeration dimension
-
  */
-
-int test_svp_proved_vs_fast(size_t d, size_t d2)
+void test_svp_proved_vs_fast(std::size_t d, std::size_t d2)
 {
-  ZZ_mat<mpz_t> A(d, d);
-  Z_NR<mpz_t> q;
+  // This is the only test in this program that consumes random numbers; the
+  // seed is the one the old main() installed.
+  fplll::RandGen::init_with_seed(0);
+
+  fplll::ZZ_mat<mpz_t> A(static_cast<int>(d), static_cast<int>(d));
+  fplll::Z_NR<mpz_t> q;
   q = 65537;
-  A.gen_qary(d / 2, q);
+  A.gen_qary(static_cast<int>(d / 2), q);
 
-  int r = lll_reduction(A);
-  ZZ_mat<mpz_t> B(d2, d);  // so that LLL doesn't just solve it
-  vector<Z_NR<mpz_t>> sol_coord_proved, sol_coord_fast;
-  vector<Z_NR<mpz_t>> solution_proved, solution_fast;
+  require_red_success(fplll::lll_reduction(A), "LLL reduction failed");
 
-  for (size_t i = 0; i < d2; i++)
+  fplll::ZZ_mat<mpz_t> B(static_cast<int>(d2),
+                         static_cast<int>(d));  // so that LLL doesn't just solve it
+  std::vector<fplll::Z_NR<mpz_t>> sol_coord_proved, sol_coord_fast;
+  std::vector<fplll::Z_NR<mpz_t>> solution_proved, solution_fast;
+
+  for (std::size_t i = 0; i < d2; i++)
   {
     for (int j = 0; j < A.get_cols(); j++)
-      B[i][j] = A[i][j];
+    {
+      B[static_cast<int>(i)][j] = A[static_cast<int>(i)][j];
+    }
   }
 
-  r |= shortest_vector(B, sol_coord_proved, SVPM_PROVED);
-  r |= shortest_vector(B, sol_coord_fast, SVPM_FAST);
+  fplll::RedStatus status = fplll::shortest_vector(
+      B, sol_coord_proved, fplll::SVPOptions{.method = fplll::SVPMethod::proved});
+  require_red_success(status, "shortest_vector failed");
 
-  vector_matrix_product(solution_proved, sol_coord_proved, B);
-  vector_matrix_product(solution_fast, sol_coord_fast, B);
-  r |= (norm(solution_fast) < norm(solution_proved));
-  return r;
+  status = fplll::shortest_vector(B, sol_coord_fast,
+                                  fplll::SVPOptions{.method = fplll::SVPMethod::fast});
+  require_red_success(status, "shortest_vector failed");
+
+  fplll::vector_matrix_product(solution_proved, sol_coord_proved, B);
+  fplll::vector_matrix_product(solution_fast, sol_coord_fast, B);
+  CHECK_FALSE(norm(solution_fast) < norm(solution_proved));
 }
 
-int test_rank_defect()
+void test_rank_defect()
 {
-  ZZ_mat<mpz_t> A = ZZ_mat<mpz_t>(4, 4);
-  A[0][0]         = 75;
-  A[0][1]         = 44;
-  A[0][2]         = -5;
-  A[0][3]         = -16;
-  A[1][0]         = 29;
-  A[1][1]         = 7;
-  A[1][2]         = -52;
-  A[1][3]         = 134;
-  A[2][0]         = -89;
-  A[2][1]         = 108;
-  A[2][2]         = 56;
-  A[2][3]         = 29;
-  A[3][0]         = -94;
-  A[3][1]         = 55;
-  A[3][2]         = -194;
-  A[3][3]         = -20;
-  lll_reduction(A);
-  vector<Z_NR<mpz_t>> sol_coord;
-  return shortest_vector(A, sol_coord);
+  fplll::ZZ_mat<mpz_t> A = fplll::ZZ_mat<mpz_t>(4, 4);
+  A[0][0]                = 75;
+  A[0][1]                = 44;
+  A[0][2]                = -5;
+  A[0][3]                = -16;
+  A[1][0]                = 29;
+  A[1][1]                = 7;
+  A[1][2]                = -52;
+  A[1][3]                = 134;
+  A[2][0]                = -89;
+  A[2][1]                = 108;
+  A[2][2]                = 56;
+  A[2][3]                = 29;
+  A[3][0]                = -94;
+  A[3][1]                = 55;
+  A[3][2]                = -194;
+  A[3][3]                = -20;
+  require_red_success(fplll::lll_reduction(A), "LLL reduction failed");
+  std::vector<fplll::Z_NR<mpz_t>> sol_coord;
+  CHECK(fplll::shortest_vector(A, sol_coord) == fplll::RedStatus::success);
 }
 
 /**
@@ -327,68 +244,43 @@ int test_rank_defect()
 
    @param input_filename   filename of an input lattice
    @param output_filename  filename of a shortest vector
-   @return
-*/
-
-template <class ZT>
-int test_filename(const char *input_filename, const char *output_filename,
-                  const Test test = SVP_ENUM)
+ */
+void test_svp_filename(const char *input_filename, const char *output_filename)
 {
-  ZZ_mat<ZT> A;
-  int status = 0;
-  status |= read_file(A, input_filename);
+  fplll::ZZ_mat<mpz_t> A;
+  REQUIRE(read_file(A, input_filename) == 0);
 
-  vector<Z_NR<mpz_t>> b;
-  status |= read_file(b, output_filename);
+  std::vector<fplll::Z_NR<mpz_t>> b;
+  REQUIRE(read_file(b, output_filename) == 0);
 
-  switch (test)
-  {
-  case SVP_ENUM:
-    status |= test_svp<ZT>(A, b);
-    return status;
-  case DSVP_ENUM:
-    status |= test_dual_svp<ZT>(A, b);
-    return status;
-  case DSVP_REDUCE:
-    status |= test_dsvp_reduce<ZT>(A, b);
-    return status;
-  }
-
-  cerr << "Unknown test." << endl;
-  return 1;
+  test_svp(A, b);
 }
 
-/**
-   @brief Run SVP tests.
-
-   @return
-*/
-
-int main()
+void test_dual_svp_filename(const char *input_filename, const char *output_filename)
 {
+  fplll::ZZ_mat<mpz_t> A;
+  REQUIRE(read_file(A, input_filename) == 0);
 
-  RandGen::init_with_seed(0);
+  std::vector<fplll::Z_NR<mpz_t>> b;
+  REQUIRE(read_file(b, output_filename) == 0);
 
-  int status = 0;
-  status |= test_filename<mpz_t>(TESTDATADIR "/tests/lattices/example_svp_in",
-                                 TESTDATADIR "/tests/lattices/example_svp_out");
-  status |= test_filename<mpz_t>(TESTDATADIR "/tests/lattices/example_dsvp_in",
-                                 TESTDATADIR "/tests/lattices/example_dsvp_out", DSVP_ENUM);
-  status |= test_filename<mpz_t>(TESTDATADIR "/tests/lattices/example_dsvp_in",
-                                 TESTDATADIR "/tests/lattices/example_dsvp_out", DSVP_REDUCE);
-
-  status |= test_rank_defect();
-  status |= test_svp_proved_vs_fast(100, 30);
-
-  if (status == 0)
-  {
-    cerr << "All tests passed." << endl;
-    return 0;
-  }
-  else
-  {
-    return -1;
-  }
-
-  return 0;
+  test_dual_svp(A, b);
 }
+
+}  // namespace
+
+TEST_CASE("shortest_vector returns the shortest vector of example_svp_in", "[svp]")
+{
+  test_svp_filename(TESTDATADIR "/tests/lattices/example_svp_in",
+                    TESTDATADIR "/tests/lattices/example_svp_out");
+}
+
+TEST_CASE("shortest_vector with dual=true is short for example_dsvp_in", "[svp]")
+{
+  test_dual_svp_filename(TESTDATADIR "/tests/lattices/example_dsvp_in",
+                         TESTDATADIR "/tests/lattices/example_dsvp_out");
+}
+
+TEST_CASE("shortest_vector handles a rank-deficient basis", "[svp]") { test_rank_defect(); }
+
+TEST_CASE("proved SVP is no worse than fast SVP", "[svp]") { test_svp_proved_vs_fast(100, 30); }

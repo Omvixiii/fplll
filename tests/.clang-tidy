@@ -1,0 +1,8 @@
+# SPDX-FileCopyrightText: 2026 Omvixiii
+# SPDX-License-Identifier: LGPL-2.1-or-later
+
+InheritParentConfig: true
+Checks:
+  # Catch2 registers TEST_CASEs through potentially throwing static initializers.
+  # Suppress this check for test translation units only.
+  - -bugprone-throwing-static-initialization
