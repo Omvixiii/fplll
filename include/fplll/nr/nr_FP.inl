@@ -1,13 +1,27 @@
+// SPDX-FileCopyrightText: 2016-2017 Leo Ducas
+// SPDX-FileCopyrightText: 2016 Marc Stevens
+// SPDX-FileCopyrightText: 2016-2019 Martin R. Albrecht
+// SPDX-FileCopyrightText: 2016-2017 Shi Bai
+// SPDX-FileCopyrightText: 2017 Koen de Boer
+// SPDX-FileCopyrightText: 2017 Vaggelis1994
+// SPDX-FileCopyrightText: 2021-2022 Joe Rowell
+// SPDX-FileCopyrightText: 2024 Ludo Pulles
+// SPDX-FileCopyrightText: 2026 Omvixiii
+//
+// SPDX-License-Identifier: LGPL-2.1-or-later
+
 /*********************
  *   Float Class
  *********************/
 
-#include "../defs.h"
-
 #ifndef FPLLL_NR_FP_H
 #define FPLLL_NR_FP_H
 
-FPLLL_BEGIN_NAMESPACE
+#include <iosfwd>
+#include <utility>
+
+namespace fplll
+{
 
 /* declaration Z_NR */
 template <class F> class Z_NR;
@@ -15,7 +29,7 @@ template <class F> class Z_NR;
 /**
  * FP_NR stores floating-point numbers. This template provides a uniform
  * interface for doing floating-point computations with several underlying
- * types (double, dpe_t and mpfr_t). For all functions, the rounding
+ * types (double and mpfr_t). For all functions, the rounding
  * mode rnd is ignored unless F=mpfr_t.
  */
 template <class F = mpfr_t> class FP_NR
@@ -29,9 +43,9 @@ public:
    */
   inline FP_NR();
   inline FP_NR(const FP_NR<F> &f);
-  inline ~FP_NR();
-  inline FP_NR(const double d) : FP_NR() { *this = d; };
-  inline FP_NR(const char *s) : FP_NR() { *this = s; };
+  inline ~FP_NR() noexcept;
+  FP_NR(const double d) : FP_NR() { *this = d; };
+  FP_NR(const char *s) : FP_NR() { *this = s; };
 
   /**
    * Returns the current precision for new FP_NR&lt;F&gt; objects.
@@ -40,7 +54,7 @@ public:
 
   /**
    * Sets the precision of new FP_NR&lt;F&gt; objects. Returns the
-     previous value. This has no effect is F != mpfr_t.
+     previous value. This has no effect if F != mpfr_t.
    */
   static inline unsigned int set_prec(unsigned int prec);
 
@@ -49,12 +63,12 @@ public:
   /**
    * Returns the internal representation of the data.
    */
-  inline F &get_data() { return data; }
+  F &get_data() { return data; }
 
   /**
    * Returns the internal representation of the data.
    */
-  inline const F &get_data() const { return data; }
+  const F &get_data() const { return data; }
 
   /**
    * Converts this object to a double. If it does not fit in a double,
@@ -90,7 +104,7 @@ public:
    *  trunc(value * 2^expo_add) ~= x * 2^expo
    * The '~=' is an equality if trunc(value * 2^expo_add) <= LONG_MAX.
    * expo is the minimum non-negative value such that x <= LONG_MAX.
-   * expo_add must be 0 if T=dpe_t or T=mpfr_t.
+   * expo_add must be 0 if T=mpfr_t.
    */
   inline long get_si_exp_we(long &expo, long expo_add) const;
 
@@ -113,7 +127,7 @@ public:
   /**
    * Computes a and expo such that trunc(value) * 2^expo_add ~= a * 2^expo.
    * The '~=' is an equality if Z=mpz_t. expo is always non-negative.
-   * expo_add must be 0 if T=dpe_t or T=mpfr_t.
+   * expo_add must be 0 if T=mpfr_t.
    *  (in nr_FP_misc.h)
    */
   template <class Z> inline void get_z_exp_we(Z_NR<Z> &a, long &expo, long expo_add) const;
@@ -152,13 +166,12 @@ public:
   inline FP_NR<F> &operator=(const FP_NR<F> &a);
   inline FP_NR<F> &operator=(const char *s);
   inline FP_NR<F> &operator=(double a);
-  // inline FP_NR<F>& operator=(mpfr_t& a);
-  inline FP_NR<F> &operator=(mpfr_t &a) { set_mpfr(a, GMP_RNDN); };
+  FP_NR<F> &operator=(mpfr_t &a) { set_mpfr(a, GMP_RNDN); }
 
-  inline bool operator==(const FP_NR<F> &a) const { return cmp(a) == 0; }
-  inline bool operator==(double a) const { return cmp(a) == 0; }
-  inline bool operator!=(const FP_NR<F> &a) const { return cmp(a) != 0; }
-  inline bool operator!=(double a) const { return cmp(a) != 0; }
+  bool operator==(const FP_NR<F> &a) const { return cmp(a) == 0; }
+  bool operator==(double a) const { return cmp(a) == 0; }
+  bool operator!=(const FP_NR<F> &a) const { return cmp(a) != 0; }
+  bool operator!=(double a) const { return cmp(a) != 0; }
 
   inline bool operator<(const FP_NR<F> &a) const;
   inline bool operator<(double a) const;
@@ -169,45 +182,45 @@ public:
   inline bool operator>=(const FP_NR<F> &a) const;
   inline bool operator>=(double a) const;
 
-  inline FP_NR<F> &operator+=(const FP_NR<F> &a)
+  FP_NR<F> &operator+=(const FP_NR<F> &a)
   {
     this->add(*this, a);
     return *this;
   };
-  inline FP_NR<F> &operator-=(const FP_NR<F> &a)
+  FP_NR<F> &operator-=(const FP_NR<F> &a)
   {
     this->sub(*this, a);
     return *this;
   };
-  inline FP_NR<F> &operator*=(const FP_NR<F> &a)
+  FP_NR<F> &operator*=(const FP_NR<F> &a)
   {
     this->mul(*this, a);
     return *this;
   };
-  inline FP_NR<F> &operator/=(const FP_NR<F> &a)
+  FP_NR<F> &operator/=(const FP_NR<F> &a)
   {
     this->div(*this, a);
     return *this;
   };
 
-  inline FP_NR<F> &operator+=(const double a)
+  FP_NR<F> &operator+=(const double a)
   {
     FP_NR<F> t = a;
     this->add(*this, t);
     return *this;
   };
-  inline FP_NR<F> &operator-=(const double a)
+  FP_NR<F> &operator-=(const double a)
   {
     FP_NR<F> t = a;
     this->sub(*this, t);
     return *this;
   };
-  inline FP_NR<F> &operator*=(const double a)
+  FP_NR<F> &operator*=(const double a)
   {
     this->mul_d(*this, a);
     return *this;
   };
-  inline FP_NR<F> &operator/=(const double a)
+  FP_NR<F> &operator/=(const double a)
   {
     this->div(*this, FP_NR<F>(a));
     return *this;
@@ -216,19 +229,23 @@ public:
   /**
    * max between a and b
    */
-  inline FP_NR &max_f(FP_NR<F> &b)
+  FP_NR &max_f(FP_NR<F> &b)
   {
     if ((*this) <= b)
+    {
       return b;
+    }
     else
+    {
       return (*this);
+    }
   }
 
   /**
    * Returns non-zero if the current value is zero, 0 otherwise.
    */
   inline bool is_zero() const;
-  inline int zero_p() const { return is_zero(); }
+  int zero_p() const { return is_zero(); }
 
   /**
    * Returns non-zero if the current value is NaN, 0 otherwise.
@@ -321,7 +338,7 @@ public:
    * value := -b.
    */
   inline void neg(const FP_NR<F> &b);
-  inline FP_NR<F> operator-() const
+  FP_NR<F> operator-() const
   {
     FP_NR<F> r;
     r.neg(*this);
@@ -340,7 +357,7 @@ public:
 
   /**
    * value <- (rounding of a * 2^expo_add) / 2^expo_add, but never overflows.
-   * expo_add must be 0 if T=dpe_t or T=mpfr_t.
+   * expo_add must be 0 if T=mpfr_t.
    */
   inline void rnd_we(const FP_NR<F> &b, long expo_add);
 
@@ -362,7 +379,7 @@ public:
   /**
    * Efficiently swaps the values of two FP_NR.
    */
-  inline void swap(FP_NR<F> &a);
+  inline void swap(FP_NR<F> &a) noexcept;
   /**
    * value := sqrt(a^2 + b^2).
    * Needed for givens rotations
@@ -378,7 +395,7 @@ template <class F> inline FP_NR<F> operator+(const FP_NR<F> &a, const FP_NR<F> &
   return r;
 }
 
-template <class F> inline FP_NR<F> &&operator+(FP_NR<F> &&a, const FP_NR<F> &b)
+template <class F> inline FP_NR<F> operator+(FP_NR<F> &&a, const FP_NR<F> &b)
 {
   a.add(a, b);
   return std::move(a);
@@ -462,7 +479,7 @@ template <class F> inline FP_NR<F> operator*(const FP_NR<F> &a, const FP_NR<F> &
   return r;
 }
 
-template <class F> inline FP_NR<F> &&operator*(FP_NR<F> &&a, const FP_NR<F> &b)
+template <class F> inline FP_NR<F> operator*(FP_NR<F> &&a, const FP_NR<F> &b)
 {
   a.mul(a, b);
   return std::move(a);
@@ -473,6 +490,12 @@ template <class F> inline FP_NR<F> operator*(const FP_NR<F> &a, double b)
   FP_NR<F> r;
   r.mul_d(a, b);
   return r;
+}
+
+template <class F> inline FP_NR<F> operator*(FP_NR<F> &&a, double b)
+{
+  a.mul_d(a, b);
+  return std::move(a);
 }
 
 template <class F> inline FP_NR<F> operator*(const FP_NR<F> &a, long b)
@@ -488,12 +511,6 @@ template <class F> inline FP_NR<F> operator*(double a, const FP_NR<F> &b)
   FP_NR<F> r;
   r.mul_d(b, a);
   return r;
-}
-
-template <class F> inline FP_NR<F> &&operator*(FP_NR<F> &&a, double b)
-{
-  a.mul_d(a, b);
-  return std::move(a);
 }
 
 template <class F> inline FP_NR<F> operator/(const FP_NR<F> &a, const FP_NR<F> &b)
@@ -524,7 +541,7 @@ template <class F> inline FP_NR<F> sqrt(const FP_NR<F> &a)
   return r;
 }
 
-template <class F> inline FP_NR<F> &&sqrt(FP_NR<F> &&a)
+template <class F> inline FP_NR<F> sqrt(FP_NR<F> &&a)
 {
   a.sqrt(a);
   return std::move(a);
@@ -537,7 +554,7 @@ template <class F> inline FP_NR<F> abs(const FP_NR<F> &a)
   return r;
 }
 
-template <class F> inline FP_NR<F> &&abs(FP_NR<F> &&a)
+template <class F> inline FP_NR<F> abs(FP_NR<F> &&a)
 {
   a.abs(a);
   return std::move(a);
@@ -550,7 +567,7 @@ template <class F> inline FP_NR<F> floor(const FP_NR<F> &a)
   return r;
 }
 
-template <class F> inline FP_NR<F> &&floor(FP_NR<F> &&a)
+template <class F> inline FP_NR<F> floor(FP_NR<F> &&a)
 {
   a.floor(a);
   return std::move(a);
@@ -563,7 +580,7 @@ template <class F> inline FP_NR<F> log(const FP_NR<F> &a)
   return r;
 }
 
-template <class F> inline FP_NR<F> &&log(FP_NR<F> &&a)
+template <class F> inline FP_NR<F> log(FP_NR<F> &&a)
 {
   a.log(a);
   return std::move(a);
@@ -576,7 +593,7 @@ template <class F> inline FP_NR<F> exp(const FP_NR<F> &a)
   return r;
 }
 
-template <class F> inline FP_NR<F> &&exp(FP_NR<F> &&a)
+template <class F> inline FP_NR<F> exp(FP_NR<F> &&a)
 {
   a.exponential(a);
   return std::move(a);
@@ -589,7 +606,7 @@ template <class F> inline FP_NR<F> pow_si(const FP_NR<F> &a, long b)
   return r;
 }
 
-template <class F> inline FP_NR<F> &&pow_si(FP_NR<F> &&a, long b)
+template <class F> inline FP_NR<F> pow_si(FP_NR<F> &&a, long b)
 {
   a.pow_si(a, b);
   return std::move(a);
@@ -602,7 +619,7 @@ template <class F> inline FP_NR<F> root(const FP_NR<F> &a, unsigned int b)
   return r;
 }
 
-template <class F> inline FP_NR<F> &&root(FP_NR<F> &&a, unsigned int b)
+template <class F> inline FP_NR<F> root(FP_NR<F> &&a, unsigned int b)
 {
   a.root(a, b);
   return std::move(a);
@@ -633,17 +650,13 @@ template <class F> inline bool FP_NR<F>::operator>(double a) const { return cmp(
 /**
  * Prints x on stream os.
  */
-template <class T> ostream &operator<<(ostream &os, const FP_NR<T> &x)
+template <class T> std::ostream &operator<<(std::ostream &os, const FP_NR<T> &x)
 {
   return os << x.get_data();
 }
 
-#ifdef FPLLL_WITH_DPE
-template <> ostream &operator<<(ostream &os, const FP_NR<dpe_t> &x);
-#endif
+template <> std::ostream &operator<<(std::ostream &os, const FP_NR<mpfr_t> &x);
 
-template <> ostream &operator<<(ostream &os, const FP_NR<mpfr_t> &x);
-
-FPLLL_END_NAMESPACE
+}  // namespace fplll
 
 #endif

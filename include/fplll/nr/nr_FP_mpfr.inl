@@ -1,3 +1,14 @@
+// SPDX-FileCopyrightText: 2016-2019 Martin R. Albrecht
+// SPDX-FileCopyrightText: 2016-2017 Shi Bai
+// SPDX-FileCopyrightText: 2016 Marc Stevens
+// SPDX-FileCopyrightText: 2017 Koen de Boer
+// SPDX-FileCopyrightText: 2017 Vaggelis1994
+// SPDX-FileCopyrightText: 2018 Laurent Grémy
+// SPDX-FileCopyrightText: 2021-2022 Joe Rowell
+// SPDX-FileCopyrightText: 2026 Omvixiii
+//
+// SPDX-License-Identifier: LGPL-2.1-or-later
+
 /****************************
  *  F=mpfr_t specialization
  ****************************/
@@ -5,7 +16,12 @@
 #ifndef FPLLL_NR_FP_MPFR_H
 #define FPLLL_NR_FP_MPFR_H
 
-FPLLL_BEGIN_NAMESPACE
+#include <algorithm>  // IWYU pragma: keep
+#include <limits>     // IWYU pragma: keep
+#include <ostream>
+
+namespace fplll
+{
 
 /* MPFR specialization */
 
@@ -17,13 +33,13 @@ template <> inline FP_NR<mpfr_t>::FP_NR(const FP_NR<mpfr_t> &f)
   mpfr_init_set(data, f.data, GMP_RNDN);
 }
 
-template <> inline FP_NR<mpfr_t>::~FP_NR() { mpfr_clear(data); }
+template <> inline FP_NR<mpfr_t>::~FP_NR() noexcept { mpfr_clear(data); }
 
 template <> inline unsigned int FP_NR<mpfr_t>::get_prec() { return mpfr_get_default_prec(); }
 
 template <> inline unsigned int FP_NR<mpfr_t>::set_prec(unsigned int prec)
 {
-  int old_prec = get_prec();
+  unsigned int old_prec = get_prec();
   mpfr_set_default_prec(prec);
   return old_prec;
 }
@@ -38,24 +54,45 @@ template <> inline void FP_NR<mpfr_t>::get_mpfr(mpfr_t r, mp_rnd_t rnd) const
 
 template <> inline void FP_NR<mpfr_t>::set_mpfr(mpfr_t r, mp_rnd_t rnd) { mpfr_set(data, r, rnd); }
 
-template <> inline long FP_NR<mpfr_t>::get_si() const { return mpfr_get_si(data, GMP_RNDN); }
+template <> inline long FP_NR<mpfr_t>::get_si() const
+{
+  if (!mpfr_fits_slong_p(data, GMP_RNDN))
+  {
+    FPLLL_ABORT("FP_NR<mpfr_t>::get_si: value out of range");
+  }
+  return mpfr_get_si(data, GMP_RNDN);
+}
 
+// Identical branches come from the MPFR_VALUE_OF macro expansion.
+// NOLINTBEGIN(bugprone-branch-clone)
 template <> inline long FP_NR<mpfr_t>::exponent() const { return mpfr_get_exp(data); }
 
 template <> inline long FP_NR<mpfr_t>::get_si_exp(long &expo) const
 {
-  if (mpfr_zero_p(data))
+  // Work on a local copy: a const method must not modify data.
+  mpfr_t scaled;
+  mpfr_init2(scaled, mpfr_get_prec(data));
+  // NOLINTEND(bugprone-branch-clone)
+  mpfr_set(scaled, data, GMP_RNDN);
+  if (mpfr_zero_p(scaled))
   {
     expo = 0;
   }
   else
   {
-    expo = max(exponent() - numeric_limits<long>::digits, 0L);
+    expo = std::max(exponent() - std::numeric_limits<long>::digits, 0L);
+    mpfr_div_2si(scaled, scaled, expo, GMP_RNDN);
   }
-  mpfr_t &nc_data = const_cast<mpfr_t &>(data);
-  mpfr_div_2si(nc_data, nc_data, expo, GMP_RNDN);
-  long result = mpfr_get_si(nc_data, GMP_RNDZ);
-  mpfr_mul_2si(nc_data, nc_data, expo, GMP_RNDN);
+  long result = 0;
+  if (!mpfr_fits_slong_p(scaled, GMP_RNDZ))
+  {
+    FPLLL_ABORT("FP_NR<mpfr_t>::get_si_exp: value out of range");
+  }
+  else
+  {
+    result = mpfr_get_si(scaled, GMP_RNDZ);
+  }
+  mpfr_clear(scaled);
   return result;
 }
 
@@ -247,7 +284,7 @@ template <> inline void FP_NR<mpfr_t>::ceil(const FP_NR<mpfr_t> &a) { mpfr_ceil(
 
 template <> inline void FP_NR<mpfr_t>::set_nan() { mpfr_set_nan(data); }
 
-template <> inline void FP_NR<mpfr_t>::swap(FP_NR<mpfr_t> &a) { mpfr_swap(data, a.data); }
+template <> inline void FP_NR<mpfr_t>::swap(FP_NR<mpfr_t> &a) noexcept { mpfr_swap(data, a.data); }
 
 /* the hypot function for Givens rotations */
 template <>
@@ -257,10 +294,10 @@ inline void FP_NR<mpfr_t>::hypot(const FP_NR<mpfr_t> &a, const FP_NR<mpfr_t> &b,
 }
 
 /* operators FP_NR<mpfr_t> */
-template <> inline ostream &operator<<(ostream &os, const FP_NR<mpfr_t> &x)
+template <> inline std::ostream &operator<<(std::ostream &os, const FP_NR<mpfr_t> &x)
 {
   mp_exp_t e;
-  char *s = mpfr_get_str(NULL, &e, 10, os.precision(), x.get_data(), GMP_RNDN);
+  char *s = mpfr_get_str(nullptr, &e, 10, os.precision(), x.get_data(), GMP_RNDN);
   char *p = s;
   if (*p == '-')
   {
@@ -268,19 +305,25 @@ template <> inline ostream &operator<<(ostream &os, const FP_NR<mpfr_t> &x)
     p++;
   }
   if (*p == '@' || *p == 0)
+  {
     os << p;
+  }
   else if (*p == '0')
+  {
     os << *p;
+  }
   else
   {
     os << *p << '.' << p + 1;
     if (e - 1 != 0)
+    {
       os << 'e' << e - 1;
+    }
   }
   mpfr_free_str(s);
   return os;
 }
 
-FPLLL_END_NAMESPACE
+}  // namespace fplll
 
 #endif

@@ -1,3 +1,13 @@
+// SPDX-FileCopyrightText: 2016-2019 Martin R. Albrecht
+// SPDX-FileCopyrightText: 2016-2017 Shi Bai
+// SPDX-FileCopyrightText: 2016 Damien Stehle
+// SPDX-FileCopyrightText: 2017 Vaggelis1994
+// SPDX-FileCopyrightText: 2020 Joe Rowell
+// SPDX-FileCopyrightText: 2024 Ludo Pulles
+// SPDX-FileCopyrightText: 2026 Omvixiii
+//
+// SPDX-License-Identifier: LGPL-2.1-or-later
+
 /****************************
  *  Z=mpz_t specialization
  ****************************/
@@ -5,7 +15,14 @@
 #ifndef FPLLL_NR_Z_MPZ_H
 #define FPLLL_NR_Z_MPZ_H
 
-FPLLL_BEGIN_NAMESPACE
+#include <ios>
+#include <istream>
+#include <mutex>  // IWYU pragma: keep
+#include <ostream>
+#include <string>
+
+namespace fplll
+{
 
 /* specialization */
 template <> inline Z_NR<mpz_t>::Z_NR() { mpz_init(data); }
@@ -14,17 +31,10 @@ template <> inline Z_NR<mpz_t>::Z_NR(const Z_NR<mpz_t> &z) { mpz_init_set(data, 
 
 // Note - you'll still need to call mpz_free on a, because references are non-owning.
 template <> inline Z_NR<mpz_t>::Z_NR(const mpz_t &z) { mpz_init_set(data, z); }
-template <> inline Z_NR<mpz_t>::~Z_NR() { mpz_clear(data); }
+template <> inline Z_NR<mpz_t>::~Z_NR() noexcept { mpz_clear(data); }
 
 /** get data */
 template <> inline double Z_NR<mpz_t>::get_d() const { return mpz_get_d(data); }
-
-#ifdef FPLLL_WITH_LONG_DOUBLE
-template <> inline long double Z_NR<mpz_t>::get_ld() const
-{
-  return LDConvHelper::mpz_get_ld(data);
-}
-#endif
 
 template <> inline long Z_NR<mpz_t>::get_si() const { return mpz_get_si(data); }
 
@@ -48,9 +58,13 @@ template <> inline int Z_NR<mpz_t>::cmp(const Z_NR<mpz_t> &m) const
 {
   int c = mpz_cmp(data, m.data);
   if (c > 0)
+  {
     return 1;
+  }
   if (c == 0)
+  {
     return 0;
+  }
   return -1;
 }
 
@@ -152,17 +166,25 @@ template <> inline void Z_NR<mpz_t>::mul_ui(const Z_NR<mpz_t> &a, unsigned long 
 template <> inline void Z_NR<mpz_t>::mul_2si(const Z_NR<mpz_t> &a, long b)
 {
   if (b >= 0)
+  {
     mpz_mul_2exp(data, a.data, b);
+  }
   else
+  {
     mpz_div_2exp(data, a.data, -b);
+  }
 }
 
 template <> inline void Z_NR<mpz_t>::div_2si(const Z_NR<mpz_t> &a, long b)
 {
   if (b >= 0)
+  {
     mpz_div_2exp(data, a.data, b);
+  }
   else
+  {
     mpz_mul_2exp(data, a.data, -b);
+  }
 }
 
 template <> inline void Z_NR<mpz_t>::addmul(const Z_NR<mpz_t> &a, const Z_NR<mpz_t> &b)
@@ -178,9 +200,13 @@ template <> inline void Z_NR<mpz_t>::addmul_ui(const Z_NR<mpz_t> &a, unsigned lo
 template <> inline void Z_NR<mpz_t>::addmul_si(const Z_NR<mpz_t> &a, long b)
 {
   if (b >= 0)
+  {
     mpz_addmul_ui(data, a.data, static_cast<unsigned long>(b));
+  }
   else
+  {
     mpz_submul_ui(data, a.data, static_cast<unsigned long>(-b));
+  }
 }
 
 template <> inline void Z_NR<mpz_t>::submul(const Z_NR<mpz_t> &a, const Z_NR<mpz_t> &b)
@@ -195,28 +221,31 @@ template <> inline void Z_NR<mpz_t>::submul_ui(const Z_NR<mpz_t> &a, unsigned lo
 
 template <> inline void Z_NR<mpz_t>::abs(const Z_NR<mpz_t> &x) { mpz_abs(data, x.data); }
 
-template <> inline void Z_NR<mpz_t>::swap(Z_NR<mpz_t> &a) { mpz_swap(data, a.data); }
+template <> inline void Z_NR<mpz_t>::swap(Z_NR<mpz_t> &a) noexcept { mpz_swap(data, a.data); }
 
 /** random numbers */
 template <> inline void Z_NR<mpz_t>::randb(int bits)
 {
-  mpz_urandomb(data, RandGen::get_gmp_state(), bits);
-  if (bits > 32)
+  if (bits < 0)
   {
-    unsigned long long tmp = static_cast<unsigned long long>(mpz_get_ui(data) & ~((1ULL) << 31));
-    gmp_randseed_ui(RandGen::gmp_state, tmp * tmp);
+    FPLLL_ABORT("randb: number of bits must be non-negative");
   }
+  std::scoped_lock lock(RandGen::mutex());
+  mpz_urandomb(data, RandGen::get_gmp_state(), bits);
 }
 
 template <> inline void Z_NR<mpz_t>::randb_si(int bits)
 {
   randb(bits);
   if (RandGenInt::get_bit() < 0)
+  {
     mpz_neg(data, data);
+  }
 }
 
 template <> inline void Z_NR<mpz_t>::randm(const Z_NR<mpz_t> &max)
 {
+  std::scoped_lock lock(RandGen::mutex());
   mpz_urandomm(data, RandGen::get_gmp_state(), max.data);
 }
 
@@ -224,7 +253,9 @@ template <> inline void Z_NR<mpz_t>::randm_si(const Z_NR<mpz_t> &max)
 {
   randm(max);
   if (RandGenInt::get_bit() < 0)
+  {
     mpz_neg(data, data);
+  }
 }
 
 template <> inline void Z_NR<mpz_t>::nextprime(const Z_NR<mpz_t> &nbr)
@@ -233,7 +264,7 @@ template <> inline void Z_NR<mpz_t>::nextprime(const Z_NR<mpz_t> &nbr)
 }
 
 /* operators Z_NR<mpz_t> */
-template <> inline ostream &operator<<(ostream &os, const Z_NR<mpz_t> &x)
+template <> inline std::ostream &operator<<(std::ostream &os, const Z_NR<mpz_t> &x)
 {
   int size = mpz_sizeinbase(x.get_data(), 10) + 2;
   char *s  = new char[size];
@@ -243,23 +274,27 @@ template <> inline ostream &operator<<(ostream &os, const Z_NR<mpz_t> &x)
   return os;
 }
 
-template <> inline istream &operator>>(istream &is, Z_NR<mpz_t> &x)
+template <> inline std::istream &operator>>(std::istream &is, Z_NR<mpz_t> &x)
 {
-  static string s;
+  std::string s;
   char c;
 
   s.clear();
   if (!(is >> c))
+  {
     return is;
+  }
   if (c == '-')
   {
     s += c;
     if (!(is >> c))
+    {
       return is;
+    }
   }
   if (!(c >= '0' && c <= '9'))
   {
-    is.setstate(ios::failbit);
+    is.setstate(std::ios::failbit);
     return is;
   }
 
@@ -269,19 +304,25 @@ template <> inline istream &operator>>(istream &is, Z_NR<mpz_t> &x)
   } while (is.get(c) && c >= '0' && c <= '9');
 
   if (is.fail())
+  {
     return is;
+  }
   if (is.eof())
+  {
     is.clear();
+  }
   else
+  {
     is.putback(c);
+  }
 
   if (!x.set_str(s.c_str()))
   {
-    is.setstate(ios::failbit);
+    is.setstate(std::ios::failbit);
   }
   return is;
 }
 
-FPLLL_END_NAMESPACE
+}  // namespace fplll
 
 #endif

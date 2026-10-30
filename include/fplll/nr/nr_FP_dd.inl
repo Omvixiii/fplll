@@ -1,14 +1,27 @@
+// SPDX-FileCopyrightText: 2016-2019 Martin R. Albrecht
+// SPDX-FileCopyrightText: 2016-2017 Shi Bai
+// SPDX-FileCopyrightText: 2016 Marc Stevens
+// SPDX-FileCopyrightText: 2017 Koen de Boer
+// SPDX-FileCopyrightText: 2017 Gilles Villard
+// SPDX-FileCopyrightText: 2017-2018 Laurent Grémy
+// SPDX-FileCopyrightText: 2021-2022 Joe Rowell
+// SPDX-FileCopyrightText: 2026 Omvixiii
+//
+// SPDX-License-Identifier: LGPL-2.1-or-later
+
 #ifndef FPLLL_NR_FP_DD_H
 #define FPLLL_NR_FP_DD_H
 /**********************************
  *  F=dd_real specialization
  *********************************/
 
-#include "../defs.h"
-#include "nr_FP.inl"
 #include <qd/dd_real.h>
 
-FPLLL_BEGIN_NAMESPACE
+#include <algorithm>  // IWYU pragma: keep
+#include <limits>     // IWYU pragma: keep
+
+namespace fplll
+{
 
 /* DD specialization if defined QD */
 
@@ -17,7 +30,7 @@ template <> inline FP_NR<dd_real>::FP_NR() {}
 
 template <> inline FP_NR<dd_real>::FP_NR(const FP_NR<dd_real> &f) { data = f.data; }
 
-template <> inline FP_NR<dd_real>::~FP_NR() {}
+template <> inline FP_NR<dd_real>::~FP_NR() noexcept {}
 
 template <> inline unsigned int FP_NR<dd_real>::get_prec() { return PREC_DD; }
 
@@ -52,14 +65,17 @@ template <> inline void FP_NR<dd_real>::set_mpfr(mpfr_t r, mp_rnd_t rnd)
 
 template <> inline long FP_NR<dd_real>::get_si() const { return to_int(data); }
 
-template <> inline long FP_NR<dd_real>::exponent() const { return ilogb(::to_double(data)) + 1; }
+template <> inline long FP_NR<dd_real>::exponent() const
+{
+  return std::ilogb(::to_double(data)) + 1;
+}
 
 template <> inline long FP_NR<dd_real>::get_si_exp_we(long &expo, long expo_add) const
 {
   if (data == 0)
     expo = 0;
   else
-    expo = max(exponent() + expo_add - numeric_limits<long>::digits, 0L);
+    expo = std::max(exponent() + expo_add - std::numeric_limits<long>::digits, 0L);
   return static_cast<long>((::ldexp(data, expo_add - expo)).x[0]);
 }
 
@@ -234,7 +250,7 @@ template <> inline void FP_NR<dd_real>::rnd(const FP_NR<dd_real> &b) { data = ::
 template <> inline void FP_NR<dd_real>::rnd_we(const FP_NR<dd_real> &b, long expo_add)
 {
   /* double-double has same expo limit as double format*/
-  if (b.exponent() + expo_add >= numeric_limits<double>::digits)
+  if (b.exponent() + expo_add >= std::numeric_limits<double>::digits)
     data = b.data;
   else
     data = ::ldexp(::nint(::ldexp(b.data, expo_add)), -expo_add);
@@ -244,9 +260,12 @@ template <> inline void FP_NR<dd_real>::floor(const FP_NR<dd_real> &b) { data = 
 
 template <> inline void FP_NR<dd_real>::ceil(const FP_NR<dd_real> &b) { data = ::ceil(b.data); }
 
-template <> inline void FP_NR<dd_real>::set_nan() { data = NAN; }
+template <> inline void FP_NR<dd_real>::set_nan()
+{
+  data = std::numeric_limits<double>::quiet_NaN();
+}
 
-template <> inline void FP_NR<dd_real>::swap(FP_NR<dd_real> &a)
+template <> inline void FP_NR<dd_real>::swap(FP_NR<dd_real> &a) noexcept
 {
   dd_real t = a.data;
   a.data    = data;
@@ -279,6 +298,6 @@ inline void FP_NR<dd_real>::hypot(const FP_NR<dd_real> &a, const FP_NR<dd_real> 
   }
 }
 
-FPLLL_END_NAMESPACE
+}  // namespace fplll
 
 #endif

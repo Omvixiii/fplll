@@ -1,103 +1,109 @@
-/* Copyright (C) 2011 Xavier Pujol.
-
-   This file is part of fplll. fplll is free software: you
-   can redistribute it and/or modify it under the terms of the GNU Lesser
-   General Public License as published by the Free Software Foundation,
-   either version 2.1 of the License, or (at your option) any later version.
-
-   fplll is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-   GNU Lesser General Public License for more details.
-
-   You should have received a copy of the GNU Lesser General Public License
-   along with fplll. If not, see <http://www.gnu.org/licenses/>. */
+// SPDX-FileCopyrightText: 2011 Xavier Pujol
+//
+// SPDX-License-Identifier: LGPL-2.1-or-later
 
 #ifndef FPLLL_NUMVECT_H
 #define FPLLL_NUMVECT_H
 
-#include "nr.h"
+#include "../defs.h"
+
+#include <algorithm>
+#include <cstddef>
+#include <ios>
+#include <istream>
+#include <ostream>
 #include <vector>
 
-FPLLL_BEGIN_NAMESPACE
+namespace fplll
+{
 
 /** Extends the size of the given vector. */
-template <class T> void extend_vect(vector<T> &v, int size)
+template <class T> void extend_vect(std::vector<T> &v, int size)
 {
   if (static_cast<int>(v.size()) < size)
   {
-    v.resize(size);
+    v.resize(static_cast<std::size_t>(size));
   }
 }
 
 /** Reverses a vector by consecutive swaps. */
-template <class T> void reverse_by_swap(vector<T> &v, int first, int last)
+template <class T> void reverse_by_swap(std::vector<T> &v, int first, int last)
 {
   for (; first < last; first++, last--)
-    v[first].swap(v[last]);
+  {
+    v[static_cast<std::size_t>(first)].swap(v[static_cast<std::size_t>(last)]);
+  }
 }
 
 /** Rotates a vector by consecutive swaps. */
-template <class T> void rotate_by_swap(vector<T> &v, int first, int middle, int last)
+template <class T> void rotate_by_swap(std::vector<T> &v, int first, int middle, int last)
 {
-  // Algorithm from STL code
+  // Algorithm from the STL code
   reverse_by_swap(v, first, middle - 1);
   reverse_by_swap(v, middle, last);
   for (; first < middle && middle <= last; first++, last--)
   {
-    v[first].swap(v[last]);
+    v[static_cast<std::size_t>(first)].swap(v[static_cast<std::size_t>(last)]);
   }
   if (first == middle)
+  {
     reverse_by_swap(v, middle, last);
+  }
   else
+  {
     reverse_by_swap(v, first, middle - 1);
+  }
 }
 
 /** Rotates a vector left-wise by consecutive swaps. */
-template <class T> void rotate_left_by_swap(vector<T> &v, int first, int last)
+template <class T> void rotate_left_by_swap(std::vector<T> &v, int first, int last)
 {
   FPLLL_DEBUG_CHECK(0 <= first && first <= last && last < static_cast<int>(v.size()));
   for (int i = first; i < last; i++)
   {
-    v[i].swap(v[i + 1]);
+    v[static_cast<std::size_t>(i)].swap(v[static_cast<std::size_t>(i) + 1]);
   }
 }
 
 /** Rotates a vector right-wise by consecutive swaps. */
-template <class T> void rotate_right_by_swap(vector<T> &v, int first, int last)
+template <class T> void rotate_right_by_swap(std::vector<T> &v, int first, int last)
 {
   FPLLL_DEBUG_CHECK(0 <= first && first <= last && last < static_cast<int>(v.size()));
   for (int i = last - 1; i >= first; i--)
   {
-    v[i].swap(v[i + 1]);
+    v[static_cast<std::size_t>(i)].swap(v[static_cast<std::size_t>(i) + 1]);
   }
 }
 
-/** Print a vector on stream os. */
-template <class T> ostream &operator<<(ostream &os, const vector<T> &v)
+/** Prints a vector on stream os. */
+template <class T> std::ostream &operator<<(std::ostream &os, const std::vector<T> &v)
 {
   os << "[";
-  int n = v.size();
+  const int n = static_cast<int>(v.size());
   for (int i = 0; i < n; i++)
   {
     if (i > 0)
+    {
       os << " ";
-    os << v[i];
+    }
+    os << v[static_cast<std::size_t>(i)];
   }
   os << "]";
   return os;
 }
 
 /** Reads a vector from stream is. */
-template <class T> istream &operator>>(istream &is, vector<T> &v)
+template <class T> std::istream &operator>>(std::istream &is, std::vector<T> &v)
 {
   char c;
   v.clear();
   if (!(is >> c))
+  {
     return is;
+  }
   if (c != '[')
   {
-    is.setstate(ios::failbit);
+    is.setstate(std::ios::failbit);
     return is;
   }
   while (is >> c && c != ']')
@@ -113,64 +119,52 @@ template <class T> istream &operator>>(istream &is, vector<T> &v)
   return is;
 }
 
-/** Generate a zero vector. */
-template <class T> void gen_zero_vect(vector<T> &v, int n)
+/** Generates a zero vector. */
+template <class T> void gen_zero_vect(std::vector<T> &v, int n)
 {
-  v.resize(n);
-  fill(v.begin(), v.end(), 0);
+  v.resize(static_cast<std::size_t>(n));
+  std::fill(v.begin(), v.end(), 0);
 }
 
 template <class T> class NumVect;
 
-template <class T> ostream &operator<<(ostream &os, const NumVect<T> &v);
+template <class T> std::ostream &operator<<(std::ostream &os, const NumVect<T> &v);
 
-template <class T> istream &operator>>(istream &is, NumVect<T> &v);
+template <class T> std::istream &operator>>(std::istream &is, NumVect<T> &v);
 
+/** NumVect is a one-dimensional container of numbers. It is a thin wrapper
+    around std::vector that implements the vector operations used by the
+    reduction algorithms. All indices are 0-based. */
 template <class T> class NumVect
 {
 public:
-  typedef typename vector<T>::iterator iterator;
   /** Creates an empty NumVect (0). */
-  NumVect() {}
-  /** Initializes NumVect with the elements of the given NumVect. */
-  NumVect(const NumVect &v) : data(v.data) {}
+  NumVect() = default;
   /** Initializes NumVect with the elements of a given vector. */
-  NumVect(const vector<T> &v) : data(v) {}
-  /** Initializes NumVect of specific size, The initial content is
+  NumVect(const std::vector<T> &v) : data(v) {}
+  /** Initializes a NumVect of the given size. The initial content is
       undefined. */
-  NumVect(int size) : data(size) {}
-  NumVect(int size, const T &t) : data(size, t) {}
-  /** Sets the NumVect to the elements of the given NumVect. */
-  void operator=(const NumVect &v)
-  {
-    if (this != &v)
-      data = v.data;
-  }
+  NumVect(int size) : data(static_cast<std::size_t>(size)) {}
+  NumVect(int size, const T &t) : data(static_cast<std::size_t>(size), t) {}
   /** Swaps the data between the NumVect and the given NumVect. */
   void swap(NumVect &v) { data.swap(v.data); }
-  /** Returns an iterator to the beginning of NumVect.*/
-  const iterator begin() { return data.begin(); }
-  /** Returns an iterator to the end of NumVect. */
-  iterator end() { return data.end(); }
   /** Returns the number of elements in NumVect. */
-  int size() const { return data.size(); }
+  int size() const { return static_cast<int>(data.size()); }
   /** Checks whether NumVect is empty. */
   bool empty() const { return data.empty(); }
   /** Sets the size of NumVect. */
-  void resize(int size) { data.resize(size); }
-  /** Sets the size of NumVect and all its elemnts to t.*/
-  void resize(int size, const T &t) { data.resize(size, t); }
+  void resize(int size) { data.resize(static_cast<std::size_t>(size)); }
+  /** Sets the size of NumVect and all its elements to t.*/
+  void resize(int size, const T &t) { data.resize(static_cast<std::size_t>(size), t); }
   /** Sets the size of NumVect and all its elements to zero. */
   void gen_zero(int size)
   {
-    data.resize(size);
+    data.resize(static_cast<std::size_t>(size));
     fill(0);
   }
 
-  /**Compares two NumVects by comparing the underlying vectors. Returns true if equivalent & false
-   * otherwise.
-   * Note that this only works if the two NumVects have the same template type parameter. **/
-  bool operator==(NumVect<T> &other) { return other.data == data; }
+  /** Compares two NumVects by comparing the underlying vectors. */
+  bool operator==(const NumVect<T> &other) const { return data == other.data; }
 
   /** Inserts an element in the back of NumVect. */
   void push_back(const T &t) { data.push_back(t); }
@@ -190,14 +184,16 @@ public:
   void extend(int maxSize)
   {
     if (size() < maxSize)
-      data.resize(maxSize);
+    {
+      data.resize(static_cast<std::size_t>(maxSize));
+    }
   }
   void clear() { data.clear(); }
   /** Returns a reference to the i-th element of NumVect. */
-  T &operator[](int i) { return data[i]; }
+  T &operator[](int i) { return data[static_cast<std::size_t>(i)]; }
   /** Returns a const reference to the i-th element of NumVect on constant
       object. */
-  const T &operator[](int i) const { return data[i]; }
+  const T &operator[](int i) const { return data[static_cast<std::size_t>(i)]; }
   /** Addition of two NumVector objects, till index n. */
   void add(const NumVect<T> &v, int n);
   /** Addition of two NumVector objects. */
@@ -213,18 +209,21 @@ public:
   /** Multiplication of NumVector and a number c. */
   void mul(const NumVect<T> &v, T c) { mul(v, size(), c); }
   /** Division of NumVector and a number c, from index b till index n. */
+  // Kept by value: part of the public template interface.
+  // NOLINTBEGIN(performance-unnecessary-value-param)
   void div(const NumVect<T> &v, int b, int n, T c);
   /** Division of NumVector and a number c, till index n. */
   void div(const NumVect<T> &v, int n, T c);
   /** Division of NumVector and a number c. */
   void div(const NumVect<T> &v, T c) { div(v, size(), c); }
-  /** Incremeanting each coefficient of NumVector by its product with
+  /** Incrementing each coefficient of NumVector by its product with
       number c, from beg to index n - 1. */
   void addmul(const NumVect<T> &v, T x, int beg, int n);
-  /** Incremeanting each coefficient of NumVector by its product with
+  /** Incrementing each coefficient of NumVector by its product with
       number c, till index n. */
   void addmul(const NumVect<T> &v, T x, int n);
-  /** Incremeanting each coefficient of NumVector by its product with
+  // NOLINTEND(performance-unnecessary-value-param)
+  /** Incrementing each coefficient of NumVector by its product with
       number c. */
   void addmul(const NumVect<T> &v, T x) { addmul(v, x, size()); }
   void addmul_2exp(const NumVect<T> &v, const T &x, long expo, T &tmp)
@@ -246,9 +245,6 @@ public:
   /** (v[first],...,v[last]) becomes (v[last],v[first],...,v[last-1]) */
   void rotate_right(int first, int last) { rotate_right_by_swap(data, first, last); }
 
-  /** Returns expo >= 0 such that all elements are < 2^expo. */
-  long get_max_exponent();
-
   /** Fills NumVect with the value given. */
   void fill(long value);
 
@@ -258,32 +254,40 @@ public:
   /** Returns last non-zero index of NumVector. */
   int size_nz() const;
 
-  friend ostream &operator<< <T>(ostream &os, const NumVect<T> &v);
-  friend istream &operator>> <T>(istream &is, NumVect<T> &v);
+  friend std::ostream &operator<< <T>(std::ostream &os, const NumVect<T> &v);
+  friend std::istream &operator>> <T>(std::istream &is, NumVect<T> &v);
 
 private:
-  vector<T> data;
+  std::vector<T> data;
 };
 
 template <class T> void NumVect<T>::add(const NumVect<T> &v, int n)
 {
   FPLLL_DEBUG_CHECK(n <= size() && size() == v.size() && v.is_zero(n));
   for (int i = n - 1; i >= 0; i--)
-    data[i].add(data[i], v[i]);
+  {
+    data[static_cast<std::size_t>(i)].add(data[static_cast<std::size_t>(i)],
+                                          v.data[static_cast<std::size_t>(i)]);
+  }
 }
 
 template <class T> void NumVect<T>::sub(const NumVect<T> &v, int n)
 {
   FPLLL_DEBUG_CHECK(n <= size() && size() == v.size() && v.is_zero(n));
   for (int i = n - 1; i >= 0; i--)
-    data[i].sub(data[i], v[i]);
+  {
+    data[static_cast<std::size_t>(i)].sub(data[static_cast<std::size_t>(i)],
+                                          v.data[static_cast<std::size_t>(i)]);
+  }
 }
 
 template <class T> void NumVect<T>::mul(const NumVect<T> &v, int b, int n, T c)
 {
   FPLLL_DEBUG_CHECK(n <= size() && size() == v.size() && v.is_zero(n));
   for (int i = n - 1; i >= b; i--)
-    data[i].mul(v[i], c);
+  {
+    data[static_cast<std::size_t>(i)].mul(v.data[static_cast<std::size_t>(i)], c);
+  }
 }
 
 template <class T> void NumVect<T>::mul(const NumVect<T> &v, int n, T c) { mul(v, 0, n, c); }
@@ -292,7 +296,9 @@ template <class T> void NumVect<T>::div(const NumVect<T> &v, int b, int n, T c)
 {
   FPLLL_DEBUG_CHECK(n <= size() && size() == v.size() && v.is_zero(n));
   for (int i = n - 1; i >= b; i--)
-    data[i].div(v[i], c);
+  {
+    data[static_cast<std::size_t>(i)].div(v.data[static_cast<std::size_t>(i)], c);
+  }
 }
 
 template <class T> void NumVect<T>::div(const NumVect<T> &v, int n, T c) { div(v, 0, n, c); }
@@ -301,7 +307,9 @@ template <class T> void NumVect<T>::addmul(const NumVect<T> &v, T x, int beg, in
 {
   FPLLL_DEBUG_CHECK(n <= size() && size() == v.size() && v.is_zero(n));
   for (int i = n - 1; i >= beg; i--)
-    data[i].addmul(v[i], x);
+  {
+    data[static_cast<std::size_t>(i)].addmul(v.data[static_cast<std::size_t>(i)], x);
+  }
 }
 
 template <class T> void NumVect<T>::addmul(const NumVect<T> &v, T x, int n)
@@ -315,9 +323,9 @@ void NumVect<T>::addmul_2exp(const NumVect<T> &v, const T &x, long expo, int n, 
   FPLLL_DEBUG_CHECK(n <= size() && size() == v.size() && v.is_zero(n));
   for (int i = n - 1; i >= 0; i--)
   {
-    tmp.mul(v[i], x);
+    tmp.mul(v.data[static_cast<std::size_t>(i)], x);
     tmp.mul_2si(tmp, expo);
-    data[i].add(data[i], tmp);
+    data[static_cast<std::size_t>(i)].add(data[static_cast<std::size_t>(i)], tmp);
   }
 }
 
@@ -325,7 +333,9 @@ template <class T> void NumVect<T>::addmul_si(const NumVect<T> &v, long x, int n
 {
   FPLLL_DEBUG_CHECK(n <= size() && size() == v.size() && v.is_zero(n));
   for (int i = n - 1; i >= 0; i--)
-    data[i].addmul_si(v[i], x);
+  {
+    data[static_cast<std::size_t>(i)].addmul_si(v.data[static_cast<std::size_t>(i)], x);
+  }
 }
 
 template <class T>
@@ -334,27 +344,17 @@ void NumVect<T>::addmul_si_2exp(const NumVect<T> &v, long x, long expo, int n, T
   FPLLL_DEBUG_CHECK(n <= size() && size() == v.size() && v.is_zero(n));
   for (int i = n - 1; i >= 0; i--)
   {
-    tmp.mul_si(v[i], x);
+    tmp.mul_si(v.data[static_cast<std::size_t>(i)], x);
     tmp.mul_2si(tmp, expo);
-    data[i].add(data[i], tmp);
+    data[static_cast<std::size_t>(i)].add(data[static_cast<std::size_t>(i)], tmp);
   }
-}
-
-template <class T> long NumVect<T>::get_max_exponent()
-{
-  long max_expo = 0;
-  for (int i = 0; i < size(); i++)
-  {
-    max_expo = max(max_expo, data[i].exponent());
-  }
-  return max_expo;
 }
 
 template <class T> void NumVect<T>::fill(long value)
 {
   for (int i = 0; i < size(); i++)
   {
-    data[i] = value;
+    data[static_cast<std::size_t>(i)] = value;
   }
 }
 
@@ -362,8 +362,10 @@ template <class T> bool NumVect<T>::is_zero(int fromCol) const
 {
   for (int i = fromCol; i < size(); i++)
   {
-    if (!data[i].is_zero())
+    if (!data[static_cast<std::size_t>(i)].is_zero())
+    {
       return false;
+    }
   }
   return true;
 }
@@ -371,22 +373,23 @@ template <class T> bool NumVect<T>::is_zero(int fromCol) const
 template <class T> int NumVect<T>::size_nz() const
 {
   int i;
-  for (i = data.size(); i > 0; i--)
+  for (i = size(); i > 0; i--)
   {
-    if (data[i - 1] != 0)
+    if (data[static_cast<std::size_t>(i - 1)] != 0)
+    {
       break;
+    }
   }
   return i;
 }
 
-/** Compute the truncated dot product between tow Numvect using coefficients [beg, n).
+/** Computes the truncated dot product between two NumVects using coefficients [beg, n).
  * Constraint: n > beg.
  */
 template <class T>
 inline void dot_product(T &result, const NumVect<T> &v1, const NumVect<T> &v2, int beg, int n)
 {
   FPLLL_DEBUG_CHECK(beg >= 0 && n > beg && n <= v1.size() && n <= v2.size());
-  //(v1.is_zero(n) || v2.is_zero(n))); tested previously
   result.mul(v1[beg], v2[beg]);
   for (int i = beg + 1; i < n; i++)
   {
@@ -401,22 +404,18 @@ inline void dot_product(T &result, const NumVect<T> &v1, const NumVect<T> &v2, i
   dot_product(result, v1, v2, 0, n);
 }
 
-template <class T> inline void dot_product(T &result, const NumVect<T> &v1, const NumVect<T> &v2)
-{
-  dot_product(result, v1, v2, v1.size());
-}
-
-template <class T> inline void squared_norm(T &result, const NumVect<T> &v)
-{
-  dot_product(result, v, v);
-}
-
 /** Prints a NumVect on stream os. */
-template <class T> ostream &operator<<(ostream &os, const NumVect<T> &v) { return os << v.data; }
+template <class T> std::ostream &operator<<(std::ostream &os, const NumVect<T> &v)
+{
+  return os << v.data;
+}
 
 /** Reads a NumVect from stream is. */
-template <class T> istream &operator>>(istream &is, NumVect<T> &v) { return is >> v.data; }
+template <class T> std::istream &operator>>(std::istream &is, NumVect<T> &v)
+{
+  return is >> v.data;
+}
 
-FPLLL_END_NAMESPACE
+}  // namespace fplll
 
 #endif

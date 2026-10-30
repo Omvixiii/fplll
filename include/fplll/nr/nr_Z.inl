@@ -1,3 +1,13 @@
+// SPDX-FileCopyrightText: 2016-2019 Martin R. Albrecht
+// SPDX-FileCopyrightText: 2016-2017 Shi Bai
+// SPDX-FileCopyrightText: 2016 Damien Stehle
+// SPDX-FileCopyrightText: 2017 Vaggelis1994
+// SPDX-FileCopyrightText: 2020-2022 Joe Rowell
+// SPDX-FileCopyrightText: 2024 Ludo Pulles
+// SPDX-FileCopyrightText: 2026 Omvixiii
+//
+// SPDX-License-Identifier: LGPL-2.1-or-later
+
 /*********************
  *   Integer Class
  *********************/
@@ -5,7 +15,10 @@
 #ifndef FPLLL_NR_Z_H
 #define FPLLL_NR_Z_H
 
-FPLLL_BEGIN_NAMESPACE
+#include <iosfwd>
+
+namespace fplll
+{
 
 /* declaration FP_NR */
 template <class F> class FP_NR;
@@ -13,7 +26,7 @@ template <class F> class FP_NR;
 /**
  * Z_NR stores integers. This template provides a uniform interface
  *  for doing integer computations with several underlying types
- *  (long, double and mpz_t).
+ *  (long and mpz_t).
  */
 template <class Z = mpz_t> class Z_NR
 {
@@ -27,33 +40,25 @@ public:
   inline Z_NR();
   inline Z_NR(const Z_NR<Z> &z);
   inline Z_NR(const Z &z);
-  inline ~Z_NR();
+  inline ~Z_NR() noexcept;
 
   /** get data */
 
   /**
    * Returns the internal representation of the data.
    */
-  inline Z &get_data() { return data; }
+  Z &get_data() { return data; }
 
   /**
    * Returns the internal representation of the data.
    */
-  inline const Z &get_data() const { return data; }
+  const Z &get_data() const { return data; }
 
   /**
    * Converts this object to a double. If it does not fit in
    *  a double, the result is undefined.
    */
   inline double get_d() const;
-
-  /**
-   * Converts this object to a long double. If it does not fit in
-   * a long double, the result is undefined.
-   */
-#ifdef FPLLL_WITH_LONG_DOUBLE
-  inline long double get_ld() const;
-#endif
 
   /**
    * Converts this object to a long. If it does not fit in a long,
@@ -74,8 +79,8 @@ public:
   /**
    * Computes f and expo such that 0.5 <= f < 1 and value ~= 2^expo * f.
    *   The rounding direction is undefined.
-   *   This function is implemented only for native floating-point types
-   *   (double and long double), otherwise the behaviour is undefined.
+   *   This function is implemented for double, mpfr_t and, when available,
+   *   dd_real and qd_real; the behaviour is undefined otherwise.
    */
   template <class F> inline void get_f_exp(F &f, long &expo);
 
@@ -131,18 +136,22 @@ public:
   /**
    * max between a and b
    */
-  inline Z_NR &max_z(Z_NR<Z> &b)
+  Z_NR &max_z(Z_NR<Z> &b)
   {
     if ((*this) <= b)
+    {
       return b;
+    }
     else
+    {
       return (*this);
+    }
   }
 
   /**
    * Returns non-zero if the current value is zero, 0 otherwise.
    */
-  inline bool is_zero() const { return *this == 0; }
+  bool is_zero() const { return *this == 0; }
 
   /** arithmetic */
 
@@ -211,7 +220,7 @@ public:
   /**
    * Efficiently swaps the values of two Z_NR.
    */
-  inline void swap(Z_NR<Z> &a);
+  inline void swap(Z_NR<Z> &a) noexcept;
 
   /**
    * Generates random integer between 0 and 2^bits-1.
@@ -231,86 +240,18 @@ public:
   inline void nextprime(const Z_NR<Z> &nbr);
 };
 
-/**
- * LDConvHelper provides conversion functions between mpz_t and
- * long double which are not (yet) in GMP. It uses mpfr so it is slow.
- */
-#ifdef FPLLL_WITH_LONG_DOUBLE
-
-// Thread_local variables for doing numeric conversions.
-// These are global to replace their previous usage, but member variables
-// cannot be thread local and so they're declared at this scope.
-// NOTE: these are extern because these can only have one definition.
-// These are defined in util.cpp
-extern thread_local mpfr_t temp_mpfr;
-extern thread_local bool temp_mpfr_initialized;
-
-class LDConvHelper
-{
-public:
-  /** Converts op to a long double with rounding to nearest. */
-  static long double mpz_get_ld(const mpz_t op)
-  {
-    init_temp();
-    mpfr_set_z(temp_mpfr, op, GMP_RNDN);
-    return mpfr_get_ld(temp_mpfr, GMP_RNDN);  // exact
-  }
-
-  static void free() { free_temp(); }
-
-  /**
-   * Returns d and sets exp such that 0.5 <= |d| < 1 and d * 2^exp is equal
-   * to op rounded to the nearest long double.
-   */
-  static long double mpz_get_ld_2exp(long *exp, const mpz_t op)
-  {
-    init_temp();
-    mpfr_set_z(temp_mpfr, op, GMP_RNDN);
-    return mpfr_get_ld_2exp(exp, temp_mpfr, GMP_RNDN);  // exact
-  }
-
-  /** Sets the value of rop from op. */
-  static void mpz_set_ld(mpz_t rop, long double op)
-  {
-    init_temp();
-    mpfr_set_ld(temp_mpfr, op, GMP_RNDN);  // exact
-    mpfr_get_z(rop, temp_mpfr, GMP_RNDN);
-  }
-
-private:
-  static inline void init_temp()
-  {
-    if (!temp_mpfr_initialized)
-    {
-      mpfr_init2(temp_mpfr, numeric_limits<long double>::digits);
-      temp_mpfr_initialized = true;
-    }
-  }
-
-  static inline void free_temp()
-  {
-    if (temp_mpfr_initialized)
-    {
-      mpfr_clear(temp_mpfr);
-      temp_mpfr_initialized = false;
-    }
-  }
-};
-
-#endif
-
 /** overloading stream operators */
 
 /**
  * Prints x on stream os.
  */
-template <class T> ostream &operator<<(ostream &os, const Z_NR<T> &x);
+template <class T> std::ostream &operator<<(std::ostream &os, const Z_NR<T> &x);
 
 /**
  * Reads x from stream is.
  */
-template <class T> istream &operator>>(istream &is, Z_NR<T> &x);
+template <class T> std::istream &operator>>(std::istream &is, Z_NR<T> &x);
 
-FPLLL_END_NAMESPACE
+}  // namespace fplll
 
 #endif

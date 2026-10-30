@@ -1,3 +1,12 @@
+// SPDX-FileCopyrightText: 2016-2019 Martin R. Albrecht
+// SPDX-FileCopyrightText: 2016-2017 Shi Bai
+// SPDX-FileCopyrightText: 2016 Marc Stevens
+// SPDX-FileCopyrightText: 2017 Koen de Boer
+// SPDX-FileCopyrightText: 2021-2022 Joe Rowell
+// SPDX-FileCopyrightText: 2026 Omvixiii
+//
+// SPDX-License-Identifier: LGPL-2.1-or-later
+
 /****************************
  *  F=double specialization
  ****************************/
@@ -5,10 +14,13 @@
 #ifndef FPLLL_NR_FP_D_H
 #define FPLLL_NR_FP_D_H
 
-#include "../defs.h"
-#include "nr_FP.inl"
+#include <algorithm>  // IWYU pragma: keep
+#include <cmath>      // IWYU pragma: keep
+#include <limits>     // IWYU pragma: keep
+#include <utility>    // IWYU pragma: keep
 
-FPLLL_BEGIN_NAMESPACE
+namespace fplll
+{
 
 /* Double specialization */
 
@@ -17,7 +29,7 @@ template <> inline FP_NR<double>::FP_NR() : data(0.0) {}
 
 template <> inline FP_NR<double>::FP_NR(const FP_NR<double> &f) { data = f.data; }
 
-template <> inline FP_NR<double>::~FP_NR() {}
+template <> inline FP_NR<double>::~FP_NR() noexcept = default;
 
 template <> inline unsigned int FP_NR<double>::get_prec() { return PREC_DOUBLE; }
 
@@ -27,7 +39,9 @@ template <> inline unsigned int FP_NR<double>::set_prec(unsigned int)
 }
 
 /* return data */
-template <> inline double FP_NR<double>::get_d(mp_rnd_t) const { return static_cast<double>(data); }
+// The rounding parameter is unnamed here; the suggested fix-it is invalid.
+// NOLINTNEXTLINE(misc-unused-parameters)
+template <> inline double FP_NR<double>::get_d(mp_rnd_t) const { return data; }
 
 template <> inline void FP_NR<double>::get_mpfr(mpfr_t r, mp_rnd_t rnd) const
 {
@@ -39,17 +53,29 @@ template <> inline void FP_NR<double>::set_mpfr(mpfr_t r, mp_rnd_t rnd)
   data = mpfr_get_d(r, rnd);
 }
 
-template <> inline long FP_NR<double>::get_si() const { return static_cast<long>(data); }
+template <> inline long FP_NR<double>::get_si() const
+{
+  const double limit = std::ldexp(1.0, std::numeric_limits<long>::digits);
+  if (!std::isfinite(data) || data < -limit || data >= limit)
+  {
+    FPLLL_ABORT("FP_NR<double>::get_si: value out of range");
+  }
+  return static_cast<long>(data);
+}
 
-template <> inline long FP_NR<double>::exponent() const { return ilogb(data) + 1; }
+template <> inline long FP_NR<double>::exponent() const { return std::ilogb(data) + 1; }
 
 template <> inline long FP_NR<double>::get_si_exp_we(long &expo, long expo_add) const
 {
   if (data == 0)
+  {
     expo = 0;
+  }
   else
-    expo = max(exponent() + expo_add - numeric_limits<long>::digits, 0L);
-  return static_cast<long>(ldexp(data, expo_add - expo));
+  {
+    expo = std::max(exponent() + expo_add - std::numeric_limits<long>::digits, 0L);
+  }
+  return static_cast<long>(std::ldexp(data, static_cast<int>(expo_add - expo)));
 }
 
 template <> inline long FP_NR<double>::get_si_exp(long &expo) const
@@ -61,36 +87,44 @@ template <> inline long FP_NR<double>::get_si_exp(long &expo) const
 template <> inline int FP_NR<double>::cmp(const FP_NR<double> &b) const
 {
   if (data > b.data)
+  {
     return 1;
+  }
   if (data < b.data)
+  {
     return -1;
+  }
   return 0;
 }
 
 template <> inline int FP_NR<double>::cmp(double b) const
 {
   if (data > b)
+  {
     return 1;
+  }
   if (data < b)
+  {
     return -1;
+  }
   return 0;
 }
 
 template <> inline int FP_NR<double>::sgn() const
 {
   if (data > 0)
+  {
     return 1;
+  }
   if (data < 0)
+  {
     return -1;
+  }
   return 0;
 }
 
 /* operators */
-template <> inline FP_NR<double> &FP_NR<double>::operator=(const FP_NR<double> &f)
-{
-  data = f.data;
-  return *this;
-}
+template <> inline FP_NR<double> &FP_NR<double>::operator=(const FP_NR<double> &f) = default;
 
 template <> inline FP_NR<double> &FP_NR<double>::operator=(double d)
 {
@@ -100,7 +134,19 @@ template <> inline FP_NR<double> &FP_NR<double>::operator=(double d)
 
 template <> inline FP_NR<double> &FP_NR<double>::operator=(const char *s)
 {
-  data = strtod(s, NULL);
+  // MPFR parsing is locale-independent and handles out-of-range values the way
+  // the standard library does (overflow yields +/-inf, underflow yields zero).
+  mpfr_t parsed;
+  mpfr_init2(parsed, PREC_DOUBLE);
+  if (mpfr_set_str(parsed, s, 10, MPFR_RNDN) != 0)
+  {
+    data = 0.0;
+  }
+  else
+  {
+    data = mpfr_get_d(parsed, MPFR_RNDN);
+  }
+  mpfr_clear(parsed);
   return *this;
 }
 
@@ -136,10 +182,12 @@ template <> inline bool FP_NR<double>::is_zero() const { return data == 0; }
 
 template <> inline int FP_NR<double>::is_nan() const { return data != data; }
 
-template <> inline int FP_NR<double>::is_finite() const { return isfinite(data); }
+template <> inline int FP_NR<double>::is_finite() const { return std::isfinite(data); }
 
 /* arithmetic */
 template <>
+// The rounding parameter is unnamed here; the suggested fix-it is invalid.
+// NOLINTBEGIN(misc-unused-parameters)
 inline void FP_NR<double>::add(const FP_NR<double> &b, const FP_NR<double> &c, mp_rnd_t /*rnd*/)
 {
   data = b.data + c.data;
@@ -165,7 +213,7 @@ inline void FP_NR<double>::mul_d(const FP_NR<double> &b, const double c, mp_rnd_
 
 template <> inline void FP_NR<double>::mul_2si(const FP_NR<double> &b, long c)
 {
-  data = ldexp(b.data, static_cast<int>(c));
+  data = std::ldexp(b.data, static_cast<int>(c));
 }
 
 template <>
@@ -188,65 +236,71 @@ inline void FP_NR<double>::submul(const FP_NR<double> &b, const FP_NR<double> &c
 
 template <> inline void FP_NR<double>::pow_si(const FP_NR<double> &a, long b, mp_rnd_t /*rnd*/)
 {
-  data = ::pow(a.data, static_cast<double>(b));
+  data = std::pow(a.data, static_cast<double>(b));
 }
 
 template <> inline void FP_NR<double>::exponential(const FP_NR<double> &a, mp_rnd_t /*rnd*/)
 {
-  data = ::exp(a.data);
+  data = std::exp(a.data);
 }
 
 template <> inline void FP_NR<double>::log(const FP_NR<double> &a, mp_rnd_t /*rnd*/)
 {
-  data = ::log(a.data);
+  data = std::log(a.data);
 }
 
 template <> inline void FP_NR<double>::sqrt(const FP_NR<double> &s, mp_rnd_t /*rnd*/)
 {
-  data = ::sqrt(s.data);
+  data = std::sqrt(s.data);
 }
 
 template <>
 inline void FP_NR<double>::root(const FP_NR<double> &a, unsigned int k, mp_rnd_t /*rnd*/)
+// NOLINTEND(misc-unused-parameters)
 {
-  data = ::pow(a.data, 1 / (static_cast<double>(k)));
+  data = std::pow(a.data, 1 / static_cast<double>(k));
 }
 
 template <> inline void FP_NR<double>::neg(const FP_NR<double> &b) { data = -b.data; }
 
-template <> inline void FP_NR<double>::abs(const FP_NR<double> &b)
-{
-  data = b.data;
-  if (data < 0)
-    data = -data;
-}
+template <> inline void FP_NR<double>::abs(const FP_NR<double> &b) { data = std::fabs(b.data); }
 
-template <> inline void FP_NR<double>::rnd(const FP_NR<double> &b) { data = rint(b.data); }
+template <> inline void FP_NR<double>::rnd(const FP_NR<double> &b) { data = std::rint(b.data); }
 
 template <> inline void FP_NR<double>::rnd_we(const FP_NR<double> &b, long expo_add)
 {
   // If data == 0.0, exponent() is undefined, but both branches will work
-  if (b.exponent() + expo_add >= numeric_limits<double>::digits)
+  if (b.exponent() + expo_add >= std::numeric_limits<double>::digits)
+  {
     data = b.data;
+  }
   else
-    data = ldexp(::rint(ldexp(b.data, expo_add)), -expo_add);
+  {
+    data = std::ldexp(std::rint(std::ldexp(b.data, static_cast<int>(expo_add))),
+                      static_cast<int>(-expo_add));
+  }
 }
 
-template <> inline void FP_NR<double>::floor(const FP_NR<double> &b) { data = ::floor(b.data); }
+template <> inline void FP_NR<double>::floor(const FP_NR<double> &b) { data = std::floor(b.data); }
 
-template <> inline void FP_NR<double>::ceil(const FP_NR<double> &b) { data = ::ceil(b.data); }
+template <> inline void FP_NR<double>::ceil(const FP_NR<double> &b) { data = std::ceil(b.data); }
 
-template <> inline void FP_NR<double>::set_nan() { data = NAN; }
+template <> inline void FP_NR<double>::set_nan()
+{
+  data = std::numeric_limits<double>::quiet_NaN();
+}
 
-template <> inline void FP_NR<double>::swap(FP_NR<double> &a) { std::swap(data, a.data); }
+template <> inline void FP_NR<double>::swap(FP_NR<double> &a) noexcept { std::swap(data, a.data); }
 
 /* hypot function for Givens */
 template <>
+// The rounding parameter is unnamed here; the suggested fix-it is invalid.
+// NOLINTNEXTLINE(misc-unused-parameters)
 inline void FP_NR<double>::hypot(const FP_NR<double> &a, const FP_NR<double> &b, mp_rnd_t /*rnd*/)
 {
-  data = ::hypot(a.data, b.data);
+  data = std::hypot(a.data, b.data);
 }
 
-FPLLL_END_NAMESPACE
+}  // namespace fplll
 
 #endif

@@ -1,37 +1,39 @@
-/* Copyright (C) 2005-2008 Damien Stehle.
-   Copyright (C) 2007 David Cade.
-   Copyright (C) 2011 Xavier Pujol.
-
-   This file is part of fplll. fplll is free software: you
-   can redistribute it and/or modify it under the terms of the GNU Lesser
-   General Public License as published by the Free Software Foundation,
-   either version 2.1 of the License, or (at your option) any later version.
-
-   fplll is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-   GNU Lesser General Public License for more details.
-
-   You should have received a copy of the GNU Lesser General Public License
-   along with fplll. If not, see <http://www.gnu.org/licenses/>. */
+// SPDX-FileCopyrightText: 2005-2008 Damien Stehle
+// SPDX-FileCopyrightText: 2007 David Cade
+// SPDX-FileCopyrightText: 2011 Xavier Pujol
+//
+// SPDX-License-Identifier: LGPL-2.1-or-later
 
 #ifndef FPLLL_MATRIX_H
 #define FPLLL_MATRIX_H
 
+#include <iosfwd>
+#include <type_traits>
+#include <utility>
+#include <vector>
+
+#include "../defs.h"
+#include "nr.h"
 #include "numvect.h"
 
-FPLLL_BEGIN_NAMESPACE
-
-enum MatPrintMode
+namespace fplll
 {
-  MAT_PRINT_COMPACT = 0,
-  MAT_PRINT_REGULAR = 1
+
+/** Output format of Matrix::print and of the stream operator. */
+// Public enum: the int underlying type is kept for ABI stability.
+// NOLINTNEXTLINE(performance-enum-size)
+enum class MatrixPrintMode
+{
+  compact,
+  regular
 };
 
 template <class T> class Matrix;
+template <class T> class ConstMatrixRow;
 
-/** MatrixRow stores a reference to a row of a Matrix. It supports a subset
-    of operations available on vectors. */
+/** MatrixRow stores a reference to a writable row of a Matrix. It supports a
+    subset of operations available on vectors. Rows of constant matrices are
+    exposed as ConstMatrixRow objects instead, which are read-only. */
 template <class T> class MatrixRow
 {
 public:
@@ -40,10 +42,6 @@ public:
   /** Returns a const reference to the i-th element of this row on constant
       objects. */
   const T &operator[](int i) const { return row[i]; }
-  /** Returns the number of columns. */
-  int size() const { return row.size(); }
-  /** Prints this object on stream os. */
-  void print(ostream &os) const { os << row; }
 
   bool is_zero(int from = 0) const { return row.is_zero(from); }
   int size_nz() const { return row.size_nz(); }
@@ -52,18 +50,19 @@ public:
   void add(const MatrixRow<T> &v, int n) { row.add(v.row, n); }
   void sub(const MatrixRow<T> &v) { row.sub(v.row); }
   void sub(const MatrixRow<T> &v, int n) { row.sub(v.row, n); }
-  void mul(const MatrixRow<T> &v, int b, int n, T x) { row.mul(v.row, b, n, x); }
+  // Kept by value: part of the public template interface.
+  // NOLINTBEGIN(performance-unnecessary-value-param)
   void div(const MatrixRow<T> &v, int b, int n, T x) { row.div(v.row, b, n, x); }
-  void addmul(const MatrixRow<T> &v, T x) { row.addmul(v.row, x); }
   void addmul(const MatrixRow<T> &v, T x, int n) { row.addmul(v.row, x, n); }
   void addmul(const MatrixRow<T> &v, T x, int b, int n) { row.addmul(v.row, x, b, n); }
+  // NOLINTEND(performance-unnecessary-value-param)
   void addmul_2exp(const MatrixRow<T> &v, const T &x, long expo, T &tmp)
   {
     row.addmul_2exp(v.row, x, expo, tmp);
   }
-  void addmul_2exp(const MatrixRow<T> &v, const T &x, long expo, int /*n*/, T &tmp)
+  void addmul_2exp(const MatrixRow<T> &v, const T &x, long expo, int n, T &tmp)
   {
-    row.addmul_2exp(v.row, x, expo, tmp);
+    row.addmul_2exp(v.row, x, expo, n, tmp);
   }
   void addmul_si(const MatrixRow<T> &v, long x) { row.addmul_si(v.row, x); }
   void addmul_si(const MatrixRow<T> &v, long x, int n) { row.addmul_si(v.row, x, n); }
@@ -79,36 +78,56 @@ public:
   /** Computes the truncated dot product between two rows of a Matrix.
    * Constraint: n > beg.
    */
-  inline void dot_product(T &result, const MatrixRow<T> &v0, int beg, int n) const
+  void dot_product(T &result, const MatrixRow<T> &v0, int beg, int n) const
   {
     fplll::dot_product(result, this->row, v0.row, beg, n);
   }
 
-  /** Computes the dot product between two rows of a Matrix */
-  inline void dot_product(T &result, const MatrixRow<T> &v0, int n) const
+  /** Computes the dot product between two rows of a Matrix, up to index n. */
+  void dot_product(T &result, const MatrixRow<T> &v0, int n) const
   {
     fplll::dot_product(result, this->row, v0.row, n);
-  }
-
-  /** Computes the truncated dot product between two rows of a Matrix */
-  inline void dot_product(T &result, const MatrixRow<T> &v0) const
-  {
-    fplll::dot_product(result, this->row, v0.row);
   }
 
   friend class Matrix<T>;
 
 private:
-  MatrixRow(const NumVect<T> &row) : row(const_cast<NumVect<T> &>(row)) {}
+  MatrixRow(NumVect<T> &row) : row(row) {}
   NumVect<T> &row;
 };
 
-/** Prints a MatrixRow on stream os. */
-template <class T> ostream &operator<<(ostream &os, const MatrixRow<T> &row)
+/** ConstMatrixRow stores a reference to a read-only row of a constant Matrix.
+    It exposes only the operations that do not modify the row, so a constant
+    matrix cannot be written through it. */
+template <class T> class ConstMatrixRow
 {
-  row.print(os);
-  return os;
-}
+public:
+  /** Returns a const reference to the i-th element of this row. */
+  const T &operator[](int i) const noexcept { return row[i]; }
+
+  bool is_zero(int from = 0) const { return row.is_zero(from); }
+  int size_nz() const { return row.size_nz(); }
+
+  /** Computes the truncated dot product between two rows of a Matrix.
+   * Constraint: n > beg.
+   */
+  void dot_product(T &result, const ConstMatrixRow<T> &v0, int beg, int n) const
+  {
+    fplll::dot_product(result, this->row, v0.row, beg, n);
+  }
+
+  /** Computes the dot product between two rows of a Matrix, up to index n. */
+  void dot_product(T &result, const ConstMatrixRow<T> &v0, int n) const
+  {
+    fplll::dot_product(result, this->row, v0.row, n);
+  }
+
+  friend class Matrix<T>;
+
+private:
+  ConstMatrixRow(const NumVect<T> &row) noexcept : row(row) {}
+  const NumVect<T> &row;
+};
 
 /** Matrix is a two-dimensional container. Read and write operations on single
     elements are in constant time. The amortized complexity of resizing the
@@ -166,18 +185,19 @@ public:
     FPLLL_DEBUG_CHECK(i >= 0 && i < r && j >= 0 && j < c);
     return matrix[i][j];
   }
-  /** Returns a MatrixRow object pointing to the i-th row of this matrix. */
-  MatrixRow<T> operator[](int i)
+  /** Returns a MatrixRow object pointing to the i-th row of this matrix. On
+      constant objects it returns a read-only ConstMatrixRow instead. */
+  template <class Self> auto operator[](this Self &&self, int i)
   {
-    FPLLL_DEBUG_CHECK(i >= 0 && i < r);
-    return MatrixRow<T>(matrix[i]);
-  }
-  /** Returns a MatrixRow object pointing to the i-th row of this matrix
-      on constant objects. */
-  const MatrixRow<T> operator[](int i) const
-  {
-    FPLLL_DEBUG_CHECK(i >= 0 && i < r);
-    return MatrixRow<T>(matrix[i]);
+    FPLLL_DEBUG_CHECK(i >= 0 && i < self.r);
+    if constexpr (std::is_const_v<std::remove_reference_t<Self>>)
+    {
+      return ConstMatrixRow<T>(self.matrix[i]);
+    }
+    else
+    {
+      return MatrixRow<T>(self.matrix[i]);
+    }
   }
   /** Rows swap. */
   void swap_rows(int r1, int r2) { matrix[r1].swap(matrix[r2]); }
@@ -205,35 +225,34 @@ public:
       @param os      output stream
       @param nrows   maximum number of rows to display (optional)
       @param ncols   maximum number of columns to display (optional) */
-  void print(ostream &os, int nrows = -1, int ncols = -1) const;
+  void print(std::ostream &os, int nrows = -1, int ncols = -1) const;
   /** Reads this matrix from a stream. */
-  void read(istream &is);
+  void read(std::istream &is);
   /** Print the matrix, sage format style */
-  ostream &print_comma(ostream &os) const;
-  /** Change the output format style of Matrix */
-  static int set_print_mode(int new_print_mode)
+  std::ostream &print_comma(std::ostream &os) const;
+  /** Changes the output format style of Matrix and returns the previous
+      mode. */
+  static MatrixPrintMode set_print_mode(MatrixPrintMode new_print_mode)
   {
-    int old_mode = print_mode;
-    print_mode   = new_print_mode;
+    const MatrixPrintMode old_mode = print_mode;
+    print_mode                     = new_print_mode;
     return old_mode;
   }
 
 protected:
   int r, c;
-  vector<NumVect<T>> matrix;
+  std::vector<NumVect<T>> matrix;
 
-  static int print_mode;
+  static inline MatrixPrintMode print_mode = MatrixPrintMode::compact;
 };
 
-template <class T> int Matrix<T>::print_mode = MAT_PRINT_COMPACT;
-
-template <class T> ostream &operator<<(ostream &os, const Matrix<T> &m)
+template <class T> std::ostream &operator<<(std::ostream &os, const Matrix<T> &m)
 {
   m.print(os);
   return os;
 }
 
-template <class T> istream &operator>>(istream &is, Matrix<T> &m)
+template <class T> std::istream &operator>>(std::istream &is, Matrix<T> &m)
 {
   m.read(is);
   return is;
@@ -243,7 +262,7 @@ template <class T> istream &operator>>(istream &is, Matrix<T> &m)
 template <class ZT> class ZZ_mat : public Matrix<Z_NR<ZT>>
 {
 public:
-  typedef Z_NR<ZT> T;
+  using T = Z_NR<ZT>;
   using Matrix<T>::r;
   using Matrix<T>::c;
   using Matrix<T>::matrix;
@@ -262,14 +281,18 @@ public:
   {
     resize(d, n);
     for (int i = 0; i < d; i++)
+    {
       matrix[i].fill(0);
+    }
   }
   /** Generate an identity matrix */
   void gen_identity(int d)
   {
     gen_zero(d, d);
     for (int i = 0; i < d; i++)
+    {
       matrix[i][i] = 1;
+    }
   }
   /** Generate an augmented matrix of random coefficients for the first column */
   void gen_intrel(int bits);
@@ -281,8 +304,12 @@ public:
   /** Generate a value for q in the interval [2^{bits-1}, 2^bits - 1],
      uniformly at random, and store the result in q.
   */
-  static inline void gen_q(int bits, Z_NR<ZT> &q)
+  static void gen_q(int bits, Z_NR<ZT> &q)
   {
+    if (bits < 1)
+    {
+      FPLLL_ABORT("gen_q: bits must be positive");
+    }
     Z_NR<ZT> pow2;
     pow2 = 1;
     pow2.mul_2si(pow2, bits - 1);
@@ -361,7 +388,7 @@ bool convert(ZZ_mat<ZTto> &Ato, const ZZ_mat<ZTfrom> &Afrom, int buffer = 0);
 template <class FT> class FP_mat : public Matrix<FP_NR<FT>>
 {
 public:
-  typedef FP_NR<FT> T;
+  using T = FP_NR<FT>;
   /** Creates an empty matrix (0 x 0). */
   FP_mat() : Matrix<T>() {}
   /** Creates a matrix of dimensions rows x cols. All elements are
@@ -369,8 +396,11 @@ public:
   FP_mat(int rows, int cols) : Matrix<T>(rows, cols) {}
 };
 
-FPLLL_END_NAMESPACE
+}  // namespace fplll
 
-#include "matrix.cpp"
+// The inline definitions live in matrix.inl; keep it part of this public header
+// for include-cleaner so that including <fplll/nr/matrix.h> also covers the
+// free functions implemented there (e.g. convert()).
+#include "matrix.inl"  // IWYU pragma: export
 
 #endif
