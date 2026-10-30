@@ -1,50 +1,70 @@
-/* Copyright (C) 2011 Xavier Pujol.
+// SPDX-FileCopyrightText: 2011 Xavier Pujol
+// SPDX-FileCopyrightText: 2026 Omvixiii
+//
+// SPDX-License-Identifier: LGPL-2.1-or-later
 
-   This file is part of fplll. fplll is free software: you
-   can redistribute it and/or modify it under the terms of the GNU Lesser
-   General Public License as published by the Free Software Foundation,
-   either version 2.1 of the License, or (at your option) any later version.
+#include "detail/float_type.h"
+#include <fplll/defs.h>
+#include <fplll/nr/matrix.h>
+#include <fplll/nr/nr.h>
+#include <fplll/util.h>
 
-   fplll is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-   GNU Lesser General Public License for more details.
+#include <atomic>
+#include <cmath>
+#include <cstdint>
+#include <gmp.h>
+#include <numbers>
+#include <ostream>
+#include <streambuf>
 
-   You should have received a copy of the GNU Lesser General Public License
-   along with fplll. If not, see <http://www.gnu.org/licenses/>. */
-
-#include "util.h"
-
-#ifdef DEBUG
-int debug_depth = 0;
-#endif
-
-FPLLL_BEGIN_NAMESPACE
-
-enum MinPrecAlgo
+namespace fplll
 {
-  MINPREC_GSO,
-  MINPREC_L2
+
+namespace
+{
+
+class NullLogBuffer : public std::streambuf
+{
+protected:
+  int overflow(int c) override { return c; }
 };
 
-/*
-  Helper variables for LDConvHelper (declared in nr_Z.inl, must be defined in exactly
-  one source file)
-*/
-#ifdef FPLLL_WITH_LONG_DOUBLE
-thread_local mpfr_t temp_mpfr;
-thread_local bool temp_mpfr_initialized{false};
-#endif
-
-/* State of the random generator (declared in nr.h, must be defined in exactly
-   one source file) */
-bool RandGen::initialized = false;
-gmp_randstate_t RandGen::gmp_state;
-
-static int compute_min_prec(double &rho, int d, double delta, double eta, double epsilon,
-                            MinPrecAlgo algo)
+// Constructed lazily: a namespace-scope std::ostream may throw while static
+// initialization runs, which would terminate the program before main().
+std::ostream &null_log_stream()
 {
-  int old_prec = FP_NR<mpfr_t>::set_prec(53);
+  static NullLogBuffer null_log_buffer;
+  static std::ostream stream(&null_log_buffer);
+  return stream;
+}
+
+std::atomic<std::ostream *> current_log_stream{nullptr};
+
+}  // namespace
+
+std::ostream &log_stream()
+{
+  std::ostream *stream = current_log_stream.load(std::memory_order_acquire);
+  return stream != nullptr ? *stream : null_log_stream();
+}
+
+void set_log_stream(std::ostream *stream)
+{
+  current_log_stream.store(stream, std::memory_order_release);
+}
+
+namespace
+{
+
+enum class MinPrecAlgo : std::uint8_t
+{
+  gso,
+  l2,
+};
+
+int compute_min_prec(double &rho, int d, double delta, double eta, double epsilon, MinPrecAlgo algo)
+{
+  ScopedPrecision precision_guard(53);
   FP_NR<mpfr_t> f_minprec, f_rho, f_d, f_eta, f_delta, f_epsilon, tmp1, tmp2;
 
   // These four conversions are exact
@@ -52,15 +72,19 @@ static int compute_min_prec(double &rho, int d, double delta, double eta, double
   f_eta     = eta;
   f_delta   = delta;
   f_epsilon = epsilon;
-  if (algo == MINPREC_L2)
+  if (algo == MinPrecAlgo::l2)
   {
     // eta - 0.5 is an exact fp operation
     if (f_epsilon > eta - 0.5)
+    {
       f_epsilon = eta - 0.5;
+    }
     tmp1 = 1.0;
     tmp1.sub(tmp1, f_delta, GMP_RNDD);
     if (f_epsilon > tmp1)
+    {
       f_epsilon = tmp1;
+    }
     // now fEpsilon <= min(epsilon, eta - 0.5, 1 - delta);
   }
   // Computes tmp1 >= (1 + eta) ^ 2 + epsilon
@@ -88,23 +112,28 @@ static int compute_min_prec(double &rho, int d, double delta, double eta, double
   tmp2 = 2.0;                      // exact
   tmp2.log(tmp2, GMP_RNDD);        // <= log(2)
   tmp1.div(tmp1, tmp2, GMP_RNDU);  // >= 2*log2(d)-log2(epsilon)+d*log2(rho)
-  tmp2 = (algo == MINPREC_L2) ? 10.0 : 5.0;
+  tmp2 = (algo == MinPrecAlgo::l2) ? 10.0 : 5.0;
   f_minprec.add(tmp1, tmp2, GMP_RNDU);
-  int minprec = static_cast<int>(ceil(f_minprec.get_d(GMP_RNDU)));
+  const int minprec = static_cast<int>(std::ceil(f_minprec.get_d(GMP_RNDU)));
   mpfr_free_cache();
-  FP_NR<mpfr_t>::set_prec(old_prec);
   return minprec;
 }
 
+}  // namespace
+
+/* State of the random generator (declared in nr.h, must be defined in exactly
+   one source file) */
+gmp_randstate_t RandGen::gmp_state;
+
 int gso_min_prec(double &rho, int d, double delta, double eta, double epsilon)
 {
-  return compute_min_prec(rho, d, delta, eta, epsilon, MINPREC_GSO);
+  return compute_min_prec(rho, d, delta, eta, epsilon, MinPrecAlgo::gso);
 }
 
 int l2_min_prec(int d, double delta, double eta, double epsilon)
 {
   double rho;
-  return compute_min_prec(rho, d, delta, eta, epsilon, MINPREC_L2);
+  return compute_min_prec(rho, d, delta, eta, epsilon, MinPrecAlgo::l2);
 }
 
 int hlll_min_prec(int d_i, int n_i, double delta_d, double eta_d, double theta_d, double c_d)
@@ -114,7 +143,7 @@ int hlll_min_prec(int d_i, int n_i, double delta_d, double eta_d, double theta_d
   FPLLL_CHECK(eta_d >= 0.5, "theta must be larger than or equal to 0.5.");
   FPLLL_CHECK(eta_d - theta_d > 0.5, "eta - theta must be larger than 0.5.");
 
-  int old_prec = FP_NR<mpfr_t>::set_prec(53);
+  ScopedPrecision precision_guard(53);
   FP_NR<mpfr_t> d, n, delta, eta, theta, c, alpha, c0, c1, rho, phi, p0, p;
   FP_NR<mpfr_t> ftmp0, ftmp1, ftmp2, ftmp3, ftmp4;
 
@@ -156,7 +185,10 @@ int hlll_min_prec(int d_i, int n_i, double delta_d, double eta_d, double theta_d
   ftmp1 = 4.0 * ftmp2 / (1.0 + eta) * ftmp3;
   // ftmp0 = max(1 + |1 - eta - theta| * alpha / ((eta + theta) * (-1 + sqrt(3/2))),
   //             4 * sqrt(6) / (1 + eta) * sqrt(1 + d * eta^2))
-  ftmp0.max_f(ftmp1);
+  if (ftmp1 > ftmp0)
+  {
+    ftmp0 = ftmp1;
+  }
   // c0 = max(...) * n * sqrt(d)
   c0 = ftmp0 * n * ftmp4;
 
@@ -194,38 +226,35 @@ int hlll_min_prec(int d_i, int n_i, double delta_d, double eta_d, double theta_d
   p = p0 + 1.0 - ftmp0 - ftmp2;
 
   // Convert p in int
-  int p_i = static_cast<int>(ceil(p.get_d(GMP_RNDU)));
-
-  FP_NR<mpfr_t>::set_prec(old_prec);
-
-  return p_i;
+  return static_cast<int>(std::ceil(p.get_d(GMP_RNDU)));
 }
 
-/**
- * Computes the volume of a d-dimensional hypersphere of radius 1.
- */
+/** Computes the volume of a d-dimensional hypersphere of radius 1. */
 void sphere_volume(FP_NR<mpfr_t> &volume, int d)
 {
   FP_NR<mpfr_t> rtmp1;
-  volume = pow(M_PI, (double)(d / 2));
+  const int half_d = d / 2;
+  volume           = std::pow(std::numbers::pi, static_cast<double>(half_d));
 
   if (d % 2 == 0)
+  {
     for (int i = 1; i <= d / 2; i++)
     {
-      rtmp1 = (double)i;
+      rtmp1 = static_cast<double>(i);
       volume.div(volume, rtmp1);
     }
+  }
   else
+  {
     for (int i = 0; i <= d / 2; i++)
     {
-      rtmp1 = 2.0 / (double)(2 * i + 1);
+      rtmp1 = 2.0 / static_cast<double>(2 * i + 1);
       volume.mul(volume, rtmp1);
     }
+  }
 }
 
-/**
- * Estimates the cost of the enumeration for SVP.
- */
+/** Estimates the cost of the enumeration for SVP. */
 void cost_estimate(FP_NR<mpfr_t> &cost, const FP_NR<mpfr_t> &bound, const Matrix<FP_NR<mpfr_t>> &r,
                    int dimMax)
 {
@@ -246,57 +275,4 @@ void cost_estimate(FP_NR<mpfr_t> &cost, const FP_NR<mpfr_t> &bound, const Matrix
   }
 }
 
-const char *get_red_status_str(int status)
-{
-  if (status >= 0 && status < RED_STATUS_MAX)
-    return RED_STATUS_STR[status];
-  else
-    return "unknown error";
-}
-
-template <class ZT> void zeros_first(ZZ_mat<ZT> &b, ZZ_mat<ZT> &u, ZZ_mat<ZT> &u_inv_t)
-{
-  int i, d = b.get_rows();
-  for (i = d; i > 0 && b[i - 1].is_zero(); i--)
-  {
-  }
-  if (i > 0 && i < d)
-  {
-    b.rotate(0, i, d - 1);
-    if (!u.empty())
-      u.rotate(0, i, d - 1);
-    if (!u_inv_t.empty())
-      u_inv_t.rotate(0, i, d - 1);
-  }
-}
-
-template <class ZT> void zeros_last(ZZ_mat<ZT> &b, ZZ_mat<ZT> &u, ZZ_mat<ZT> &u_inv_t)
-{
-  int i, d = b.get_rows();
-  for (i = 0; i < d && b[i].is_zero(); i++)
-  {
-  }
-  if (i > 0 && i < d)
-  {
-    b.rotate(0, i, d - 1);
-    if (!u.empty())
-      u.rotate(0, i, d - 1);
-    if (!u_inv_t.empty())
-      u_inv_t.rotate(0, i, d - 1);
-  }
-}
-
-template void zeros_first<mpz_t>(ZZ_mat<mpz_t> &, ZZ_mat<mpz_t> &, ZZ_mat<mpz_t> &);
-template void zeros_last<mpz_t>(ZZ_mat<mpz_t> &, ZZ_mat<mpz_t> &, ZZ_mat<mpz_t> &);
-
-#ifdef FPLLL_WITH_ZLONG
-template void zeros_first<long>(ZZ_mat<long> &, ZZ_mat<long> &, ZZ_mat<long> &);
-template void zeros_last<long>(ZZ_mat<long> &, ZZ_mat<long> &, ZZ_mat<long> &);
-#endif
-
-#ifdef FPLLL_WITH_ZDOUBLE
-template void zeros_first<double>(ZZ_mat<double> &, ZZ_mat<double> &, ZZ_mat<double> &);
-template void zeros_last<double>(ZZ_mat<double> &, ZZ_mat<double> &, ZZ_mat<double> &);
-#endif
-
-FPLLL_END_NAMESPACE
+}  // namespace fplll
