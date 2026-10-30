@@ -1,37 +1,37 @@
-/* Copyright (C) 2005-2008 Damien Stehle.
-   Copyright (C) 2007 David Cade.
-   Copyright (C) 2011 Xavier Pujol.
-   Copyright (C) 2019 Koen de Boer
-
-   This file is part of fplll. fplll is free software: you
-   can redistribute it and/or modify it under the terms of the GNU Lesser
-   General Public License as published by the Free Software Foundation,
-   either version 2.1 of the License, or (at your option) any later version.
-
-   fplll is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-   GNU Lesser General Public License for more details.
-
-   You should have received a copy of the GNU Lesser General Public License
-   along with fplll. If not, see <http://www.gnu.org/licenses/>. */
+// SPDX-FileCopyrightText: 2005-2008 Damien Stehle
+// SPDX-FileCopyrightText: 2007 David Cade
+// SPDX-FileCopyrightText: 2011 Xavier Pujol
+// SPDX-FileCopyrightText: 2019 Koen de Boer
+//
+// SPDX-License-Identifier: LGPL-2.1-or-later
 
 /* Template source file */
 
-#include "gso_interface.h"
+#include <fplll/defs.h>
+#include <fplll/gso/gso_interface.h>
+#include <fplll/nr/nr.h>
 
-FPLLL_BEGIN_NAMESPACE
+#include <algorithm>
+#include <cmath>
+#include <cstddef>
+#include <gmp.h>
+#include <limits>
+#include <numbers>
+#include <vector>
+
+namespace fplll
+{
 
 template <class ZT, class FT>
-inline void MatGSOInterface<ZT, FT>::invalidate_gso_row(int i, int new_valid_cols)
+void MatGSOInterface<ZT, FT>::invalidate_gso_row(int i, int new_valid_cols)
 {
   FPLLL_DEBUG_CHECK(i >= 0 && i < n_known_rows && new_valid_cols >= 0 && new_valid_cols <= i + 1);
-  gso_valid_cols[i] = min(gso_valid_cols[i], new_valid_cols);
+  gso_valid_cols[i] = std::min(gso_valid_cols[i], new_valid_cols);
 }
 
 template <class ZT, class FT> void MatGSOInterface<ZT, FT>::row_op_end(int first, int last)
 {
-#ifdef DEBUG
+#ifdef FPLLL_DEBUG_CHECKS
   FPLLL_DEBUG_CHECK(row_op_first == first && row_op_last == last);
   row_op_first = row_op_last = -1;
 #endif
@@ -42,7 +42,9 @@ template <class ZT, class FT> void MatGSOInterface<ZT, FT>::row_op_end(int first
       update_bf(i);
       invalidate_gram_row(i);
       for (int j = i + 1; j < n_known_rows; j++)
+      {
         gf(j, i).set_nan();
+      }
     }
     invalidate_gso_row(i, 0);
   }
@@ -52,93 +54,27 @@ template <class ZT, class FT> void MatGSOInterface<ZT, FT>::row_op_end(int first
   }
 }
 
-template <class ZT, class FT> inline ZT MatGSOInterface<ZT, FT>::get_max_gram()
-{
-  ZT tmp;
-  if (enable_int_gram)
-  {
-    if (gptr == nullptr)
-    {
-      throw std::runtime_error("Error: gptr is equal to the nullpointer.");
-    }
-    Matrix<ZT> gr = *gptr;
-    tmp           = gr(0, 0);
-    for (int i = 0; i < n_known_rows; i++)
-      tmp = tmp.max_z(gr(i, i));
-  }
-  else
-  {
-    FT tmp1 = gf(0, 0);
-    for (int i = 0; i < n_known_rows; i++)
-      tmp1 = tmp1.max_f(gf(i, i));
-    tmp.set_f(tmp1);
-  }
-  return tmp;
-}
-
-template <class ZT, class FT> inline FT MatGSOInterface<ZT, FT>::get_max_bstar()
-{
-  FT tmp;
-  tmp = r(0, 0);
-  for (int i = 0; i < n_known_rows; i++)
-    tmp = tmp.max_f(r(i, i));
-  return tmp;
-}
-
 template <class ZT, class FT> long MatGSOInterface<ZT, FT>::get_max_mu_exp(int i, int n_columns)
 {
   FPLLL_DEBUG_CHECK(i >= 0 && i < n_known_rows && gso_valid_cols[i] >= n_columns);
-  long max_expo = LONG_MIN, expo;
+  long max_expo = std::numeric_limits<long>::min(), expo;
   for (int j = 0; j < n_columns; j++)
   {
     long expo2 = get_mu_exp(i, j, expo).exponent();
-    max_expo   = max(max_expo, expo + expo2);
+    max_expo   = std::max(max_expo, expo + expo2);
   }
   return max_expo;
 }
-// This function *can* be included in the interface; it has no base-class specific functions.
-// If this function is going to be included, it must be removed from gso.* and gsogram.*
-// and also added to gso_interface.h as non-virtual.
-/*
-template <class ZT, class FT>
-void MatGSOInterface<ZT, FT>::row_addmul_we(int i, int j, const FT &x, long expo_add)
-{
-  FPLLL_DEBUG_CHECK(j >= 0 && i < n_known_rows && j < n_source_rows);
-  long expo;
-  long lx = x.get_si_exp_we(expo, expo_add);
-
-  if (expo == 0)
-  {
-    if (lx == 1)
-      row_add(i, j);
-    else if (lx == -1)
-      row_sub(i, j);
-    else if (lx != 0)
-      row_addmul_si(i, j, lx);
-  }
-  else if (row_op_force_long)
-  {
-    row_addmul_si_2exp(i, j, lx, expo);
-  }
-  else
-  {
-    x.get_z_exp_we(ztmp2, expo, expo_add);
-    row_addmul_2exp(i, j, ztmp2, expo);
-  }
-}
-*/
 
 template <class ZT, class FT> bool MatGSOInterface<ZT, FT>::update_gso_row(int i, int last_j)
 {
-  // FPLLL_TRACE_IN("Updating GSO up to (" << i << ", " << last_j << ")");
-  // FPLLL_TRACE("n_known_rows=" << n_known_rows << " n_source_rows=" << n_source_rows);
   if (i >= n_known_rows)
   {
     discover_row();
   }
   FPLLL_DEBUG_CHECK(i >= 0 && i < n_known_rows && last_j >= 0 && last_j < n_source_rows);
 
-  int j = max(0, gso_valid_cols[i]);
+  int j = std::max(0, gso_valid_cols[i]);
 
   for (; j <= last_j; j++)
   {
@@ -154,12 +90,13 @@ template <class ZT, class FT> bool MatGSOInterface<ZT, FT>::update_gso_row(int i
     {
       mu(i, j).div(ftmp1, r(j, j));
       if (!mu(i, j).is_finite())
+      {
         return false;
+      }
     }
   }
 
   gso_valid_cols[i] = j;  // = max(0, gso_valid_cols[i], last_j + 1)
-  // FPLLL_TRACE_OUT("End of GSO update");
   return true;
 }
 
@@ -172,35 +109,12 @@ template <class ZT, class FT> void MatGSOInterface<ZT, FT>::unlock_cols()
 }
 
 template <class ZT, class FT>
-void MatGSOInterface<ZT, FT>::apply_transform(const Matrix<FT> &transform, int src_base,
-                                              int target_base)
-{
-  int target_size = transform.get_rows(), src_size = transform.get_cols();
-  int old_d = d;
-  create_rows(target_size);
-  for (int i = 0; i < target_size; i++)
-  {
-    for (int j = 0; j < src_size; j++)
-    {
-      row_addmul(old_d + i, src_base + j, transform(i, j));
-    }
-  }
-  row_op_begin(target_base, target_base + target_size);
-  for (int i = 0; i < target_size; i++)
-  {
-    row_swap(target_base + i, old_d + i);
-  }
-  row_op_end(target_base, target_base + target_size);
-  remove_last_rows(target_size);
-}
-
-template <class ZT, class FT>
 double MatGSOInterface<ZT, FT>::get_current_slope(int start_row, int stop_row)
 {
   FT f, log_f;
   long expo;
   int n     = stop_row - start_row;
-  double v1 = 0, v2 = (double)(n + 1) * n * (n - 1) / 12.0, weight = (1.0 - n) / 2.0;
+  double v1 = 0, v2 = static_cast<double>(n + 1) * n * (n - 1) / 12.0, weight = (1.0 - n) / 2.0;
   // Calculate v1 and v2 and return v1 / v2, with
   //   v1 = sum_i (i - avg(i))(x_i - avg(x)),
   //   v2 = sum_i (i - avg(i))^2,
@@ -211,7 +125,7 @@ double MatGSOInterface<ZT, FT>::get_current_slope(int start_row, int stop_row)
     update_gso_row(i);
     f = get_r_exp(i, i, expo);
     log_f.log(f, GMP_RNDU);
-    v1 += weight * (log_f.get_d() + expo * std::log(2.0));
+    v1 += weight * (log_f.get_d() + static_cast<double>(expo) * std::log(2.0));
     weight++;
   }
   return v1 / v2;
@@ -219,9 +133,9 @@ double MatGSOInterface<ZT, FT>::get_current_slope(int start_row, int stop_row)
 
 template <class ZT, class FT> FT MatGSOInterface<ZT, FT>::get_root_det(int start_row, int end_row)
 {
-  start_row   = max(0, start_row);
-  end_row     = min(d, end_row);
-  FT h        = (double)(end_row - start_row);
+  start_row   = std::max(0, start_row);
+  end_row     = std::min(d, end_row);
+  FT h        = static_cast<double>(end_row - start_row);
   FT root_det = get_log_det(start_row, end_row) / h;
   root_det.exponential(root_det);
   return root_det;
@@ -230,8 +144,8 @@ template <class ZT, class FT> FT MatGSOInterface<ZT, FT>::get_root_det(int start
 template <class ZT, class FT> FT MatGSOInterface<ZT, FT>::get_log_det(int start_row, int end_row)
 {
   FT log_det = 0.0;
-  start_row  = max(0, start_row);
-  end_row    = min(d, end_row);
+  start_row  = std::max(0, start_row);
+  end_row    = std::min(d, end_row);
   FT h;
   for (int i = start_row; i < end_row; ++i)
   {
@@ -261,10 +175,10 @@ template <class FT>
 void adjust_radius_to_gh_bound(FT &max_dist, long max_dist_expo, int block_size, const FT &root_det,
                                double gh_factor)
 {
-  double t = (double)block_size / 2.0 + 1;
-  t        = lgamma(t);
-  t        = pow(M_E, t * 2.0 / (double)block_size);
-  t        = t / M_PI;
+  double t = static_cast<double>(block_size) / 2.0 + 1;
+  t        = std::lgamma(t);
+  t        = std::pow(std::numbers::e, t * 2.0 / static_cast<double>(block_size));
+  t        = t / std::numbers::pi;
   FT f     = t;
   f        = f * root_det;
   f.mul_2si(f, -max_dist_expo);
@@ -274,12 +188,13 @@ void adjust_radius_to_gh_bound(FT &max_dist, long max_dist_expo, int block_size,
     max_dist = f;
   }
 }
+
 template <class ZT, class FT>
-void MatGSOInterface<ZT, FT>::babai(vector<ZT> &v, int start, int dimension)
+void MatGSOInterface<ZT, FT>::babai(std::vector<ZT> &v, int start, int dimension)
 {
-  vector<FT> w;
+  std::vector<FT> w;
   FT tmp = 0.0;
-  for (size_t i = 0; i < v.size(); i++)
+  for (std::size_t i = 0; i < v.size(); i++)
   {
     tmp.set_z(v[i]);
     w.push_back(tmp);
@@ -289,12 +204,13 @@ void MatGSOInterface<ZT, FT>::babai(vector<ZT> &v, int start, int dimension)
 }
 
 template <class ZT, class FT>
-void MatGSOInterface<ZT, FT>::babai(vector<ZT> &w, const vector<FT> &v, int start, int dimension)
+void MatGSOInterface<ZT, FT>::babai(std::vector<ZT> &w, const std::vector<FT> &v, int start,
+                                    int dimension)
 {
   FT mu_;
-  dimension = (dimension == -1) ? this->d - start : dimension;
+  dimension = (dimension == -1) ? d - start : dimension;
 
-  vector<FT> x = vector<FT>(v);
+  std::vector<FT> x(v);
   for (long i = dimension - 1; i >= 0; i--)
   {
     x[i].rnd(x[i]);
@@ -303,7 +219,7 @@ void MatGSOInterface<ZT, FT>::babai(vector<ZT> &w, const vector<FT> &v, int star
       x[j] -= get_mu(mu_, start + i, start + j) * x[i];
     }
   }
-  w.resize(dimension);
+  w.resize(static_cast<std::size_t>(dimension));
   for (long i = 0; i < dimension; i++)
   {
     w[i].set_f(x[i]);
@@ -311,34 +227,20 @@ void MatGSOInterface<ZT, FT>::babai(vector<ZT> &w, const vector<FT> &v, int star
 }
 
 template class MatGSOInterface<Z_NR<long>, FP_NR<double>>;
-template class MatGSOInterface<Z_NR<double>, FP_NR<double>>;
 template class MatGSOInterface<Z_NR<mpz_t>, FP_NR<double>>;
 template void adjust_radius_to_gh_bound<FP_NR<double>>(FP_NR<double> &max_dist, long max_dist_expo,
                                                        int block_size,
                                                        const FP_NR<double> &root_det,
                                                        double gh_factor);
 
-#ifdef FPLLL_WITH_LONG_DOUBLE
-template class MatGSOInterface<Z_NR<long>, FP_NR<long double>>;
-template class MatGSOInterface<Z_NR<double>, FP_NR<long double>>;
-template class MatGSOInterface<Z_NR<mpz_t>, FP_NR<long double>>;
-template void adjust_radius_to_gh_bound<FP_NR<long double>>(FP_NR<long double> &max_dist,
-                                                            long max_dist_expo, int block_size,
-                                                            const FP_NR<long double> &root_det,
-                                                            double gh_factor);
-
-#endif
-
 #ifdef FPLLL_WITH_QD
 template class MatGSOInterface<Z_NR<long>, FP_NR<dd_real>>;
-template class MatGSOInterface<Z_NR<double>, FP_NR<dd_real>>;
 template class MatGSOInterface<Z_NR<mpz_t>, FP_NR<dd_real>>;
 template void adjust_radius_to_gh_bound<FP_NR<dd_real>>(FP_NR<dd_real> &max_dist,
                                                         long max_dist_expo, int block_size,
                                                         const FP_NR<dd_real> &root_det,
                                                         double gh_factor);
 template class MatGSOInterface<Z_NR<long>, FP_NR<qd_real>>;
-template class MatGSOInterface<Z_NR<double>, FP_NR<qd_real>>;
 template class MatGSOInterface<Z_NR<mpz_t>, FP_NR<qd_real>>;
 template void adjust_radius_to_gh_bound<FP_NR<qd_real>>(FP_NR<qd_real> &max_dist,
                                                         long max_dist_expo, int block_size,
@@ -346,21 +248,11 @@ template void adjust_radius_to_gh_bound<FP_NR<qd_real>>(FP_NR<qd_real> &max_dist
                                                         double gh_factor);
 #endif
 
-#ifdef FPLLL_WITH_DPE
-template class MatGSOInterface<Z_NR<long>, FP_NR<dpe_t>>;
-template class MatGSOInterface<Z_NR<double>, FP_NR<dpe_t>>;
-template class MatGSOInterface<Z_NR<mpz_t>, FP_NR<dpe_t>>;
-template void adjust_radius_to_gh_bound<FP_NR<dpe_t>>(FP_NR<dpe_t> &max_dist, long max_dist_expo,
-                                                      int block_size, const FP_NR<dpe_t> &root_det,
-                                                      double gh_factor);
-#endif
-
 template class MatGSOInterface<Z_NR<long>, FP_NR<mpfr_t>>;
-template class MatGSOInterface<Z_NR<double>, FP_NR<mpfr_t>>;
 template class MatGSOInterface<Z_NR<mpz_t>, FP_NR<mpfr_t>>;
 template void adjust_radius_to_gh_bound<FP_NR<mpfr_t>>(FP_NR<mpfr_t> &max_dist, long max_dist_expo,
                                                        int block_size,
                                                        const FP_NR<mpfr_t> &root_det,
                                                        double gh_factor);
 
-FPLLL_END_NAMESPACE
+}  // namespace fplll

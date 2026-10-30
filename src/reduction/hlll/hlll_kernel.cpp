@@ -1,27 +1,36 @@
-/* Copyright (C) 2005-2008 Damien Stehle.
-   Copyright (C) 2007 David Cade.
-   Copyright (C) 2011 Xavier Pujol.
-   Copyright (C) 2017-1018 Laurent Grémy.
-
-   This file is part of fplll. fplll is free software: you
-   can redistribute it and/or modify it under the terms of the GNU Lesser
-   General Public License as published by the Free Software Foundation,
-   either version 2.1 of the License, or (at your option) any later version.
-
-   fplll is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-   GNU Lesser General Public License for more details.
-
-   You should have received a copy of the GNU Lesser General Public License
-   along with fplll. If not, see <http://www.gnu.org/licenses/>. */
+// SPDX-FileCopyrightText: 2005-2008 Damien Stehle
+// SPDX-FileCopyrightText: 2007 David Cade
+// SPDX-FileCopyrightText: 2011 Xavier Pujol
+// SPDX-FileCopyrightText: 2017-2018 Laurent Grémy
+// SPDX-FileCopyrightText: 2026 Omvixiii
+//
+// SPDX-License-Identifier: LGPL-2.1-or-later
 
 /* Template source file */
 
-#include "hlll.h"
-#include "util.h"
+#include "hlll_kernel.h"
+#include "detail/cpu_time.h"
 
-FPLLL_BEGIN_NAMESPACE
+#include <fplll/defs.h>
+#include <fplll/gso/householder.h>
+#include <fplll/nr/nr.h>
+#include <fplll/reduction/hlll.h>
+
+#include <cstdint>
+#include <gmp.h>
+#include <vector>
+
+namespace fplll
+{
+
+template <class ZT, class FT>
+HLLLReduction<ZT, FT>::HLLLReduction(MatHouseholder<ZT, FT> &m, const HLLLParameters &parameters)
+    : delta(parameters.delta), eta(parameters.eta), theta(parameters.theta), m(m),
+      verbose(parameters.verbose)
+{
+  dR.resize(m.get_d());
+  eR.resize(m.get_d());
+}
 
 template <class ZT, class FT> bool HLLLReduction<ZT, FT>::hlll()
 {
@@ -33,16 +42,23 @@ template <class ZT, class FT> bool HLLLReduction<ZT, FT>::hlll()
    * Experimentally, the delta used during the computation must be equal to
    * (delta + (0.01 or 0.02) to have an basis which is HLLL-reduced w.r.t delta.
    */
-  int start_time = (verbose) ? cputime() : 0;
+  const std::int64_t start_time = verbose ? detail::cpu_time_milliseconds() : 0;
   // True if the corresponding vector is weak size-reduced
   bool status_sr = true;
+
+  // HLLL works on pairs of rows; a single-row basis is already reduced.
+  if (m.get_d() < 2)
+  {
+    return set_status(RedStatus::success);
+  }
 
   if (verbose)
   {
     // Print the parameters of the computation
     print_params();
     // Discover b[0]
-    cerr << "Discovering vector 1/" << m.get_d() << " cputime=" << cputime() - start_time << endl;
+    log_stream() << "Discovering vector 1/" << m.get_d()
+                 << " cputime=" << detail::cpu_time_milliseconds() - start_time << '\n';
   }
 
   // Set R[0] and bf[0] to b[0], precompute ||b[0]||^2
@@ -59,8 +75,8 @@ template <class ZT, class FT> bool HLLLReduction<ZT, FT>::hlll()
   int k_max = 1;
 
   int prev_k = -1;
-  vector<FT> prev_R;
-  vector<long> prev_expo;
+  std::vector<FT> prev_R;
+  std::vector<long> prev_expo;
   prev_R.resize(m.get_d());
   prev_expo.resize(m.get_d());
   // prev_R[0] is never used: m.get_R(prev_R[0], 0, 0, prev_expo[0]);
@@ -68,7 +84,8 @@ template <class ZT, class FT> bool HLLLReduction<ZT, FT>::hlll()
   if (verbose)
   {
     // Discover b[1]
-    cerr << "Discovering vector 2/" << m.get_d() << " cputime=" << cputime() - start_time << endl;
+    log_stream() << "Discovering vector 2/" << m.get_d()
+                 << " cputime=" << detail::cpu_time_milliseconds() - start_time << '\n';
   }
 
   // Set R[1] and bf[1] to b[1], precompute ||b[1]||^2
@@ -80,7 +97,9 @@ template <class ZT, class FT> bool HLLLReduction<ZT, FT>::hlll()
     size_reduction(k, k, 0);
     status_sr = verify_size_reduction(k);  // b[kappa] should be size_reduced. Verify it.
     if (!status_sr)
-      return set_status(RED_HLLL_SR_FAILURE);
+    {
+      return set_status(RedStatus::hlll_sr_failure);
+    }
 
     if (lovasz_test(k))
     {
@@ -102,8 +121,8 @@ template <class ZT, class FT> bool HLLLReduction<ZT, FT>::hlll()
 
         if (ftmp0.cmp(ftmp1) > 0)
         {
-          // cerr << "Anomaly: the norm increases for kappa = " << k << endl;
-          return set_status(RED_HLLL_NORM_FAILURE);
+          // log_stream() << "Anomaly: the norm increases for kappa = " << k << '\n';
+          return set_status(RedStatus::hlll_norm_failure);
         }
       }
 
@@ -121,22 +140,26 @@ template <class ZT, class FT> bool HLLLReduction<ZT, FT>::hlll()
           // First time b[k] is discovered
           if (verbose)
           {
-            cerr << "Discovering vector " << k + 1 << "/" << m.get_d()
-                 << " cputime=" << cputime() - start_time << endl;
+            log_stream() << "Discovering vector " << k + 1 << "/" << m.get_d()
+                         << " cputime=" << detail::cpu_time_milliseconds() - start_time << '\n';
           }
           k_max = k;
           // Set R[k] and bf[k] to b[k], precompute ||b[k]||^2
           m.refresh_R_bf(k);
         }
         else
+        {
           // Set R[k] to b[k]. Indeed, it is not necessary to refresh bf[k], since b[k] has not
           // changed. However, it is mandatory to refresh R[k], since b[0] to b[k - 1] may have
           // changed, and then, it is necessary to recompute R[k].
           m.refresh_R(k);
+        }
       }
       else
+      {
         // if k == m.get_d(), then b[k] does not exist and the computation is ended
-        return set_status(RED_SUCCESS);
+        return set_status(RedStatus::success);
+      }
     }
     else
     {
@@ -174,7 +197,6 @@ template <class ZT, class FT> bool HLLLReduction<ZT, FT>::hlll()
 
 template <class ZT, class FT> bool HLLLReduction<ZT, FT>::lovasz_test(int k)
 {
-#ifndef MODIFIED_LOVASZ_TEST
   // This Lovasz test is the one proposed in [MSV, ISSAC'09]
   //
   // Prior, we used another test, which is dR[k-1].cmp(R(k, k - 1)^2 + R(k, k)^2) <= 0, if R(k, k)
@@ -185,7 +207,6 @@ template <class ZT, class FT> bool HLLLReduction<ZT, FT>::lovasz_test(int k)
   // (https://github.com/gilvillard/hplll/releases), this can maybe be retested. An example of
   // matrices that was not HLLL reduced because of a fail in this test can be generated thanks to
   // latticegen -randseed 122 r 300 30000.
-  // Such a test can be activate by compiling with -DMODIFIED_LOVASZ_TEST
 
   m.get_norm_square_b(ftmp0, k, expo0);  // ||b[k]||^2 = ftmp0 * 2^expo0
   m.norm_square_R_row(ftmp1, k, 0, k - 1,
@@ -204,38 +225,6 @@ template <class ZT, class FT> bool HLLLReduction<ZT, FT>::lovasz_test(int k)
   //   dR[k-1] * 2^(2*expo0) <= ftmp1 * 2^expo1
   //   dR[k-1] <= ftmp1 * 2^(expo1 - 2*expo0)
   ftmp1.mul_2si(ftmp1, expo1 - 2 * expo0);
-#else  // MODIFIED_LOVASZ_TEST
-  // Modified Lovasz test, following the comment above.
-  // FIXME: probably not maintained, especially if code is not compiled with -DMODIFIED_LOVASZ_TEST
-  // for a while.
-
-  m.norm_square_R_row(ftmp1, k, k, m.get_n(),
-                      expo1);  // sum_{i = k}^{i < n}R[k][i]^2 = ftmp1 * 2^expo1
-// Since we do not necessarily need expo1 (since expo0 and expo1 are correlated), we can
-// avoid to return it.
-#ifdef DEBUG
-  m.get_R(ftmp0, k, k - 1, expo0);  // R(k, k - 1) = ftmp0 * 2^expo0
-#else   // DEBUG
-  m.get_R(ftmp0, k, k - 1);  // R(k, k - 1) = ftmp0 * 2^(expo1 / 2)
-#endif  // DEBUG
-
-  ftmp0.mul(ftmp0, ftmp0);  // R(k, k - 1)^2 = ftmp0 * 2^(2 * expo 0)
-
-  // If this check is false, we need to reenable
-  // ftmp0.mul_2si(ftmp0, 2 * expo0 - expo1);  // 2 * expo0 since R(k, k-1)^2 = ftmp0 *
-  // (2^expo0)^2
-  FPLLL_DEBUG_CHECK(2 * expo0 == expo1);
-
-  ftmp1.add(ftmp0, ftmp1);  // sum_{i = k}^{i < n}R[k][i]^2 + R(k, k-1)^2 = ftmp1 * 2^expo1
-
-  expo0 = m.get_row_expo(k - 1);
-
-  // Here, delta * R(k - 1, k - 1)^2 = dR[k-1] * 2^(2*expo0). We want to compare
-  //   delta * R(k - 1, k - 1)^2 <= sum_{i = k}^{i < n}R[k][i]^2 + R(k, k-1)^2
-  //   dR[k-1] * 2^(2*expo0) <= ftmp1 * 2^expo1
-  //   dR[k-1] <= ftmp1 * 2^(expo1 - 2*expo0)
-  ftmp1.mul_2si(ftmp1, expo1 - 2 * expo0);
-#endif  // MODIFIED_LOVASZ_TEST
 
   return (dR[k - 1].cmp(ftmp1) <= 0);
 }
@@ -281,7 +270,6 @@ void HLLLReduction<ZT, FT>::size_reduction(int kappa, int size_reduction_end,
   bool not_stop      = true;
   bool prev_not_stop = true;
 
-#ifndef HOUSEHOLDER_USE_SIZE_REDUCTION_TEST
   /*
    * Variables introduced in hplll (https://github.com/gilvillard/hplll)
    * See commit a6b29d1a23ca34000264e22608ef23a64e3cac9d
@@ -295,9 +283,6 @@ void HLLLReduction<ZT, FT>::size_reduction(int kappa, int size_reduction_end,
    * TODO: this hard coded value must be theoretically analyzed.
    */
   FT approx = 0.1;
-#else   // HOUSEHOLDER_USE_SIZE_REDUCTION_TEST
-  FT approx = sr;
-#endif  // HOUSEHOLDER_USE_SIZE_REDUCTION_TEST
 
   m.update_R(kappa, false);
 
@@ -317,7 +302,9 @@ void HLLLReduction<ZT, FT>::size_reduction(int kappa, int size_reduction_end,
     // If not reduced, b(kappa) has not changed. Computing ||b[kappa]||^2 is not necessary.
     // 1 > 2^(-cd)=sr since cd > 0.
     if (!reduced)
+    {
       return;
+    }
     else
     {
       // At this point, even if b has changed, the precomputed squared norm of b was for b before
@@ -345,9 +332,13 @@ void HLLLReduction<ZT, FT>::size_reduction(int kappa, int size_reduction_end,
       m.update_R(kappa, false);
 
       if (prev_not_stop || not_stop)
+      {
         prev_not_stop = not_stop;  // Continue to try to reduce b(kappa).
+      }
       else
+      {
         return;
+      }
     }
   } while (true);
 }
@@ -357,7 +348,7 @@ void HLLLReduction<ZT, FT>::size_reduction(int kappa, int size_reduction_end,
  * commit 93da15d1418347714ef5c07ae8860946825772e5). This test detects not
  * enough precision during the computation is therefore needed in addition to
  * the one about the norms (such a test is implemented and send a
- * RED_HLLL_NORM_FAILURE in this implementation).
+ * RedStatus::hlll_norm_failure in this implementation).
  *
  * However, for now on, the following test about the weak size reduction was
  * never used to stop one of our computations, even if hplll, for a same lattice,
@@ -370,82 +361,6 @@ void HLLLReduction<ZT, FT>::size_reduction(int kappa, int size_reduction_end,
  */
 template <class ZT, class FT> bool HLLLReduction<ZT, FT>::verify_size_reduction(int kappa)
 {
-#ifdef HOUSEHOLDER_VERIFY_SIZE_REDUCTION_HPLLL
-  /*
-   * This test tries to mimick to the test of hplll in hsizereduce. It tests if
-   *   |R(k, i)| / R(i, i) <= (0.00...01 * ||b[kappa]||) / R(i, i) + 1
-   * but we test with this one
-   *   |R(k, i)| <= 0.00...01 * ||b[kappa]|| + R(i, i)
-   */
-
-  // TODO: can this test be more concise. This test is used at the end of each call to
-  // size_reduction, improving it can save time, especially if, for now, it does not help
-  // to detect loss of precision during the computation.
-
-  m.get_norm_square_b(ftmp0, kappa, expo0);  // ||b[kappa]||^2 = ftmp0 * 2^expo0
-
-  FPLLL_DEBUG_CHECK(expo0 % 2 == 0);
-  ftmp0.sqrt(ftmp0);
-  expo0 = expo0 / 2;  // ||b[kappa]|| = ftmp0 * 2^expo0
-
-  ftmp2 = 0.00000000001;
-  ftmp0.mul(ftmp0, ftmp2);  // See hplll, to tune for theta depending on the precision.
-  // 0.00000000001 * ||b[kappa]|| = ftmp0 * 2^expo0
-
-  for (int i = 0; i < kappa; i++)
-  {
-// Since we do not necessarily need expo1 (since expo0 and expo1 are correlated), we can
-// avoid to return it.
-#ifdef DEBUG
-    m.get_R(ftmp1, kappa, i, expo1);  // R(kappa, i) = ftmp1 * 2^expo1
-#else                                 // DEBUG
-    m.get_R(ftmp1, kappa, i);  // R(kappa, i) = ftmp1 * 2^expo0
-#endif                                // DEBUG
-
-    FPLLL_DEBUG_CHECK(expo0 == expo1);  // Since R[kappa] and b[kappa] share the same row_expo.
-    ftmp1.abs(ftmp1);
-
-    m.get_R(ftmp2, i, i, expo2);  // R(i, i) = ftmp2 * 2^expo2
-
-#if 0
-    // We want to test if
-    //   |R(kappa, i)| <= (0.00...01 * ||b[kappa]||) + R(i, i)
-    //   ftmp1 * 2^expo1 <= ftmp0 * 2^expo1 + ftmp2 * 2^expo2, since expo0 == expo1
-    //   ftmp1 <= ftmp0 + ftmp2 * 2^(expo2 - expo1);
-
-    ftmp2.mul_2si(ftmp2, expo2 - expo1);
-    ftmp2.add(ftmp0, ftmp2);
-
-#else  // 0
-    // We want to test if (theoretically the same test as in hplll)
-    //   |R(kappa, i)| / R(i, i) <= (0.00...01 * ||b[kappa]||) / R(i, i) + 1
-    //   ftmp1 / ftmp2 * 2^(expo1 - expo2) <= ftmp0 / ftmp2 * 2^(expo0 - expo2) + 1
-    //   ftmp1 / ftmp2 <= ftmp0 / ftmp2 + 2^(expo2 - expo1), since expo0 == expo1
-
-    ftmp1.div(ftmp1, ftmp2);
-    // Here, |R(kappa, i)| / R(i, i) = ftmp1 * 2^(expo1 - expo2)
-
-    ftmp2.div(ftmp0, ftmp2);
-    // Here, (0.00...01 * ||b[kappa]||) / R(i, i) = ftmp2 * 2^(expo1 - expo2);
-
-    FT one = 1.0;
-    one.mul_2si(one, expo2 - expo1);
-    ftmp2.add(one, ftmp2);
-#endif  // 0
-
-    if (ftmp1.cmp(ftmp2) > 0)
-    {
-#ifdef HOUSEHOLDER_DEBUG
-      cerr << "This is probably the first time this test is used." << endl;
-#endif  // HOUSEHOLDER_DEBUG
-
-      cerr << "Anomaly: weak size reduction is not complete kappa = " << kappa << " and i = " << i
-           << endl;
-
-      return false;
-    }
-  }
-#else  // HOUSEHOLDER_VERIFY_SIZE_REDUCTION_HPLLL
   /*
    * This test is similar to the test of hplll in hsizereduce. It is however not
    * exactly the same, this one crudely verify the condition of the weak-size
@@ -483,17 +398,13 @@ template <class ZT, class FT> bool HLLLReduction<ZT, FT>::verify_size_reduction(
 
     if (ftmp0.cmp(ftmp2) > 0)
     {
-#ifdef HOUSEHOLDER_DEBUG
-      cerr << "This is probably the first time this test is used." << endl;
-#endif  // HOUSEHOLDER_DEBUG
 
-      cerr << "Anomaly: weak size reduction is not complete kappa = " << kappa << " and i = " << i
-           << endl;
+      log_stream() << "Anomaly: weak size reduction is not complete kappa = " << kappa
+                   << " and i = " << i << '\n';
 
       return false;
     }
   }
-#endif  // HOUSEHOLDER_VERIFY_SIZE_REDUCTION_HPLLL
 
   return true;
 }
@@ -501,18 +412,17 @@ template <class ZT, class FT> bool HLLLReduction<ZT, FT>::verify_size_reduction(
 /*
  * Verify if the basis b inside m is (delta, eta)-hlll reduced.
  * Use a different implementation of the Householder transformation to compute R in this test than
- * the one used to reduced the basis.
+ * the one used to reduce the basis.
  */
 template <class ZT, class FT>
-int is_hlll_reduced(MatHouseholder<ZT, FT> &m, double delta, double eta, double theta)
+bool is_hlll_reduced(MatHouseholder<ZT, FT> &m, const HLLLParameters &parameters)
 {
-  int i, j;
   // Temporary variables
   FT ftmp0, ftmp1, ftmp2;
   // FT version of delta and eta
-  FT delta_ = delta;
-  FT eta_   = eta;
-  FT theta_ = theta;
+  FT delta_ = parameters.delta;
+  FT eta_   = parameters.eta;
+  FT theta_ = parameters.theta;
 
   // Compute the R coefficients of b
   m.update_R_naively();
@@ -524,9 +434,9 @@ int is_hlll_reduced(MatHouseholder<ZT, FT> &m, double delta, double eta, double 
 
   // Verify if |R(j, i)| <= eta * R(i, i) + theta * R(j, j) (weak size-reduction of Definition 2
   // [MSV'09].
-  for (j = 0; j < m.get_d(); j++)
+  for (int j = 0; j < m.get_d(); j++)
   {
-    for (i = 0; i < j; i++)
+    for (int i = 0; i < j; i++)
     {
       m.get_R_naively(ftmp0, j, i, expo0);  // R(j, i) = ftmp0 * 2^expo0
       ftmp0.abs(ftmp0);                     // |R(j, i)| = |ftmp0| * 2^expo0
@@ -546,13 +456,15 @@ int is_hlll_reduced(MatHouseholder<ZT, FT> &m, double delta, double eta, double 
       ftmp1.add(ftmp1, ftmp2);
 
       if (ftmp0.cmp(ftmp1) > 0)
-        return RED_HLLL_FAILURE;
+      {
+        return false;
+      }
     }
   }
 
   // At this step, we verify if two consecutive vectors must be swapped during the hlll-reduction or
   // not (Lovasz's condition)
-  for (i = 1; i < m.get_d(); i++)
+  for (int i = 1; i < m.get_d(); i++)
   {
     m.get_R_naively(ftmp0, i - 1, i - 1, expo0);  // R(i - 1, i - 1) = ftmp0 * 2^expo0
     m.get_R_naively(ftmp1, i, i - 1, expo1);      // R(i, i - 1) = ftmp1 * 2^expo1
@@ -569,7 +481,7 @@ int is_hlll_reduced(MatHouseholder<ZT, FT> &m, double delta, double eta, double 
     // Here: R(i, i - 1)^2 = ftmp1 * 2^expo1
     // Here: R(i, i)^2 = ftmp2 * 2^expo2
 
-    ftmp0.mul(ftmp0, delta);  // delta * R(i - 1, i - 1)^2 = delta * ftmp0 * 2^expo0
+    ftmp0.mul(ftmp0, delta_);  // delta * R(i - 1, i - 1)^2 = delta * ftmp0 * 2^expo0
 
     // We want to test if
     //   delta * R(i - 1, i - 1)^2 <= R(i, i - 1)^2 + R(i, i)^2
@@ -579,94 +491,73 @@ int is_hlll_reduced(MatHouseholder<ZT, FT> &m, double delta, double eta, double 
     ftmp1.add(ftmp1, ftmp2);
 
     if (ftmp0.cmp(ftmp1) > 0)
-      return RED_HLLL_FAILURE;
+    {
+      return false;
+    }
   }
 
-  return RED_SUCCESS;
+  return true;
 }
 
-/** instantiate functions **/
+template <class ZT, class FT> void HLLLReduction<ZT, FT>::print_params()
+{
+  log_stream() << "Entering HLLL" << '\n'
+               << "delta = " << delta << '\n'
+               << "eta = " << eta << '\n'
+               << "theta = " << theta << '\n'
+               << "precision = " << FT::get_prec() << '\n'
+               << "row_expo = " << static_cast<int>(m.is_enable_row_expo()) << '\n'
+               << "long_in_size_reduction = " << static_cast<int>(m.is_row_op_force_long()) << '\n';
+}
 
-template class HLLLReduction<Z_NR<long>, FP_NR<double>>;
-template class HLLLReduction<Z_NR<double>, FP_NR<double>>;
-template class HLLLReduction<Z_NR<mpz_t>, FP_NR<double>>;
-template int
-is_hlll_reduced<Z_NR<mpz_t>, FP_NR<double>>(MatHouseholder<Z_NR<mpz_t>, FP_NR<double>> &m,
-                                            double delta, double eta, double theta);
-template int
-is_hlll_reduced<Z_NR<long>, FP_NR<double>>(MatHouseholder<Z_NR<long>, FP_NR<double>> &m,
-                                           double delta, double eta, double theta);
-template int
-is_hlll_reduced<Z_NR<double>, FP_NR<double>>(MatHouseholder<Z_NR<double>, FP_NR<double>> &m,
-                                             double delta, double eta, double theta);
+template <class ZT, class FT> void HLLLReduction<ZT, FT>::compute_dR(int k)
+{
+  m.get_R(dR[k], k, k);
+  dR[k].mul(dR[k], dR[k]);
+  dR[k].mul(delta, dR[k]);  // dR[k] = delta * R(k, k)^2
+}
 
-#ifdef FPLLL_WITH_LONG_DOUBLE
-template class HLLLReduction<Z_NR<long>, FP_NR<long double>>;
-template class HLLLReduction<Z_NR<double>, FP_NR<long double>>;
-template class HLLLReduction<Z_NR<mpz_t>, FP_NR<long double>>;
-template int
-is_hlll_reduced<Z_NR<mpz_t>, FP_NR<long double>>(MatHouseholder<Z_NR<mpz_t>, FP_NR<long double>> &m,
-                                                 double delta, double eta, double theta);
-template int
-is_hlll_reduced<Z_NR<long>, FP_NR<long double>>(MatHouseholder<Z_NR<long>, FP_NR<long double>> &m,
-                                                double delta, double eta, double theta);
-template int is_hlll_reduced<Z_NR<double>, FP_NR<long double>>(
-    MatHouseholder<Z_NR<double>, FP_NR<long double>> &m, double delta, double eta, double theta);
-#endif
+template <class ZT, class FT> void HLLLReduction<ZT, FT>::compute_eR(int k)
+{
+  m.get_R(eR[k], k, k);
+  eR[k].mul(eta, eR[k]);  // eR[k] = eta * R(k, k)
+}
 
+template <class ZT, class FT> bool HLLLReduction<ZT, FT>::set_status(RedStatus new_status)
+{
+  status = new_status;
+  if (verbose)
+  {
+    if (status == RedStatus::success)
+    {
+      log_stream() << "End of HLLL: success" << '\n';
+    }
+    else
+    {
+      log_stream() << "End of HLLL: failure: " << to_string(status) << '\n';
+    }
+  }
+  return status == RedStatus::success;
+}
+
+/** explicit instantiations **/
+
+#define FPLLL_INSTANTIATE_HLLL(ZT, FT)                                                             \
+  template class HLLLReduction<ZT, FT>;                                                            \
+  template bool is_hlll_reduced<ZT, FT>(MatHouseholder<ZT, FT> & m,                                \
+                                        const HLLLParameters &parameters);
+
+FPLLL_INSTANTIATE_HLLL(Z_NR<long>, FP_NR<double>)
+FPLLL_INSTANTIATE_HLLL(Z_NR<mpz_t>, FP_NR<double>)
 #ifdef FPLLL_WITH_QD
-template class HLLLReduction<Z_NR<long>, FP_NR<dd_real>>;
-template class HLLLReduction<Z_NR<double>, FP_NR<dd_real>>;
-template class HLLLReduction<Z_NR<mpz_t>, FP_NR<dd_real>>;
-
-template class HLLLReduction<Z_NR<long>, FP_NR<qd_real>>;
-template class HLLLReduction<Z_NR<double>, FP_NR<qd_real>>;
-template class HLLLReduction<Z_NR<mpz_t>, FP_NR<qd_real>>;
-template int
-is_hlll_reduced<Z_NR<mpz_t>, FP_NR<qd_real>>(MatHouseholder<Z_NR<mpz_t>, FP_NR<qd_real>> &m,
-                                             double delta, double eta, double theta);
-template int
-is_hlll_reduced<Z_NR<long>, FP_NR<qd_real>>(MatHouseholder<Z_NR<long>, FP_NR<qd_real>> &m,
-                                            double delta, double eta, double theta);
-template int
-is_hlll_reduced<Z_NR<double>, FP_NR<qd_real>>(MatHouseholder<Z_NR<double>, FP_NR<qd_real>> &m,
-                                              double delta, double eta, double theta);
-template int
-is_hlll_reduced<Z_NR<mpz_t>, FP_NR<dd_real>>(MatHouseholder<Z_NR<mpz_t>, FP_NR<dd_real>> &m,
-                                             double delta, double eta, double theta);
-template int
-is_hlll_reduced<Z_NR<long>, FP_NR<dd_real>>(MatHouseholder<Z_NR<long>, FP_NR<dd_real>> &m,
-                                            double delta, double eta, double theta);
-template int
-is_hlll_reduced<Z_NR<double>, FP_NR<dd_real>>(MatHouseholder<Z_NR<double>, FP_NR<dd_real>> &m,
-                                              double delta, double eta, double theta);
+FPLLL_INSTANTIATE_HLLL(Z_NR<long>, FP_NR<dd_real>)
+FPLLL_INSTANTIATE_HLLL(Z_NR<mpz_t>, FP_NR<dd_real>)
+FPLLL_INSTANTIATE_HLLL(Z_NR<long>, FP_NR<qd_real>)
+FPLLL_INSTANTIATE_HLLL(Z_NR<mpz_t>, FP_NR<qd_real>)
 #endif
+FPLLL_INSTANTIATE_HLLL(Z_NR<long>, FP_NR<mpfr_t>)
+FPLLL_INSTANTIATE_HLLL(Z_NR<mpz_t>, FP_NR<mpfr_t>)
 
-#ifdef FPLLL_WITH_DPE
-template class HLLLReduction<Z_NR<long>, FP_NR<dpe_t>>;
-template class HLLLReduction<Z_NR<double>, FP_NR<dpe_t>>;
-template class HLLLReduction<Z_NR<mpz_t>, FP_NR<dpe_t>>;
-template int
-is_hlll_reduced<Z_NR<mpz_t>, FP_NR<dpe_t>>(MatHouseholder<Z_NR<mpz_t>, FP_NR<dpe_t>> &m,
-                                           double delta, double eta, double theta);
-template int is_hlll_reduced<Z_NR<long>, FP_NR<dpe_t>>(MatHouseholder<Z_NR<long>, FP_NR<dpe_t>> &m,
-                                                       double delta, double eta, double theta);
-template int
-is_hlll_reduced<Z_NR<double>, FP_NR<dpe_t>>(MatHouseholder<Z_NR<double>, FP_NR<dpe_t>> &m,
-                                            double delta, double eta, double theta);
-#endif
+#undef FPLLL_INSTANTIATE_HLLL
 
-template class HLLLReduction<Z_NR<long>, FP_NR<mpfr_t>>;
-template class HLLLReduction<Z_NR<double>, FP_NR<mpfr_t>>;
-template class HLLLReduction<Z_NR<mpz_t>, FP_NR<mpfr_t>>;
-template int
-is_hlll_reduced<Z_NR<mpz_t>, FP_NR<mpfr_t>>(MatHouseholder<Z_NR<mpz_t>, FP_NR<mpfr_t>> &m,
-                                            double delta, double eta, double theta);
-template int
-is_hlll_reduced<Z_NR<long>, FP_NR<mpfr_t>>(MatHouseholder<Z_NR<long>, FP_NR<mpfr_t>> &m,
-                                           double delta, double eta, double theta);
-template int
-is_hlll_reduced<Z_NR<double>, FP_NR<mpfr_t>>(MatHouseholder<Z_NR<double>, FP_NR<mpfr_t>> &m,
-                                             double delta, double eta, double theta);
-
-FPLLL_END_NAMESPACE
+}  // namespace fplll

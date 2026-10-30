@@ -1,28 +1,25 @@
-/* Copyright (C) 2005-2008 Damien Stehle.
-   Copyright (C) 2007 David Cade.
-   Copyright (C) 2011 Xavier Pujol.
-   Copyright (C) 2017-1018 Laurent Grémy.
-
-   This file is part of fplll. fplll is free software: you
-   can redistribute it and/or modify it under the terms of the GNU Lesser
-   General Public License as published by the Free Software Foundation,
-   either version 2.1 of the License, or (at your option) any later version.
-
-   fplll is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-   GNU Lesser General Public License for more details.
-
-   You should have received a copy of the GNU Lesser General Public License
-   along with fplll. If not, see <http://www.gnu.org/licenses/>. */
+// SPDX-FileCopyrightText: 2005-2008 Damien Stehle
+// SPDX-FileCopyrightText: 2007 David Cade
+// SPDX-FileCopyrightText: 2011 Xavier Pujol
+// SPDX-FileCopyrightText: 2017-2018 Laurent Grémy
+//
+// SPDX-License-Identifier: LGPL-2.1-or-later
 
 /* Template source file */
 
-#include "householder.h"
+#include <fplll/defs.h>
+#include <fplll/gso/householder.h>
+#include <fplll/nr/nr.h>
 
-FPLLL_BEGIN_NAMESPACE
+#include <algorithm>
+#include <gmp.h>
+#include <limits>
+#include <vector>
 
-// TODO: maybe add a variable available on DEBUG to verify in update_R(i, false) was done
+namespace fplll
+{
+
+// TODO: maybe add a debug_checks-only flag to verify in update_R(i, false) was done
 // This function corresponds more or less to householder_v in hplll.
 template <class ZT, class FT> void MatHouseholder<ZT, FT>::update_R_last(int i)
 {
@@ -30,7 +27,9 @@ template <class ZT, class FT> void MatHouseholder<ZT, FT>::update_R_last(int i)
   sigma[i] = (R(i, i).cmp(0.0) < 0) ? -1.0 : 1.0;
   // V(i, i) is used as a temporary variable. In the following, V(i, i) is always modified.
   if (i + 1 == n)
+  {
     ftmp3 = 0.0;
+  }
   else
   {
     // r^T * r (with first coefficient ignored)
@@ -61,7 +60,6 @@ template <class ZT, class FT> void MatHouseholder<ZT, FT>::update_R_last(int i)
       // ftmp0 = sqrt(-sigma[i] * ||r|| * (-sum(r[j]^2, j, 2, n-i+1) / (r[1] + s))
       ftmp0.sqrt(ftmp0);
 
-#ifndef HOUSEHOLDER_PRECOMPUTE_INVERSE
       // V(i, i) =
       // ((-sum(r[j]^2, j, 2, n-i+1) / (r[1] + s)) / sqrt(-sigma[i] * ||r|| * (-sum(r[j]^2, j, 2,
       // n-i+1) / (r[1] + s))
@@ -71,31 +69,24 @@ template <class ZT, class FT> void MatHouseholder<ZT, FT>::update_R_last(int i)
 
       V[i].div(R[i], i + 1, n, ftmp0);
 
-#else   // HOUSEHOLDER_PRECOMPUTE_INVERSE
-      ftmp0.div(1.0, ftmp0);
-      // Here, ftmp0 = 1 / sqrt(-s * vi[1])
-      V(i, i).mul(ftmp3, ftmp0);
-      R(i, i) = ftmp2;
+      // Here, vi = vi / ftmp0 and ri[i..n] = (||r||, 0, 0, ..., 0)
 
-      // FIXME: not tested.
-      V[i].mul(R[i], i + 1, n, ftmp0);
-
-      R_inverse_diag[i].div(1.0, ftmp2);
-#endif  // HOUSEHOLDER_PRECOMPUTE_INVERSE
-        // Here, vi = vi / ftmp0 and ri[i..n] = (||r||, 0, 0, ..., 0)
-
-#ifdef DEBUG
-      // Setting R(i, k) to 0 is not neccessary since this value will be not used in HLLL.
-      // However, in DEBUG, we must set to do not break test.
+#ifdef FPLLL_DEBUG_CHECKS
+      // Setting R(i, k) to 0 is not necessary since this value will not be used in HLLL.
+      // However, the checks compare R, so keep it exact.
       for (int k = i + 1; k < n; k++)
+      {
         R(i, k) = 0.0;
-#endif  // DEBUG
+      }
+#endif  // FPLLL_DEBUG_CHECKS
     }
     else
     {
       V(i, i) = 0.0;
       if (R(i, i).cmp(0.0) < 0)
+      {
         R(i, i).neg(R(i, i));
+      }
 
       // TODO: this is a row operation (from i + 1 to n).
       for (int k = i + 1; k < n; k++)
@@ -104,16 +95,12 @@ template <class ZT, class FT> void MatHouseholder<ZT, FT>::update_R_last(int i)
         FPLLL_DEBUG_CHECK(enable_row_expo ? 1 : R(i, k).is_zero());
         V(i, k) = 0.0;
 
-// Setting R(i, k) to 0 is not neccessary since this value will be not used in HLLL.
-// However, in DEBUG, we must set to do not break test.
-#ifdef DEBUG
+// Setting R(i, k) to 0 is not necessary since this value will not be used in HLLL.
+// However, the checks compare R, so keep it exact.
+#ifdef FPLLL_DEBUG_CHECKS
         R(i, k) = 0.0;
-#endif  // DEBUG
+#endif  // FPLLL_DEBUG_CHECKS
       }
-
-#ifdef HOUSEHOLDER_PRECOMPUTE_INVERSE
-      R_inverse_diag[i].div(1.0, R(i, i));
-#endif  // HOUSEHOLDER_PRECOMPUTE_INVERSE
     }
   }
   else
@@ -128,18 +115,12 @@ template <class ZT, class FT> void MatHouseholder<ZT, FT>::update_R_last(int i)
       FPLLL_DEBUG_CHECK(enable_row_expo ? 1 : R(i, k).is_zero());
       V(i, k) = 0.0;
 
-// Setting R(i, k) to 0 is not neccessary since this value will be not used in HLLL.
-// However, in DEBUG, we must set to do not break test.
-#ifdef DEBUG
+// Setting R(i, k) to 0 is not necessary since this value will not be used in HLLL.
+// However, the checks compare R, so keep it exact.
+#ifdef FPLLL_DEBUG_CHECKS
       R(i, k) = 0.0;
-#endif  // DEBUG
+#endif  // FPLLL_DEBUG_CHECKS
     }
-
-#ifdef HOUSEHOLDER_PRECOMPUTE_INVERSE
-    // Result is inf.
-    // TODO: set inf instead of doing the computation.
-    R_inverse_diag[i].div(1.0, 0.0);
-#endif  // HOUSEHOLDER_PRECOMPUTE_INVERSE
   }
 
   n_known_rows++;
@@ -152,7 +133,7 @@ template <class ZT, class FT> void MatHouseholder<ZT, FT>::update_R(int i, bool 
 {
   // To update row i, we need to know n_known_rows rows
   FPLLL_DEBUG_CHECK(i <= n_known_rows);
-  if (/*i == n_known_rows && =*/!updated_R)
+  if (!updated_R)
   {
     int j, k;
 
@@ -174,12 +155,16 @@ template <class ZT, class FT> void MatHouseholder<ZT, FT>::update_R(int i, bool 
       // TODO: this is a row operation. Can try to copy R(i, j..n-1) directly in
       // R_history[i][j](j..n-1).
       for (k = j; k < n; k++)
+      {
         R_history[i][j][k] = R(i, k);
+      }
     }
 
     // Compute R(i, i), since R(i, 0..i-1) are known
     if (last_j)
+    {
       update_R_last(i);
+    }
   }
 }
 
@@ -190,11 +175,11 @@ template <class ZT, class FT> void MatHouseholder<ZT, FT>::refresh_R_bf(int i)
 
   int j;
 
-  n_known_cols = max(n_known_cols, init_row_size[i]);
+  n_known_cols = std::max(n_known_cols, init_row_size[i]);
 
   if (enable_row_expo)
   {
-    long max_expo = LONG_MIN;
+    long max_expo = std::numeric_limits<long>::min();
 
     // Copy b(i, j) in bf(i, j) and get the maximal exponent of the row
     // TODO: these are row operations. However, since the types are converted, maybe difficult
@@ -202,16 +187,20 @@ template <class ZT, class FT> void MatHouseholder<ZT, FT>::refresh_R_bf(int i)
     for (j = 0; j < n_known_cols; j++)
     {
       b(i, j).get_f_exp(bf(i, j), tmp_col_expo[j]);
-      max_expo = max(max_expo, tmp_col_expo[j]);
+      max_expo = std::max(max_expo, tmp_col_expo[j]);
     }
 
     // Renormalize all the bf(i, j) with max_expo
     // TODO: these are row operations. However, since the exponent of mul_2si is not constant,
     // maybe difficult to make a row operation here.
     for (j = 0; j < n_known_cols; j++)
+    {
       bf(i, j).mul_2si(bf(i, j), tmp_col_expo[j] - max_expo);
+    }
     for (j = n_known_cols; j < n; j++)
+    {
       bf(i, j) = 0.0;
+    }
 
     row_expo[i] = max_expo;
     FPLLL_DEBUG_CHECK(row_expo[i] >= 0);
@@ -222,26 +211,34 @@ template <class ZT, class FT> void MatHouseholder<ZT, FT>::refresh_R_bf(int i)
     // TODO: these are row operations. However, since the types are converted, maybe difficult
     // to make a row operation here.
     for (j = 0; j < n_known_cols; j++)
+    {
       bf(i, j).set_z(b(i, j));
+    }
     for (j = n_known_cols; j < n; j++)
+    {
       bf(i, j) = 0.0;
+    }
   }
 
   // Copy R[i] in bf[i] (while we have copied b[i] in R[i])
   // TODO: these are row operations.
   for (j = 0; j < n_known_cols; j++)
+  {
     R(i, j) = bf(i, j);
+  }
   for (j = n_known_cols; j < n; j++)
+  {
     R(i, j) = 0.0;
+  }
 
-  // TODO: maybe not realy efficient (since we will redo some already done comparisions if flags are
-  // enabled) but factorize code.
+  // TODO: maybe not really efficient (since we will redo some already done comparisons if options
+  // are enabled) but factorize code.
   norm_square_b_row(norm_square_b[i], i, expo_norm_square_b[i]);
 
-#ifdef DEBUG
+#ifdef FPLLL_DEBUG_CHECKS
   // bf[i] = b[i] at the end of the function
   col_kept[i] = true;
-#endif  // DEBUG
+#endif  // FPLLL_DEBUG_CHECKS
 }
 
 template <class ZT, class FT> void MatHouseholder<ZT, FT>::refresh_R(int i)
@@ -255,9 +252,13 @@ template <class ZT, class FT> void MatHouseholder<ZT, FT>::refresh_R(int i)
   // TODO: these are row operations. However, since the types are converted, maybe difficult
   // to make a row operation here.
   for (j = 0; j < n_known_cols; j++)
+  {
     R(i, j) = bf(i, j);
+  }
   for (j = n_known_cols; j < n; j++)
+  {
     R(i, j) = 0.0;
+  }
 }
 
 template <class ZT, class FT> void MatHouseholder<ZT, FT>::update_R_naively(int i)
@@ -270,16 +271,18 @@ template <class ZT, class FT> void MatHouseholder<ZT, FT>::update_R_naively(int 
   // Set B in R_naively.
   if (enable_row_expo)
   {
-    long max_expo = LONG_MIN;
+    long max_expo = std::numeric_limits<long>::min();
 
     for (j = 0; j < n; j++)
     {
       b(i, j).get_f_exp(R_naively(i, j), tmp_col_expo[j]);
-      max_expo = max(max_expo, tmp_col_expo[j]);
+      max_expo = std::max(max_expo, tmp_col_expo[j]);
     }
 
     for (j = 0; j < n; j++)
+    {
       R_naively(i, j).mul_2si(R_naively(i, j), tmp_col_expo[j] - max_expo);
+    }
 
     row_expo_naively[i] = max_expo;
     FPLLL_DEBUG_CHECK(row_expo_naively[i] >= 0);
@@ -287,7 +290,9 @@ template <class ZT, class FT> void MatHouseholder<ZT, FT>::update_R_naively(int 
   else
   {
     for (j = 0; j < n; j++)
+    {
       R_naively(i, j).set_z(b(i, j));
+    }
   }
 
   for (j = 0; j < i; j++)
@@ -306,7 +311,9 @@ template <class ZT, class FT> void MatHouseholder<ZT, FT>::update_R_naively(int 
   // Here, ftmp2 is equal to s in [MSV, ISSAC'09].
   // Copy R_naively[i][i..n] in V_naively
   for (j = i; j < n; j++)
+  {
     V_naively(i, j) = R_naively(i, j);
+  }
 
   // sigma_naively[i] = sign(r[1])
   sigma_naively[i] = (R_naively(i, i).cmp(0.0) < 0) ? -1.0 : 1.0;
@@ -320,9 +327,13 @@ template <class ZT, class FT> void MatHouseholder<ZT, FT>::update_R_naively(int 
   if (ftmp0.cmp(0.0) != 0)
   {
     if (i + 1 == n)
+    {
       ftmp1 = 0.0;
+    }
     else
+    {
       R_naively[i].dot_product(ftmp1, R_naively[i], i + 1, n);
+    }
     if (ftmp1.cmp(0.0) != 0)
     {
       // ftmp1 = (-sum(r[j]^2, j, 2, n-i+1)
@@ -342,12 +353,16 @@ template <class ZT, class FT> void MatHouseholder<ZT, FT>::update_R_naively(int 
 
       R_naively(i, i).abs(ftmp2);
       for (j = i + 1; j < n; j++)
+      {
         R_naively(i, j) = 0.0;
+      }
     }
     else
     {
       if (R_naively(i, i).cmp(0.0) < 0)
+      {
         R_naively(i, i).neg(R_naively(i, i));
+      }
 
       V_naively(i, i) = 0.0;
       for (int k = i + 1; k < n; k++)
@@ -378,23 +393,27 @@ template <class ZT, class FT> void MatHouseholder<ZT, FT>::swap(int i, int j)
 
   b.swap_rows(i, j);
   bf.swap_rows(i, j);
-  iter_swap(sigma.begin() + i, sigma.begin() + j);
+  std::iter_swap(sigma.begin() + i, sigma.begin() + j);
   if (enable_row_expo)
-    iter_swap(row_expo.begin() + i, row_expo.begin() + j);
-  iter_swap(init_row_size.begin() + i, init_row_size.begin() + j);
-  iter_swap(R_history.begin() + i, R_history.begin() + j);
+  {
+    std::iter_swap(row_expo.begin() + i, row_expo.begin() + j);
+  }
+  std::iter_swap(init_row_size.begin() + i, init_row_size.begin() + j);
+  std::iter_swap(R_history.begin() + i, R_history.begin() + j);
   if (enable_transform)
   {
     u.swap_rows(i, j);
     if (enable_inverse_transform)
+    {
       u_inv_t.swap_rows(i, j);
+    }
   }
-  iter_swap(norm_square_b.begin() + i, norm_square_b.begin() + j);
-  iter_swap(expo_norm_square_b.begin() + i, expo_norm_square_b.begin() + j);
+  std::iter_swap(norm_square_b.begin() + i, norm_square_b.begin() + j);
+  std::iter_swap(expo_norm_square_b.begin() + i, expo_norm_square_b.begin() + j);
 
-#ifdef DEBUG
-  iter_swap(col_kept.begin() + i, col_kept.begin() + j);
-#endif  // DEBUG
+#ifdef FPLLL_DEBUG_CHECKS
+  std::iter_swap(col_kept.begin() + i, col_kept.begin() + j);
+#endif  // FPLLL_DEBUG_CHECKS
 }
 
 // Reduce b[k] and R[k] accordingly (Step 3 to Step 6 of Algorithm 3 of [MSV,
@@ -406,16 +425,18 @@ bool MatHouseholder<ZT, FT>::size_reduce(int k, int size_reduction_end, int size
 
   bool reduced = false;
 
+#ifdef FPLLL_DEBUG_CHECKS
+  // The private write helpers check this flag: only size_reduce() keeps R
+  // consistent with the basis after a write.
+  in_size_reduction = true;
+#endif  // FPLLL_DEBUG_CHECKS
+
   for (int i = size_reduction_end - 1; i >= size_reduction_start; i--)
   {
-// R(k, i) / R(i, i) = ftmp1 * 2^(row_expo[k] - row_expo[i])
-#ifndef HOUSEHOLDER_PRECOMPUTE_INVERSE
+    // R(k, i) / R(i, i) = ftmp1 * 2^(row_expo[k] - row_expo[i])
     ftmp1.div(R(k, i), R(i, i));
-#else   // HOUSEHOLDER_PRECOMPUTE_INVERSE
-    ftmp1.mul(R(k, i), R_inverse_diag[i]);
-#endif  // HOUSEHOLDER_PRECOMPUTE_INVERSE
 
-    /* If T = mpfr or dpe, enable_row_expo must be false and then, expo1 - expo0 == 0 (required by
+    /* If T = mpfr, enable_row_expo must be false and then, expo1 - expo0 == 0 (required by
      * rnd_we with these types) */
     // rnd(R(k, i) / R(i, i)) = ftmp1 * 2^(row_expo[k] - row_expo[i])
     ftmp1.rnd_we(ftmp1, row_expo[k] - row_expo[i]);
@@ -436,16 +457,20 @@ bool MatHouseholder<ZT, FT>::size_reduce(int k, int size_reduction_end, int size
   // b[k] was reduced by at least one b[i]
   if (reduced)
   {
-#ifdef DEBUG
+#ifdef FPLLL_DEBUG_CHECKS
     // b[k] has changed
     col_kept[k] = false;
-#endif  // DEBUG
+#endif  // FPLLL_DEBUG_CHECKS
 
     // Invalidate since b has changed, but R is not recomputed. We do operations on R[k], but not
     // the one to get the correct R[k]: the operations are the one mentionned in line 5 of
     // Algorithm 3 [MSV, ISSAC'09].
     invalidate_row(k);
   }
+
+#ifdef FPLLL_DEBUG_CHECKS
+  in_size_reduction = false;
+#endif  // FPLLL_DEBUG_CHECKS
 
   return reduced;
 }
@@ -454,25 +479,31 @@ bool MatHouseholder<ZT, FT>::size_reduce(int k, int size_reduction_end, int size
 // TODO: is it possible to factorize piece of code with fplll/gso.cpp?
 template <class ZT, class FT> void MatHouseholder<ZT, FT>::row_add(int i, int j)
 {
+  FPLLL_DEBUG_CHECK(in_size_reduction);
   b[i].add(b[j], n_known_cols);
 
   if (enable_transform)
   {
     u[i].add(u[j]);
     if (enable_inverse_transform)
+    {
       u_inv_t[j].sub(u_inv_t[i]);
+    }
   }
 }
 
 template <class ZT, class FT> void MatHouseholder<ZT, FT>::row_sub(int i, int j)
 {
+  FPLLL_DEBUG_CHECK(in_size_reduction);
   b[i].sub(b[j], n_known_cols);
 
   if (enable_transform)
   {
     u[i].sub(u[j]);
     if (enable_inverse_transform)
+    {
       u_inv_t[j].add(u_inv_t[i]);
+    }
   }
 }
 
@@ -484,7 +515,9 @@ template <class ZT, class FT> void MatHouseholder<ZT, FT>::row_addmul_si(int i, 
   {
     u[i].addmul_si(u[j], x);
     if (enable_inverse_transform)
+    {
       u_inv_t[j].addmul_si(u_inv_t[i], -x);
+    }
   }
 }
 
@@ -497,7 +530,9 @@ void MatHouseholder<ZT, FT>::row_addmul_si_2exp(int i, int j, long x, long expo)
   {
     u[i].addmul_si_2exp(u[j], x, expo, ztmp0);
     if (enable_inverse_transform)
+    {
       u_inv_t[j].addmul_si_2exp(u_inv_t[i], -x, expo, ztmp0);
+    }
   }
 }
 
@@ -522,6 +557,9 @@ void MatHouseholder<ZT, FT>::row_addmul_2exp(int i, int j, const ZT &x, long exp
 template <class ZT, class FT>
 void MatHouseholder<ZT, FT>::row_addmul_we(int i, int j, const FT &x, long expo_add)
 {
+  // The only caller is size_reduce(): it is the place that keeps R consistent
+  // with the basis after a write.
+  FPLLL_DEBUG_CHECK(in_size_reduction);
   FPLLL_DEBUG_CHECK(j >= 0 && i == n_known_rows && j < i);
   FPLLL_DEBUG_CHECK(x.cmp(0.0) != 0);
 
@@ -532,60 +570,56 @@ void MatHouseholder<ZT, FT>::row_addmul_we(int i, int j, const FT &x, long expo_
   if (expo == 0)
   {
     if (lx == 1)
+    {
       row_add(i, j);
+    }
     else if (lx == -1)
+    {
       row_sub(i, j);
+    }
     else if (lx != 0)
+    {
       row_addmul_si(i, j, lx);
+    }
   }
   else if (row_op_force_long)
+  {
     row_addmul_si_2exp(i, j, lx, expo);
+  }
   else
   {
     x.get_z_exp_we(ztmp0, expo, expo_add);
     row_addmul_2exp(i, j, ztmp0, expo);
   }
 
-  // TODO: is it possible to combine this specialization with the condition on lx?
   // Cannot specialize depending on lx, since x contains the contribution of the 2^row_expo[i] and
   // 2^row_expo[j].
-  // TODO: not sure this specialization is usefull.
   if (x.cmp(1.0) == 0.0)
+  {
     R[i].add(R[j], i);
+  }
   else if (x.cmp(-1.0) == 0.0)
+  {
     R[i].sub(R[j], i);
+  }
   else
+  {
     R[i].addmul(R[j], x, i);
+  }
 }
 
 template class MatHouseholder<Z_NR<long>, FP_NR<double>>;
-template class MatHouseholder<Z_NR<double>, FP_NR<double>>;
 template class MatHouseholder<Z_NR<mpz_t>, FP_NR<double>>;
-
-#ifdef FPLLL_WITH_LONG_DOUBLE
-template class MatHouseholder<Z_NR<long>, FP_NR<long double>>;
-template class MatHouseholder<Z_NR<double>, FP_NR<long double>>;
-template class MatHouseholder<Z_NR<mpz_t>, FP_NR<long double>>;
-#endif
 
 #ifdef FPLLL_WITH_QD
 template class MatHouseholder<Z_NR<long>, FP_NR<dd_real>>;
-template class MatHouseholder<Z_NR<double>, FP_NR<dd_real>>;
 template class MatHouseholder<Z_NR<mpz_t>, FP_NR<dd_real>>;
 
 template class MatHouseholder<Z_NR<long>, FP_NR<qd_real>>;
-template class MatHouseholder<Z_NR<double>, FP_NR<qd_real>>;
 template class MatHouseholder<Z_NR<mpz_t>, FP_NR<qd_real>>;
 #endif
 
-#ifdef FPLLL_WITH_DPE
-template class MatHouseholder<Z_NR<long>, FP_NR<dpe_t>>;
-template class MatHouseholder<Z_NR<double>, FP_NR<dpe_t>>;
-template class MatHouseholder<Z_NR<mpz_t>, FP_NR<dpe_t>>;
-#endif
-
 template class MatHouseholder<Z_NR<long>, FP_NR<mpfr_t>>;
-template class MatHouseholder<Z_NR<double>, FP_NR<mpfr_t>>;
 template class MatHouseholder<Z_NR<mpz_t>, FP_NR<mpfr_t>>;
 
-FPLLL_END_NAMESPACE
+}  // namespace fplll
