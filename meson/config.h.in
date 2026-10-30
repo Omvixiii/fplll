@@ -1,0 +1,4 @@
+#ifndef FPLLL_CONFIG_H
+#define FPLLL_CONFIG_H
+#define VERSION "@VERSION@"
+#endif

@@ -1,0 +1,55 @@
+option(
+  'qd',
+  type: 'feature',
+  value: 'auto',
+  description: 'Enable quad-double arithmetic through libqd',
+)
+
+option(
+  'mpir',
+  type: 'boolean',
+  value: false,
+  description: 'Use MPIR instead of GMP',
+)
+
+option(
+  'recursive_enum',
+  type: 'boolean',
+  value: true,
+  description: 'Enable recursive enumeration',
+)
+
+option(
+  'max_enum_dim',
+  type: 'integer',
+  value: 256,
+  description: 'Maximum supported enumeration dimension',
+)
+
+option(
+  'max_parallel_enum_dim',
+  type: 'integer',
+  value: 120,
+  description: 'Maximum parallel enumeration dimension (0 disables parallel enumeration)',
+)
+
+option(
+  'extenum_dir',
+  type: 'string',
+  value: '',
+  description: 'Directory hint for the external enumeration library',
+)
+
+option(
+  'extenum_lib',
+  type: 'string',
+  value: '',
+  description: 'External enumeration library name',
+)
+
+option(
+  'extenum_func',
+  type: 'string',
+  value: '',
+  description: 'External enumeration function name',
+)
